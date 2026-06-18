@@ -1,0 +1,9 @@
+{
+  "name": "dashboard-supabase",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": "24.x"
+  }
+}
