@@ -318,10 +318,9 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="cnt">
   <!-- VISÃO GERAL -->
   <div class="page active" id="pg-visao">
-    <div class="vg-kpis">
+    <div class="vg-kpis" style="grid-template-columns:repeat(2,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('vg','clientes',this)"><div class="sk-top"><span class="sk-ic">🏢</span><span class="sk-tag t-bl">Fixo</span></div><div class="sk-lbl">Clientes Ativos</div><div class="sk-v" id="vg-cl">—</div><div class="sk-sub" id="vg-cls">—</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('vg','funcs',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-gr">Fixo</span></div><div class="sk-lbl">Funcionários Ativos</div><div class="sk-v" id="vg-fn">—</div><div class="sk-sub" id="vg-fns">—</div></div>
-      <div class="sk sk-or clickable" onclick="skDet('vg','cobertura',this)"><div class="sk-top"><span class="sk-ic">🎯</span><span class="sk-tag t-or">Período</span></div><div class="sk-lbl">Taxa de Cobertura</div><div class="sk-v" id="vg-tc">—</div><div class="sk-sub" id="vg-tcs">—</div></div>
     </div>
     <div class="det-panel" id="det-vg"><div class="det-hdr" id="det-vg-hdr"><span class="det-title" id="det-vg-title"></span><button class="det-close" onclick="closeDet('vg')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-vg-body"></div><div class="det-sub" id="det-vg-sub"></div></div></div>
     <div class="oc-row">
@@ -360,17 +359,18 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="page" id="pg-ativos">
     <div class="sec-hdr"><span class="sec-hdr-ic">👤</span><div><div class="sec-hdr-t">Funcionários Ativos</div><div class="sec-hdr-sub">Quadro completo de pessoal ativo no Grupo ServCamp</div></div></div>
     <div class="sec-kpis" style="grid-template-columns:repeat(3,1fr)">
-      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-bl">Fixo</span></div><div class="sk-lbl">Total Ativos</div><div class="sk-v" id="at-tot">—</div><div class="sk-sub" id="at-tots">—</div></div>
-      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">☀️</span></div><div class="sk-lbl">Turno Diurno</div><div class="sk-v" id="at-di">—</div><div class="sk-sub" id="at-dis">—</div></div>
-      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🌙</span></div><div class="sk-lbl">Turno Noturno</div><div class="sk-v" id="at-no">—</div><div class="sk-sub" id="at-nos">—</div></div>
+      <div class="sk sk-bl clickable" onclick="skDet('ativos','total',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-bl">Fixo</span></div><div class="sk-lbl">Total Ativos</div><div class="sk-v" id="at-tot">—</div><div class="sk-sub" id="at-tots">—</div></div>
+      <div class="sk sk-gr clickable" onclick="skDet('ativos','diurno',this)"><div class="sk-top"><span class="sk-ic">☀️</span></div><div class="sk-lbl">Turno Diurno</div><div class="sk-v" id="at-di">—</div><div class="sk-sub" id="at-dis">—</div></div>
+      <div class="sk sk-or clickable" onclick="skDet('ativos','noturno',this)"><div class="sk-top"><span class="sk-ic">🌙</span></div><div class="sk-lbl">Turno Noturno</div><div class="sk-v" id="at-no">—</div><div class="sk-sub" id="at-nos">—</div></div>
     </div>
     <div class="sec-kpis" style="grid-template-columns:repeat(5,1fr)">
-      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias</div><div class="sk-v" id="at-ferias">—</div><div class="sk-sub" id="at-feriass">—</div></div>
-      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">🏥</span></div><div class="sk-lbl">INSS</div><div class="sk-v" id="at-inss">—</div><div class="sk-sub" id="at-insss">—</div></div>
-      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">😴</span></div><div class="sk-lbl">Folga</div><div class="sk-v" id="at-folga">—</div><div class="sk-sub" id="at-folgas">—</div></div>
-      <div class="sk sk-te"><div class="sk-top"><span class="sk-ic">❌</span></div><div class="sk-lbl">Falta</div><div class="sk-v" id="at-falta">—</div><div class="sk-sub" id="at-faltas">—</div></div>
-      <div class="sk sk-pu"><div class="sk-top"><span class="sk-ic">💼</span></div><div class="sk-lbl">Trabalho</div><div class="sk-v" id="at-trab">—</div><div class="sk-sub" id="at-trabs">—</div></div>
+      <div class="sk sk-bl clickable" onclick="skDet('ativos','ferias',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias</div><div class="sk-v" id="at-ferias">—</div><div class="sk-sub" id="at-feriass">—</div></div>
+      <div class="sk sk-gr clickable" onclick="skDet('ativos','inss',this)"><div class="sk-top"><span class="sk-ic">🏥</span></div><div class="sk-lbl">INSS</div><div class="sk-v" id="at-inss">—</div><div class="sk-sub" id="at-insss">—</div></div>
+      <div class="sk sk-or clickable" onclick="skDet('ativos','folga',this)"><div class="sk-top"><span class="sk-ic">😴</span></div><div class="sk-lbl">Folga</div><div class="sk-v" id="at-folga">—</div><div class="sk-sub" id="at-folgas">—</div></div>
+      <div class="sk sk-te clickable" onclick="skDet('ativos','falta',this)"><div class="sk-top"><span class="sk-ic">❌</span></div><div class="sk-lbl">Falta</div><div class="sk-v" id="at-falta">—</div><div class="sk-sub" id="at-faltas">—</div></div>
+      <div class="sk sk-pu clickable" onclick="skDet('ativos','trabalho',this)"><div class="sk-top"><span class="sk-ic">💼</span></div><div class="sk-lbl">Trabalho</div><div class="sk-v" id="at-trab">—</div><div class="sk-sub" id="at-trabs">—</div></div>
     </div>
+    <div class="det-panel" id="det-ativos"><div class="det-hdr" id="det-ativos-hdr"><span class="det-title" id="det-ativos-title"></span><button class="det-close" onclick="closeDet('ativos')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-ativos-body"></div><div class="det-sub" id="det-ativos-sub"></div></div></div>
     <div class="cc" style="margin-bottom:11px"><div class="ch"><div class="chb"></div><span class="ct">Funcionários Ativos por Cargo</span></div><div class="cw" style="height:320px"><canvas id="cAT1"></canvas></div></div>
     <div class="cc" style="margin-bottom:11px"><div class="ch"><div class="chb"></div><span class="ct">Top Escalas</span></div><div class="cw" style="height:260px"><canvas id="cAT4"></canvas></div></div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Lista de Funcionários Ativos</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-ativos" oninput="rTbl('ativos')"></div></div><div id="tbl-ativos"></div><div class="pag"><div class="pi2" id="pi-ativos"></div><div class="pbs" id="pb-ativos"></div></div></div>
@@ -634,9 +634,6 @@ function updVG(){
   const ativos=DASHBOARD_DATA.ativos||[];
   document.getElementById("vg-fn").textContent=ativos.length;
   document.getElementById("vg-fns").innerHTML=`<b>${ativos.filter(r=>r.TURNO==="DIURNO").length}</b> diurno · <b>${ativos.filter(r=>r.TURNO==="NOTURNO").length}</b> noturno`;
-  const flen=F.faltas.length,clen=F.cobertura.length;
-  document.getElementById("vg-tc").textContent=flen?Math.min(Math.round(clen/flen*100),999)+"%":"—";
-  document.getElementById("vg-tcs").innerHTML=`<b>${clen}</b> cob. / <b>${flen}</b> faltas`;
 }
 function updOC(){
   document.getElementById("oc1").textContent=F.faltas.length;
@@ -870,6 +867,16 @@ function skDet(sec,type,card){
       no:{rows:()=>byName((DASHBOARD_DATA.clientes||[]).filter(r=>r.TURNO==="NOTURNO"),"AREA"),t:"🌙 Clientes — Turno Noturno",fill:"#1e2d3e",arr:()=>(DASHBOARD_DATA.clientes||[]).filter(r=>r.TURNO==="NOTURNO"),key:"NOME"},
       ter:{rows:()=>{const m={};for(const r of(DASHBOARD_DATA.ativos||[])){const cn=normTxt(r.TPCLIENTE);if(!cn||CL_EXCL.has(cn))continue;if(!m[cn])m[cn]={set:new Set(),raw:r.TPCLIENTE,v:0};if(r.EMPRESA)m[cn].set.add(r.EMPRESA);m[cn].v++;}return Object.values(m).filter(o=>o.set.has("SERV CAMP TERCEIRIZAÇÃO")).map(o=>({NOME:o.raw,v:o.v,rawKey:o.raw}));},t:"🏗️ Clientes — Serv Camp Terceirização",fill:"#7c3aed",arr:()=>DASHBOARD_DATA.ativos,key:"TPCLIENTE"},
       fac:{rows:()=>{const m={};for(const r of(DASHBOARD_DATA.ativos||[])){const cn=normTxt(r.TPCLIENTE);if(!cn||CL_EXCL.has(cn))continue;if(!m[cn])m[cn]={set:new Set(),raw:r.TPCLIENTE,v:0};if(r.EMPRESA)m[cn].set.add(r.EMPRESA);m[cn].v++;}return Object.values(m).filter(o=>o.set.has("SERV CAMP FACILITES")).map(o=>({NOME:o.raw,v:o.v,rawKey:o.raw}));},t:"🏢 Clientes — Serv Camp Facilites",fill:"#d97706",arr:()=>DASHBOARD_DATA.ativos,key:"TPCLIENTE"}
+    },
+    ativos:{
+      total:{rows:()=>cnt(DASHBOARD_DATA.ativos||[],"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"👥 Ativos por Cargo",arr:()=>DASHBOARD_DATA.ativos,key:"CARGO"},
+      diurno:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="DIURNO"),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"☀️ Diurnos por Cargo",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="DIURNO"),key:"CARGO"},
+      noturno:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="NOTURNO"),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🌙 Noturnos por Cargo",fill:"#f97316",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="NOTURNO"),key:"CARGO"},
+      ferias:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS"),"AREA"),t:"🏖️ Funcionários de Férias",fill:"#1e4d8c",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS"),key:"NOME"},
+      inss:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),"AREA"),t:"🏥 Funcionários no INSS",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),key:"NOME"},
+      folga:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),"AREA"),t:"😴 Funcionários de Folga",fill:"#f97316",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),key:"NOME"},
+      falta:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),"AREA"),t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
+      trabalho:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),"AREA"),t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
