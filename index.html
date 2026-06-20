@@ -270,6 +270,44 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 .sb-credit{padding:8px 14px 10px;text-align:center;border-top:1px solid rgba(255,255,255,.06);}
 .sb-credit span{font-size:.52rem;color:rgba(255,255,255,.2);letter-spacing:.3px;}
 .sb-credit b{color:rgba(46,143,239,.5);font-weight:700;}
+/* MOBILE HAMBURGER */
+.mob-header{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--sb);z-index:1000;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+.mob-hamburger{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s;}
+.mob-hamburger:hover{background:rgba(255,255,255,.1);}
+.mob-logo-mini svg{height:30px;width:auto;}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;transition:opacity .2s;}
+.mob-overlay.show{display:block;}
+/* RESPONSIVE */
+@media(max-width:768px){
+  .mob-header{display:flex;}
+  body{flex-direction:column;}
+  .sb{position:fixed;left:-260px;top:0;width:240px;min-width:240px;z-index:1001;transition:left .25s ease;height:100vh;}
+  .sb.open{left:0;}
+  .main{margin-top:52px;width:100%;height:calc(100vh - 52px);}
+  .topbar{padding:0 12px;height:44px;}
+  .tb-t{font-size:.82rem;}
+  .fb{padding:6px 12px;gap:8px;overflow-x:auto;}
+  .fg{flex-shrink:0;}
+  .pi{padding:4px 8px;font-size:.65rem;}
+  .cnt{padding:10px 12px 20px;}
+  .vg-kpis{grid-template-columns:1fr!important;}
+  .sec-kpis{grid-template-columns:repeat(2,1fr)!important;}
+  .oc-row{grid-template-columns:repeat(2,1fr)!important;gap:6px;}
+  .snav{flex-wrap:nowrap;overflow-x:auto;}
+  .sk-v{font-size:1.4rem!important;}
+  .vg-kpis .sk-v{font-size:1.6rem!important;}
+  .det-body{flex-direction:column;}
+  .det-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+  .t10c{grid-template-columns:1fr!important;}
+  .login-box{width:calc(100vw - 40px);max-width:380px;padding:30px 24px 24px;}
+  .login-box svg{width:180px;height:auto;}
+  .as{min-width:110px;font-size:.65rem;}
+}
+@media(max-width:420px){
+  .sec-kpis{grid-template-columns:1fr!important;}
+  .oc-row{grid-template-columns:1fr!important;}
+  .pg{flex-wrap:wrap;}
+}
 </style>
 </head>
 <body>
@@ -315,7 +353,21 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
   </div>
 </div>
-<aside class="sb">
+<div class="mob-header">
+  <button class="mob-hamburger" onclick="toggleSb()">☰</button>
+  <div class="mob-logo-mini">
+    <svg width="120" height="30" viewBox="0 0 162 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M18 3 A17 17 0 1 0 18 37" stroke="#9a9a9a" stroke-width="7" stroke-linecap="round" fill="none" opacity=".5"/>
+      <path d="M16 37 A13 13 0 1 0 16 8" stroke="#4a5a8a" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <text x="42" y="14" font-family="Segoe UI,sans-serif" font-size="8" fill="#7a8fa8" font-style="italic">Grupo</text>
+      <text x="42" y="28" font-family="Segoe UI,sans-serif" font-size="13" fill="#9a9a9a" font-weight="700" letter-spacing=".5">SERV</text>
+      <text x="88" y="28" font-family="Segoe UI,sans-serif" font-size="13" fill="#6a7ab8" font-weight="900" letter-spacing=".5">CAMP</text>
+    </svg>
+  </div>
+  <div style="width:32px"></div>
+</div>
+<div class="mob-overlay" id="mobOverlay" onclick="toggleSb()"></div>
+<aside class="sb" id="sidebar">
   <div class="sb-logo">
     <svg width="162" height="45" viewBox="0 0 162 45" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M18 3 A17 17 0 1 0 18 37" stroke="#9a9a9a" stroke-width="7" stroke-linecap="round" fill="none" opacity=".5"/>
@@ -635,6 +687,9 @@ function doLogin(e){
   return false;
 }
 if(sessionStorage.getItem("logged")==="1")document.getElementById("loginOverlay").classList.add("hidden");
+function toggleSb(){const sb=document.getElementById("sidebar"),ov=document.getElementById("mobOverlay");sb.classList.toggle("open");ov.classList.toggle("show");}
+const _origNavTo=typeof navTo==="function"?navTo:null;
+document.querySelectorAll(".ni").forEach(el=>{const orig=el.getAttribute("onclick");el.addEventListener("click",()=>{if(window.innerWidth<=768){document.getElementById("sidebar").classList.remove("open");document.getElementById("mobOverlay").classList.remove("show");}});});
 </script><script>
 const ST={period:"all",turno:"TODOS",area:"",pg:"visao",tpg:{faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,efcli:1,clientes:1},ps:15,sd:null,ed:null};
 let CH={},F={},_detAct={},_detRows={},_detSubAct={};
