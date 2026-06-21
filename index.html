@@ -944,6 +944,28 @@ function rT10(arr,id,bc){
     </div>`).join("");
 }
 
+function _grpByTipo(all){
+  const tipos={CONTRATO:[],RESERVA:[],DEPARTAMENTO:[]};
+  const outros=[];
+  all.forEach(r=>{
+    const t=normTxt(r.TPCLIENTE);
+    if(t==="RESERVA")tipos.RESERVA.push(r);
+    else if(t==="DEPARTAMENTO")tipos.DEPARTAMENTO.push(r);
+    else if(t==="CONTRATO")tipos.CONTRATO.push(r);
+    else outros.push(r);
+  });
+  tipos.CONTRATO=tipos.CONTRATO.concat(outros);
+  const grp=[];
+  function addGrp(label,icon,arr){
+    grp.push({NOME:icon+" "+label,v:arr.length,_header:true});
+    const m={};arr.forEach(r=>{const n=r.NOME||"—";m[n]=(m[n]||0)+1;});
+    Object.entries(m).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+  }
+  addGrp("CONTRATO","📋",tipos.CONTRATO);
+  addGrp("RESERVA","🔖",tipos.RESERVA);
+  if(tipos.DEPARTAMENTO.length)addGrp("DEPARTAMENTO","🏢",tipos.DEPARTAMENTO);
+  return grp;
+}
 // ── INTERACTIVE DETAIL PANELS ──
 function skDet(sec,type,card){
   const panel=document.getElementById("det-"+sec);if(!panel)return;
@@ -1011,71 +1033,11 @@ function skDet(sec,type,card){
       total:{rows:()=>cnt(DASHBOARD_DATA.ativos||[],"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"👥 Ativos por Cargo",arr:()=>DASHBOARD_DATA.ativos,key:"CARGO"},
       diurno:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="DIURNO"),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"☀️ Diurnos por Cargo",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="DIURNO"),key:"CARGO"},
       noturno:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="NOTURNO"),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🌙 Noturnos por Cargo",fill:"#f97316",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="NOTURNO"),key:"CARGO"},
-      ferias:{rows:()=>{
-        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS");
-        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
-        const contrato=all.filter(r=>!reserva.includes(r));
-        const grp=[];
-        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
-        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
-        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
-        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
-        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        return grp;
-      },t:"🏖️ Funcionários de Férias",fill:"#1e4d8c",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS"),key:"NOME"},
-      inss:{rows:()=>{
-        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS");
-        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
-        const contrato=all.filter(r=>!reserva.includes(r));
-        const grp=[];
-        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
-        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
-        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
-        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
-        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        return grp;
-      },t:"🏥 Funcionários no INSS",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),key:"NOME"},
-      folga:{rows:()=>{
-        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA");
-        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
-        const contrato=all.filter(r=>!reserva.includes(r));
-        const grp=[];
-        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
-        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
-        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
-        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
-        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        return grp;
-      },t:"😴 Funcionários de Folga",fill:"#f97316",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),key:"NOME"},
-      falta:{rows:()=>{
-        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA"));
-        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
-        const contrato=all.filter(r=>!reserva.includes(r));
-        const grp=[];
-        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
-        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
-        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
-        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
-        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        return grp;
-      },t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
-      trabalho:{rows:()=>{
-        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO");
-        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
-        const contrato=all.filter(r=>!reserva.includes(r));
-        const grp=[];
-        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
-        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
-        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
-        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
-        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
-        return grp;
-      },t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"}
+      ferias:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS")),t:"🏖️ Funcionários de Férias",fill:"#1e4d8c",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS"),key:"NOME"},
+      inss:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS")),t:"🏥 Funcionários no INSS",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),key:"NOME"},
+      folga:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA")),t:"😴 Funcionários de Folga",fill:"#f97316",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),key:"NOME"},
+      falta:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA"))),t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
+      trabalho:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO")),t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
