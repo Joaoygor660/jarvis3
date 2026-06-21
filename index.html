@@ -1013,8 +1013,8 @@ function skDet(sec,type,card){
       noturno:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="NOTURNO"),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🌙 Noturnos por Cargo",fill:"#f97316",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="NOTURNO"),key:"CARGO"},
       ferias:{rows:()=>{
         const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS");
-        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
         const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const contrato=all.filter(r=>!reserva.includes(r));
         const grp=[];
         grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
         const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
@@ -1026,8 +1026,8 @@ function skDet(sec,type,card){
       },t:"🏖️ Funcionários de Férias",fill:"#1e4d8c",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS"),key:"NOME"},
       inss:{rows:()=>{
         const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS");
-        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
         const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const contrato=all.filter(r=>!reserva.includes(r));
         const grp=[];
         grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
         const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
@@ -1039,8 +1039,8 @@ function skDet(sec,type,card){
       },t:"🏥 Funcionários no INSS",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),key:"NOME"},
       folga:{rows:()=>{
         const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA");
-        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
         const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const contrato=all.filter(r=>!reserva.includes(r));
         const grp=[];
         grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
         const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
@@ -1052,8 +1052,8 @@ function skDet(sec,type,card){
       },t:"😴 Funcionários de Folga",fill:"#f97316",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),key:"NOME"},
       falta:{rows:()=>{
         const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA"));
-        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
         const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const contrato=all.filter(r=>!reserva.includes(r));
         const grp=[];
         grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
         const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
@@ -1065,8 +1065,8 @@ function skDet(sec,type,card){
       },t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
       trabalho:{rows:()=>{
         const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO");
-        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
         const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const contrato=all.filter(r=>!reserva.includes(r));
         const grp=[];
         grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
         const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
@@ -1463,12 +1463,16 @@ function buildDataFromWorkbook(wb){
     NOME:r[I["CLIENTE"]],TPCLIENTE:r[I["TPCLIENTE"]],
     TURNO:r[I["TURNO"]],AREA:r[I["AREALOCAL"]]
   }),"clientes");
-  ext("FICHA DE PRESENÇA",(r,I)=>({
-    RE:r[I["RE"]],NOME:r[I["FUNCIONARIO"]]!==undefined?r[I["FUNCIONARIO"]]:r[I["NOMEFUNCIONARIO"]],
+  ext("FICHA DE PRESENÇA",(r,I)=>{
+    const tpc=function(){
+      for(const k of Object.keys(I)){const u=k.toUpperCase().replace(/[\s_]/g,"");if(u==="TPCLIENTE"||u==="TIPOCLIENTE")return r[I[k]];}
+      return r[I["TPCLIENTE"]]||r[I["TpCliente"]]||r[I["TIPOCLIENTE"]]||r[I["Tipo Cliente"]]||r[I["TIPO"]]||"";
+    }();
+    return{RE:r[I["RE"]],NOME:r[I["FUNCIONARIO"]]!==undefined?r[I["FUNCIONARIO"]]:r[I["NOMEFUNCIONARIO"]],
     DATA:isoDate(r[I["DATA"]]),
     DESCSITUACAO:r[I["DESCSITUACAO"]],DESCSITUACAOHOJE:r[I["DESCSITUACAOHOJE"]],
-    TPCLIENTE:r[I["TPCLIENTE"]]||r[I["TIPOCLIENTE"]]||r[I["TIPO"]]||""
-  }),"presenca");
+    TPCLIENTE:tpc||""};
+  },"presenca");
   const wsA=findSheet(wb,"FUNCIONARIOS ATIVOS");
   const sa=sheetRows(wsA);
   const emps={};
@@ -1489,6 +1493,11 @@ function buildDataFromWorkbook(wb){
     }
   });
   data.ativos=Object.values(emps).sort((a,b)=>String(a.NOME||"").localeCompare(String(b.NOME||"")));
+  const ativosMap={};
+  data.ativos.forEach(r=>{if(r.RE!=null)ativosMap[String(r.RE)]=r;});
+  (data.presenca||[]).forEach(r=>{
+    if(!r.TPCLIENTE&&r.RE!=null){const at=ativosMap[String(r.RE)];if(at)r.TPCLIENTE=at.TIPO||at.TPCLIENTE||"";}
+  });
   return data;
 }
 function saveToStorage(data,fname){
