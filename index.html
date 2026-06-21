@@ -395,7 +395,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-lbl">Operações</div>
     <div class="ni" onclick="navTo('faltas',this)"><span class="ni-ic">🚫</span><span>Faltas &amp; Top 10</span></div>
     <div class="ni" onclick="navTo('coberturas',this)"><span class="ni-ic">🛡️</span><span>Coberturas</span></div>
-    <div class="ni" onclick="navTo('postos',this)"><span class="ni-ic">⚠️</span><span>Postos Desc.</span></div>
+    <div class="ni" onclick="navTo('postos',this)"><span class="ni-ic">⚠️</span><span>Justif. Postos Desc.</span></div>
     <div class="ni" onclick="navTo('os',this)"><span class="ni-ic">📋</span><span>OS Avulsos</span></div>
     <div class="ni" onclick="navTo('fts',this)"><span class="ni-ic">🔄</span><span>FTS</span></div>
     <div class="ni ni-alert" onclick="navTo('dispo',this)"><span class="ni-ic">🔴</span><span>Sem Alocação</span></div>
@@ -586,9 +586,9 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 
   <!-- POSTOS -->
   <div class="page" id="pg-postos">
-    <div class="sec-hdr"><span class="sec-hdr-ic">⚠️</span><div><div class="sec-hdr-t">Postos Descobertos</div><div class="sec-hdr-sub">Vagas sem cobertura no período</div></div></div>
+    <div class="sec-hdr"><span class="sec-hdr-ic">⚠️</span><div><div class="sec-hdr-t">Justificativa de Postos Descobertos</div><div class="sec-hdr-sub">Vagas sem cobertura no período</div></div></div>
     <div class="sec-kpis" style="grid-template-columns:repeat(5,1fr)">
-      <div class="sk sk-ye clickable" onclick="skDet('postos','total',this)"><div class="sk-top"><span class="sk-ic">⚠️</span><span class="sk-tag t-or">Total</span></div><div class="sk-lbl">Total Postos Desc.</div><div class="sk-v" id="p-tot">—</div><div class="sk-sub" id="p-tots">—</div></div>
+      <div class="sk sk-ye clickable" onclick="skDet('postos','total',this)"><div class="sk-top"><span class="sk-ic">⚠️</span><span class="sk-tag t-or">Total</span></div><div class="sk-lbl">Justif. Postos Desc.</div><div class="sk-v" id="p-tot">—</div><div class="sk-sub" id="p-tots">—</div></div>
       <div class="sk sk-bl clickable" onclick="skDet('postos','diu',this)"><div class="sk-top"><span class="sk-ic">☀️</span></div><div class="sk-lbl">Diurno</div><div class="sk-v" id="p-diu">—</div><div class="sk-sub">postos</div></div>
       <div class="sk sk-dkbl clickable" onclick="skDet('postos','not',this)"><div class="sk-top"><span class="sk-ic">🌙</span></div><div class="sk-lbl">Noturno</div><div class="sk-v" id="p-not">—</div><div class="sk-sub">postos</div></div>
       <div class="sk sk-or clickable" onclick="skDet('postos','areas',this)"><div class="sk-top"><span class="sk-ic">🗺️</span></div><div class="sk-lbl">Áreas Afetadas</div><div class="sk-v" id="p-areas">—</div><div class="sk-sub">supervisores</div></div>
@@ -737,7 +737,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",efcli:"Efetivos Clientes",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",efcli:"Efetivos Clientes",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação"};
 
 function navTo(p,btn){
   ST.pg=p;
