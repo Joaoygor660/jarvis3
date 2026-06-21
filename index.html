@@ -1011,11 +1011,71 @@ function skDet(sec,type,card){
       total:{rows:()=>cnt(DASHBOARD_DATA.ativos||[],"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"👥 Ativos por Cargo",arr:()=>DASHBOARD_DATA.ativos,key:"CARGO"},
       diurno:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="DIURNO"),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"☀️ Diurnos por Cargo",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="DIURNO"),key:"CARGO"},
       noturno:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="NOTURNO"),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🌙 Noturnos por Cargo",fill:"#f97316",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>r.TURNO==="NOTURNO"),key:"CARGO"},
-      ferias:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS"),"AREA"),t:"🏖️ Funcionários de Férias",fill:"#1e4d8c",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS"),key:"NOME"},
-      inss:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),"AREA"),t:"🏥 Funcionários no INSS",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),key:"NOME"},
-      folga:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),"AREA"),t:"😴 Funcionários de Folga",fill:"#f97316",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),key:"NOME"},
-      falta:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),"AREA"),t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
-      trabalho:{rows:()=>byName((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),"AREA"),t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"}
+      ferias:{rows:()=>{
+        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS");
+        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
+        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const grp=[];
+        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
+        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
+        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
+        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
+        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        return grp;
+      },t:"🏖️ Funcionários de Férias",fill:"#1e4d8c",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS"),key:"NOME"},
+      inss:{rows:()=>{
+        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS");
+        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
+        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const grp=[];
+        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
+        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
+        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
+        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
+        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        return grp;
+      },t:"🏥 Funcionários no INSS",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),key:"NOME"},
+      folga:{rows:()=>{
+        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA");
+        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
+        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const grp=[];
+        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
+        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
+        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
+        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
+        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        return grp;
+      },t:"😴 Funcionários de Folga",fill:"#f97316",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),key:"NOME"},
+      falta:{rows:()=>{
+        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA"));
+        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
+        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const grp=[];
+        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
+        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
+        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
+        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
+        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        return grp;
+      },t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
+      trabalho:{rows:()=>{
+        const all=(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO");
+        const contrato=all.filter(r=>{const t=normTxt(r.TPCLIENTE);return t&&t!=="RESERVA";});
+        const reserva=all.filter(r=>normTxt(r.TPCLIENTE)==="RESERVA");
+        const grp=[];
+        grp.push({NOME:"📋 CONTRATO",v:contrato.length,_header:true});
+        const cn={};contrato.forEach(r=>{const n=r.NOME||"—";cn[n]=(cn[n]||0)+1;});
+        Object.entries(cn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        grp.push({NOME:"🔖 RESERVA",v:reserva.length,_header:true});
+        const rn={};reserva.forEach(r=>{const n=r.NOME||"—";rn[n]=(rn[n]||0)+1;});
+        Object.entries(rn).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>grp.push({NOME:k,v}));
+        return grp;
+      },t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
@@ -1033,15 +1093,18 @@ function skDet(sec,type,card){
   _detSubAct[sec]=null;
 
   const html=items.length
-    ? `<div class="det-grid">${items.map((r,i)=>`
-        <div class="di2${cfg.arr?" di2-click":""}"${cfg.arr?` onclick="drillRow('${sec}',${i})"`:""}>
+    ? `<div class="det-grid">${items.map((r,i)=>{
+        if(r._header)return `<div class="di2-header" style="grid-column:1/-1;padding:10px 10px 4px;border-bottom:2px solid ${fc};margin-top:${i>0?'12px':'0'}">
+          <span style="font-size:.78rem;font-weight:900;color:${fc};text-transform:uppercase;letter-spacing:.5px">${r.NOME}</span>
+          <span style="font-size:.72rem;font-weight:800;color:var(--g500);margin-left:8px">(${r.v})</span></div>`;
+        return `<div class="di2${cfg.arr?" di2-click":""}"${cfg.arr?` onclick="drillRow('${sec}',${i})"`:""}>
           <div class="di2-row">
             <span class="di2-lbl" title="${r.NOME}">${r.NOME}</span>
             <span class="di2-val">${r.v}</span>
           </div>
           ${r.sub?`<div class="di2-sub">${r.sub}</div>`:""}
           <div class="di2-bar"><div class="di2-fill" style="width:${Math.round((r.v||0)/mx*100)}%;background:${fc}"></div></div>
-        </div>`).join("")}</div>`
+        </div>`;}).join("")}</div>`
     : '<div class="nd">Nenhum dado no período selecionado</div>';
 
   document.getElementById("det-"+sec+"-title").textContent=cfg.t;
@@ -1403,7 +1466,8 @@ function buildDataFromWorkbook(wb){
   ext("FICHA DE PRESENÇA",(r,I)=>({
     RE:r[I["RE"]],NOME:r[I["FUNCIONARIO"]]!==undefined?r[I["FUNCIONARIO"]]:r[I["NOMEFUNCIONARIO"]],
     DATA:isoDate(r[I["DATA"]]),
-    DESCSITUACAO:r[I["DESCSITUACAO"]],DESCSITUACAOHOJE:r[I["DESCSITUACAOHOJE"]]
+    DESCSITUACAO:r[I["DESCSITUACAO"]],DESCSITUACAOHOJE:r[I["DESCSITUACAOHOJE"]],
+    TPCLIENTE:r[I["TPCLIENTE"]]||r[I["TIPOCLIENTE"]]||r[I["TIPO"]]||""
   }),"presenca");
   const wsA=findSheet(wb,"FUNCIONARIOS ATIVOS");
   const sa=sheetRows(wsA);
