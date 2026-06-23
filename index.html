@@ -713,6 +713,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Visitas por Cliente (Top 15)</span></div><div class="cw" style="height:320px"><canvas id="cCK1"></canvas></div></div>
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Visitas por Modelo</span></div><div class="cw" style="height:320px"><canvas id="cCK2"></canvas></div></div>
     </div>
+    <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb"></div><span class="ct">Ranking de Visitas por Supervisor</span></div><div class="cw" style="height:250px"><canvas id="cCK4"></canvas></div></div>
     <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb"></div><span class="ct">Visitas por Dia</span></div><div class="cw" style="height:200px"><canvas id="cCK3"></canvas></div></div>
     <div class="alert-banner" style="margin-top:11px" id="ck-alert-wrap"><span class="alert-icon">🚨</span><div><div class="alert-title">Clientes Sem Check List</div><div class="alert-sub" id="ck-sem-list">—</div></div></div>
     <div class="ts" style="margin-top:11px"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Registro de Visitas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-checklist" oninput="rTbl('checklist')"></div></div><div id="tbl-checklist"></div><div class="pag"><div class="pi2" id="pi-checklist"></div><div class="pbs" id="pb-checklist"></div></div></div>
@@ -765,7 +766,7 @@ function filterAll(){
     clientes:(ST.turno==="TODOS"?D.clientes:D.clientes.filter(c=>c.TURNO===ST.turno)).filter(c=>c.TPCLIENTE==="CLIENTE"),
     dispo:D.dispo||[],
     restec:(D.restec||[]).filter(r=>mT(r)),
-    checklist:full(D.checklist||[])
+    checklist:(D.checklist||[]).filter(r=>mT(r))
   };
 }
 
@@ -1070,6 +1071,9 @@ function updChecklistC(){
   mkBar("cCK2",modelos.map(([k])=>k),modelos.map(([,v])=>v),blues.slice(0,modelos.length),false);
   // Por dia
   const bd=byDay(d);
+  // Ranking por supervisor
+  const supRank=topN(d,"FUNCIONARIO",15);
+  mkBar("cCK4",supRank.map(([k])=>k.length>20?k.substring(0,20)+"…":k),supRank.map(([,v])=>v),blues.slice(0,supRank.length),true);
   mkLine("cCK3",[{label:"Visitas",data:bd.vals,borderColor:"#2e8fef",backgroundColor:"rgba(46,143,239,.1)",borderWidth:2,pointRadius:3,fill:true,tension:.35}],bd.labels);
   // Alerta sem checklist
   const alertEl=document.getElementById("ck-sem-list");
