@@ -685,7 +685,11 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Reservas por Cargo</span></div><div class="cw" style="height:280px"><canvas id="cRT1"></canvas></div></div>
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Cargo por Turno</span></div><div class="cw" style="height:280px"><canvas id="cRT2"></canvas></div></div>
     </div>
-    <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb" style="background:#2e8fef"></div><span class="ct">Distribuição por Motivo</span></div><div id="rt-motivos-panel" style="padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:11px">
+      <div class="cc"><div class="ch"><div class="chb" style="background:#dc2626"></div><span class="ct">🚫 Indisponíveis — Não Contabilizar</span></div><div id="rt-mot-indisp" style="padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;"></div></div>
+      <div class="cc"><div class="ch"><div class="chb" style="background:#16a34a"></div><span class="ct">✅ Trabalho — Contabilizar</span></div><div id="rt-mot-disp" style="padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;"></div></div>
+    </div>
+    <div class="det-panel" id="det-rtmot"><div class="det-hdr" id="det-rtmot-hdr"><span class="det-title" id="det-rtmot-title"></span><button class="det-close" onclick="closeDet('rtmot')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-rtmot-body"></div><div class="det-sub" id="det-rtmot-sub"></div></div></div>
     <div class="grid-2" style="margin-top:11px">
       <div class="cc"><div class="ch"><div class="chb" style="background:#16a34a"></div><span class="ct">Trabalhando — por Cargo</span></div><div class="cw" style="height:250px"><canvas id="cRT3"></canvas></div></div>
       <div class="cc"><div class="ch"><div class="chb" style="background:#dc2626"></div><span class="ct">Indisponíveis — por Motivo</span></div><div class="cw" style="height:250px"><canvas id="cRT4"></canvas></div></div>
@@ -982,26 +986,26 @@ function updRestecC(){
   mkBar("cRT3",dispCargos.map(([k])=>k.length>18?k.substring(0,18)+"…":k),dispCargos.map(([,v])=>v),"#16a34a",true);
   const indispMot=topN(indisp,"MOTIVO",8);
   mkBar("cRT4",indispMot.map(([k])=>k.length>18?k.substring(0,18)+"…":k),indispMot.map(([,v])=>v),"#dc2626",true);
-  // Painel de motivos
+  // Painel de motivos separado
   const allMot=topN(d,"MOTIVO",30);
-  const mp=document.getElementById("rt-motivos-panel");
-  if(mp){
-    const motColors={"INSS":"#dc2626","ABANDONO":"#991b1b","FALTA":"#ef4444","FOLGA":"#f97316","SUSPENSAO":"#d97706","SUSPENSÃO":"#d97706"};
-    mp.innerHTML=allMot.map(([k,v])=>{
-      const isInd=RT_INDISP.has(normTxt(k));
-      const bg=isInd?"#fff5f5":"#f0fdf4";
-      const bc=isInd?"#fecaca":"#bbf7d0";
-      const tc=isInd?(motColors[k.toUpperCase()]||"#dc2626"):"#16a34a";
-      const icon=isInd?"🚫":"✅";
-      return `<div style="background:${bg};border:1px solid ${bc};border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+  const motIndisp=allMot.filter(([k])=>RT_INDISP.has(normTxt(k)));
+  const motDisp=allMot.filter(([k])=>!RT_INDISP.has(normTxt(k)));
+  function renderMotCards(el,mots,isInd){
+    if(!el)return;
+    const tc=isInd?"#dc2626":"#16a34a";
+    const bg=isInd?"#fff5f5":"#f0fdf4";
+    const bc=isInd?"#fecaca":"#bbf7d0";
+    const icon=isInd?"🚫":"✅";
+    el.innerHTML=mots.map(([k,v])=>`<div onclick="_rtMotClick('${k.replace(/'/g,"\\'")}',this)" style="background:${bg};border:1px solid ${bc};border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:.85rem">${icon}</span>
           <span style="font-size:.72rem;font-weight:700;color:var(--g700)">${k}</span>
         </div>
         <span style="font-size:1.1rem;font-weight:900;color:${tc}">${v}</span>
-      </div>`;
-    }).join("");
+      </div>`).join("");
   }
+  renderMotCards(document.getElementById("rt-mot-indisp"),motIndisp,true);
+  renderMotCards(document.getElementById("rt-mot-disp"),motDisp,false);
   // Gráfico todos os motivos
   mkBar("cRT5",allMot.map(([k])=>k.length>25?k.substring(0,25)+"…":k),allMot.map(([,v])=>v),allMot.map(([k])=>RT_INDISP.has(normTxt(k))?"#dc2626":"#1e4d8c"),true);
 }
@@ -1042,6 +1046,26 @@ function _grpByTipo(all){
   addGrp("RESERVA","🔖",tipos.RESERVA);
   if(tipos.DEPARTAMENTO.length)addGrp("DEPARTAMENTO","🏢",tipos.DEPARTAMENTO);
   return grp;
+}
+function _rtMotClick(motivo){
+  const panel=document.getElementById("det-rtmot");if(!panel)return;
+  const wasOpen=panel.classList.contains("open")&&document.getElementById("det-rtmot-title").textContent.includes(motivo);
+  closeDet("rtmot");
+  if(wasOpen)return;
+  const filtered=F.restec.filter(r=>(r.MOTIVO||"—")===motivo);
+  const byCargo={};filtered.forEach(r=>{const c=r.CARGO||"—";byCargo[c]=(byCargo[c]||0)+1;});
+  const items=Object.entries(byCargo).sort((a,b)=>b[1]-a[1]);
+  const mx=items[0]?.[1]||1;
+  const isInd=RT_INDISP.has(normTxt(motivo));
+  const fc=isInd?"#dc2626":"#16a34a";
+  document.getElementById("det-rtmot-title").textContent=(isInd?"🚫 ":"✅ ")+motivo+" — por Cargo";
+  const hdr=document.getElementById("det-rtmot-hdr");if(hdr){hdr.style.background=isInd?"linear-gradient(90deg,#991b1b,#dc2626)":"linear-gradient(90deg,#14532d,#16a34a)";}
+  document.getElementById("det-rtmot-body").innerHTML=items.length
+    ?`<div class="det-grid">${items.map(([k,v])=>`<div class="di2"><div class="di2-row"><span class="di2-lbl" title="${k}">${k}</span><span class="di2-val" style="color:${fc}">${v}</span></div><div class="di2-bar"><div class="di2-fill" style="width:${Math.round(v/mx*100)}%;background:${fc}"></div></div></div>`).join("")}</div>`
+    :'<div class="nd">Nenhum registro</div>';
+  const subEl=document.getElementById("det-rtmot-sub");if(subEl){subEl.classList.remove("open");subEl.innerHTML="";}
+  panel.classList.add("open");
+  panel.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 // ── INTERACTIVE DETAIL PANELS ──
 function skDet(sec,type,card){
