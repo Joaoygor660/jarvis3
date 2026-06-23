@@ -1673,11 +1673,15 @@ function buildDataFromWorkbook(wb){
       let dt="";
       if(typeof dh==="number"){const d=new Date(Math.round((dh-25569)*86400000));dt=d.toISOString().slice(0,10);}
       else dt=isoDate(dh);
+      const func=String(r[CI["FUNCIONARIO"]]||r[CI["NOMEFUNCIONARIO"]]||"—").trim();
+      const fn=func.toUpperCase();
+      const CK_NOT=["RONALDO","PAULO"];
+      const turno=CK_NOT.some(n=>fn.includes(n))?"NOTURNO":"DIURNO";
       return{
         DATA:dt,CLIENTE:String(r[CI["NOMECLIENTE"]]||"—").trim(),
         MODELO:String(r[CI["MODELO"]]||"—").trim(),
-        FUNCIONARIO:r[CI["FUNCIONARIO"]]||r[CI["NOMEFUNCIONARIO"]]||"—",
-        TURNO:"DIURNO"
+        FUNCIONARIO:func,
+        TURNO:turno
       };
     }).filter(Boolean);
   }else{data.checklist=[];}
