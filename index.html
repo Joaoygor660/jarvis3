@@ -685,10 +685,12 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Reservas por Cargo</span></div><div class="cw" style="height:280px"><canvas id="cRT1"></canvas></div></div>
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Cargo por Turno</span></div><div class="cw" style="height:280px"><canvas id="cRT2"></canvas></div></div>
     </div>
+    <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb" style="background:#2e8fef"></div><span class="ct">Distribuição por Motivo</span></div><div id="rt-motivos-panel" style="padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;"></div></div>
     <div class="grid-2" style="margin-top:11px">
       <div class="cc"><div class="ch"><div class="chb" style="background:#16a34a"></div><span class="ct">Trabalhando — por Cargo</span></div><div class="cw" style="height:250px"><canvas id="cRT3"></canvas></div></div>
       <div class="cc"><div class="ch"><div class="chb" style="background:#dc2626"></div><span class="ct">Indisponíveis — por Motivo</span></div><div class="cw" style="height:250px"><canvas id="cRT4"></canvas></div></div>
     </div>
+    <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb" style="background:#1e4d8c"></div><span class="ct">Todos os Motivos</span></div><div class="cw" style="height:300px"><canvas id="cRT5"></canvas></div></div>
     <div class="ts" style="margin-top:11px"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Lista de Reservas Técnicas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-restec" oninput="rTbl('restec')"></div></div><div id="tbl-restec"></div><div class="pag"><div class="pi2" id="pi-restec"></div><div class="pbs" id="pb-restec"></div></div></div>
   </div>
 
@@ -980,6 +982,28 @@ function updRestecC(){
   mkBar("cRT3",dispCargos.map(([k])=>k.length>18?k.substring(0,18)+"…":k),dispCargos.map(([,v])=>v),"#16a34a",true);
   const indispMot=topN(indisp,"MOTIVO",8);
   mkBar("cRT4",indispMot.map(([k])=>k.length>18?k.substring(0,18)+"…":k),indispMot.map(([,v])=>v),"#dc2626",true);
+  // Painel de motivos
+  const allMot=topN(d,"MOTIVO",30);
+  const mp=document.getElementById("rt-motivos-panel");
+  if(mp){
+    const motColors={"INSS":"#dc2626","ABANDONO":"#991b1b","FALTA":"#ef4444","FOLGA":"#f97316","SUSPENSAO":"#d97706","SUSPENSÃO":"#d97706"};
+    mp.innerHTML=allMot.map(([k,v])=>{
+      const isInd=RT_INDISP.has(normTxt(k));
+      const bg=isInd?"#fff5f5":"#f0fdf4";
+      const bc=isInd?"#fecaca":"#bbf7d0";
+      const tc=isInd?(motColors[k.toUpperCase()]||"#dc2626"):"#16a34a";
+      const icon=isInd?"🚫":"✅";
+      return `<div style="background:${bg};border:1px solid ${bc};border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:.85rem">${icon}</span>
+          <span style="font-size:.72rem;font-weight:700;color:var(--g700)">${k}</span>
+        </div>
+        <span style="font-size:1.1rem;font-weight:900;color:${tc}">${v}</span>
+      </div>`;
+    }).join("");
+  }
+  // Gráfico todos os motivos
+  mkBar("cRT5",allMot.map(([k])=>k.length>25?k.substring(0,25)+"…":k),allMot.map(([,v])=>v),allMot.map(([k])=>RT_INDISP.has(normTxt(k))?"#dc2626":"#1e4d8c"),true);
 }
 
 // TOP 10
