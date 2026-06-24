@@ -1673,8 +1673,7 @@ function buildDataFromWorkbook(wb){
       }
     }
     if(!minutos&&_minIdx===undefined){console.warn("[HR EXTRA] Coluna MINUTOS não encontrada. Colunas disponíveis:",_allKeys.join(", "));}
-    const cliIdx=findCol(["CLIENTE","CODCLI"]);
-    const cli=cliIdx!==undefined?String(r[cliIdx]||"—").trim():(r[I["LOCAL"]]||"—");
+    const cli=r[I["CLIENTE"]]||r[I["LOCAL"]]||"—";
     return{
       NOME:r[I["FUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
       LOCAL:r[I["LOCAL"]],CLIENTE:cli,
