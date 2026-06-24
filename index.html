@@ -1048,7 +1048,7 @@ function updRestecC(){
   mkBar("cRT5",allMot.map(([k])=>k.length>25?k.substring(0,25)+"…":k),allMot.map(([,v])=>v),allMot.map(([k])=>RT_INDISP.has(normTxt(k))?"#dc2626":"#1e4d8c"),true);
 }
 
-function _heMinToStr(min){const h=Math.floor(min/60);const m=min%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");}
+function _heMinToStr(seg){const h=Math.floor(seg/3600);const m=Math.floor((seg%3600)/60);const s=seg%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");}
 const HE_EXTRA=new Set(["EXTRA ENTRADA","EXTRA SAIDA"]);
 function updHrExtraC(){
   const d=F.hrextra;
@@ -1069,11 +1069,11 @@ function updHrExtraC(){
   const extras=d.filter(r=>HE_EXTRA.has((r.TIPO||"").toUpperCase()));
   const cliMap={};extras.forEach(r=>{const c=r.CLIENTE||"—";cliMap[c]=(cliMap[c]||0)+(r.MINUTOS||0);});
   const cliRank=Object.entries(cliMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
-  mkBar("cHE1",cliRank.map(([k])=>k.length>20?k.substring(0,20)+"…":k),cliRank.map(([,v])=>Math.round(v/60*10)/10),blues.slice(0,cliRank.length),true);
+  mkBar("cHE1",cliRank.map(([k])=>k.length>20?k.substring(0,20)+"…":k),cliRank.map(([,v])=>Math.round(v/3600*10)/10),blues.slice(0,cliRank.length),true);
   // Gráfico supervisores (apenas EXTRA ENTRADA + SAIDA)
   const supMap={};extras.forEach(r=>{const s=r.AREA||"—";supMap[s]=(supMap[s]||0)+(r.MINUTOS||0);});
   const supRank=Object.entries(supMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
-  mkBar("cHE2",supRank.map(([k])=>k.length>20?k.substring(0,20)+"…":k),supRank.map(([,v])=>Math.round(v/60*10)/10),blues.slice(0,supRank.length),true);
+  mkBar("cHE2",supRank.map(([k])=>k.length>20?k.substring(0,20)+"…":k),supRank.map(([,v])=>Math.round(v/3600*10)/10),blues.slice(0,supRank.length),true);
   // Por dia
   const bd=byDay(d);
   mkLine("cHE3",[{label:"Registros",data:bd.vals,borderColor:"#2e8fef",backgroundColor:"rgba(46,143,239,.1)",borderWidth:2,pointRadius:3,fill:true,tension:.35}],bd.labels);
@@ -1662,15 +1662,15 @@ function buildDataFromWorkbook(wb){
     if(_minIdx===undefined){for(const k of _allKeys){if(k.trim().toUpperCase()==="MINUTOS"){_minIdx=I[k];break;}}}
     if(_minIdx!==undefined){
       const raw=r[_minIdx];
-      if(typeof raw==="number"&&raw>0){minutos=Math.round(raw*24*60);}
-      else if(raw instanceof Date){minutos=raw.getUTCHours()*60+raw.getUTCMinutes();}
-      else if(typeof raw==="string"){const p=raw.match(/(\d+):(\d+)/);if(p)minutos=parseInt(p[1])*60+parseInt(p[2]);}
+      if(typeof raw==="number"&&raw>0){minutos=Math.round(raw*24*3600);}
+      else if(raw instanceof Date){minutos=raw.getUTCHours()*3600+raw.getUTCMinutes()*60+raw.getUTCSeconds();}
+      else if(typeof raw==="string"){const p=raw.match(/(\d+):(\d+):?(\d+)?/);if(p)minutos=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);}
     }else{
       let _hiIdx,_hfIdx;
       for(const k of _allKeys){const u=k.trim().toUpperCase();if(u==="HRINICIAL")_hiIdx=I[k];if(u==="HRFINAL")_hfIdx=I[k];}
       if(_hiIdx!==undefined&&_hfIdx!==undefined){
         const hi=r[_hiIdx],hf=r[_hfIdx];
-        if(typeof hi==="number"&&typeof hf==="number"&&hf>hi)minutos=Math.round((hf-hi)*24*60);
+        if(typeof hi==="number"&&typeof hf==="number"&&hf>hi)minutos=Math.round((hf-hi)*24*3600);
       }
     }
     if(_minIdx!==undefined){const _raw=r[_minIdx];if(!minutos)console.warn("[HR EXTRA] MINUTOS raw=",_raw,"tipo=",typeof _raw,"minIdx=",_minIdx);}
