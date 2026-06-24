@@ -1656,25 +1656,12 @@ function buildDataFromWorkbook(wb){
     TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
   }),"cobertura");
   ext("HR EXTRA",(r,I)=>{
-    function findCol(names){for(const n of names){if(I[n]!==undefined)return I[n];}for(const k of Object.keys(I)){const u=k.trim().toUpperCase().replace(/\s+/g,"");for(const n of names){if(u===n.toUpperCase().replace(/\s+/g,""))return I[k];}}return undefined;}
-    const minIdx=findCol(["MINUTOS"]);
-    const hiIdx=findCol(["HRINICIAL","HRMRENTRADA"]);
-    const hfIdx=findCol(["HRFINAL","HRMRSAIDA"]);
+    const minIdx=I["MINUTOS"];
     let minutos=0;
-    // Tentar HRINICIAL/HRFINAL primeiro (mais confiável)
-    if(hiIdx!==undefined&&hfIdx!==undefined){
-      const hi=r[hiIdx],hf=r[hfIdx];
-      if(typeof hi==="number"&&typeof hf==="number"&&hf>hi){minutos=Math.round((hf-hi)*24*60);}
-    }
-    // Fallback: coluna MINUTOS
-    if(!minutos&&minIdx!==undefined){
+    if(minIdx!==undefined){
       const raw=r[minIdx];
-      if(typeof raw==="number"&&raw>0){
-        minutos=raw<2?Math.round(raw*24*60):Math.round(raw);
-      }else if(typeof raw==="string"){
-        const p=raw.match(/(\d+):(\d+)/);
-        if(p)minutos=parseInt(p[1])*60+parseInt(p[2]);
-      }
+      if(typeof raw==="number"&&raw>0){minutos=Math.round(raw*24*60);}
+      else if(typeof raw==="string"){const p=raw.match(/(\d+):(\d+)/);if(p)minutos=parseInt(p[1])*60+parseInt(p[2]);}
     }
     const cliIdx=findCol(["CLIENTE","CODCLI"]);
     const cli=cliIdx!==undefined?String(r[cliIdx]||"—").trim():(r[I["LOCAL"]]||"—");
