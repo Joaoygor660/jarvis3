@@ -1663,6 +1663,7 @@ function buildDataFromWorkbook(wb){
     if(_minIdx!==undefined){
       const raw=r[_minIdx];
       if(typeof raw==="number"&&raw>0){minutos=Math.round(raw*24*60);}
+      else if(raw instanceof Date){minutos=raw.getUTCHours()*60+raw.getUTCMinutes();}
       else if(typeof raw==="string"){const p=raw.match(/(\d+):(\d+)/);if(p)minutos=parseInt(p[1])*60+parseInt(p[2]);}
     }else{
       let _hiIdx,_hfIdx;
