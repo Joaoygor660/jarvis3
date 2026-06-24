@@ -1672,7 +1672,8 @@ function buildDataFromWorkbook(wb){
         if(typeof hi==="number"&&typeof hf==="number"&&hf>hi)minutos=Math.round((hf-hi)*24*60);
       }
     }
-    if(!minutos&&_minIdx===undefined){console.warn("[HR EXTRA] Coluna MINUTOS não encontrada. Colunas disponíveis:",_allKeys.join(", "));}
+    if(_minIdx!==undefined){const _raw=r[_minIdx];if(!minutos)console.warn("[HR EXTRA] MINUTOS raw=",_raw,"tipo=",typeof _raw,"minIdx=",_minIdx);}
+    else{console.warn("[HR EXTRA] Coluna MINUTOS não encontrada. Colunas:",_allKeys.join(", "));}
     const cli=r[I["CLIENTE"]]||r[I["LOCAL"]]||"—";
     return{
       NOME:r[I["FUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
