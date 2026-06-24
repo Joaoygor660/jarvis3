@@ -1656,13 +1656,23 @@ function buildDataFromWorkbook(wb){
     TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
   }),"cobertura");
   ext("HR EXTRA",(r,I)=>{
-    const minIdx=I["MINUTOS"];
     let minutos=0;
-    if(minIdx!==undefined){
-      const raw=r[minIdx];
+    const _allKeys=Object.keys(I);
+    let _minIdx=I["MINUTOS"];
+    if(_minIdx===undefined){for(const k of _allKeys){if(k.trim().toUpperCase()==="MINUTOS"){_minIdx=I[k];break;}}}
+    if(_minIdx!==undefined){
+      const raw=r[_minIdx];
       if(typeof raw==="number"&&raw>0){minutos=Math.round(raw*24*60);}
       else if(typeof raw==="string"){const p=raw.match(/(\d+):(\d+)/);if(p)minutos=parseInt(p[1])*60+parseInt(p[2]);}
+    }else{
+      let _hiIdx,_hfIdx;
+      for(const k of _allKeys){const u=k.trim().toUpperCase();if(u==="HRINICIAL")_hiIdx=I[k];if(u==="HRFINAL")_hfIdx=I[k];}
+      if(_hiIdx!==undefined&&_hfIdx!==undefined){
+        const hi=r[_hiIdx],hf=r[_hfIdx];
+        if(typeof hi==="number"&&typeof hf==="number"&&hf>hi)minutos=Math.round((hf-hi)*24*60);
+      }
     }
+    if(!minutos&&_minIdx===undefined){console.warn("[HR EXTRA] Coluna MINUTOS não encontrada. Colunas disponíveis:",_allKeys.join(", "));}
     const cliIdx=findCol(["CLIENTE","CODCLI"]);
     const cli=cliIdx!==undefined?String(r[cliIdx]||"—").trim():(r[I["LOCAL"]]||"—");
     return{
