@@ -400,6 +400,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ni" onclick="navTo('fts',this)"><span class="ni-ic">🔄</span><span>FTS</span></div>
     <div class="ni ni-alert" onclick="navTo('dispo',this)"><span class="ni-ic">🔴</span><span>Sem Alocação</span></div>
     <div class="ni" onclick="navTo('restec',this)"><span class="ni-ic">🔧</span><span>Reservas Técnicas</span></div>
+    <div class="ni" onclick="navTo('hrextra',this)"><span class="ni-ic">⏰</span><span>Horas Extras</span></div>
     <div class="ni" onclick="navTo('checklist',this)"><span class="ni-ic">📝</span><span>Check List</span></div>
   </div>
   <div class="sb-foot">
@@ -699,6 +700,19 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ts" style="margin-top:11px"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Lista de Reservas Técnicas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-restec" oninput="rTbl('restec')"></div></div><div id="tbl-restec"></div><div class="pag"><div class="pi2" id="pi-restec"></div><div class="pbs" id="pb-restec"></div></div></div>
   </div>
 
+  <!-- HORAS EXTRAS -->
+  <div class="page" id="pg-hrextra">
+    <div class="sec-hdr"><span class="sec-hdr-ic">⏰</span><div><div class="sec-hdr-t">Horas Extras</div><div class="sec-hdr-sub">Controle de horas extras por tipo, cliente e supervisor</div></div></div>
+    <div class="sec-kpis" id="he-tipos-kpis"></div>
+    <div class="det-panel" id="det-hrextra"><div class="det-hdr" id="det-hrextra-hdr"><span class="det-title" id="det-hrextra-title"></span><button class="det-close" onclick="closeDet('hrextra')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-hrextra-body"></div><div class="det-sub" id="det-hrextra-sub"></div></div></div>
+    <div class="grid-2" style="margin-top:11px">
+      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Horas Extras por Cliente (Extra Entrada + Saída)</span></div><div class="cw" style="height:320px"><canvas id="cHE1"></canvas></div></div>
+      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Horas Extras por Supervisor (Extra Entrada + Saída)</span></div><div class="cw" style="height:320px"><canvas id="cHE2"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb"></div><span class="ct">Horas Extras por Dia</span></div><div class="cw" style="height:200px"><canvas id="cHE3"></canvas></div></div>
+    <div class="ts" style="margin-top:11px"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Registro de Horas Extras</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-hrextra" oninput="rTbl('hrextra')"></div></div><div id="tbl-hrextra"></div><div class="pag"><div class="pi2" id="pi-hrextra"></div><div class="pbs" id="pb-hrextra"></div></div></div>
+  </div>
+
   <!-- CHECK LIST -->
   <div class="page" id="pg-checklist">
     <div class="sec-hdr"><span class="sec-hdr-ic">📝</span><div><div class="sec-hdr-t">Controle de Check List</div><div class="sec-hdr-sub">Visitas de supervisores aos postos — Limpeza, Portaria e Visita de Rotina</div></div></div>
@@ -761,7 +775,7 @@ function filterAll(){
   const D=DASHBOARD_DATA;
   F={
     faltas:full(D.faltas),fts:full(D.fts),os:full(D.os),
-    cobertura:full(D.cobertura),hrextra:D.hrextra.filter(r=>inR(r.DATA)),
+    cobertura:full(D.cobertura),hrextra:full(D.hrextra||[]),
     justif:full(D.justif),
     clientes:(ST.turno==="TODOS"?D.clientes:D.clientes.filter(c=>c.TURNO===ST.turno)).filter(c=>c.TPCLIENTE==="CLIENTE"),
     dispo:D.dispo||[],
@@ -787,19 +801,19 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",efcli:"Efetivos Clientes",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",checklist:"Check List"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",efcli:"Efetivos Clientes",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List"};
 
 function navTo(p,btn){
   ST.pg=p;
   document.querySelectorAll(".ni").forEach(n=>n.classList.remove("active"));
   if(btn){btn.classList.add("active");}
-  else{const keys=["visao","clientes","ativos","efcli","faltas","coberturas","postos","os","fts","dispo","restec","checklist"];document.querySelectorAll(".ni")[keys.indexOf(p)]?.classList.add("active");}
+  else{const keys=["visao","clientes","ativos","efcli","faltas","coberturas","postos","os","fts","dispo","restec","hrextra","checklist"];document.querySelectorAll(".ni")[keys.indexOf(p)]?.classList.add("active");}
   document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
   document.getElementById("pg-"+p)?.classList.add("active");
   document.getElementById("pgTitle").textContent=PTITLES[p]||p;
   const s=ST.sd,e=ST.ed;
   if(s&&e)document.getElementById("pgSub").textContent=`Grupo ServCamp · ${s.toLocaleDateString("pt-BR")} – ${e.toLocaleDateString("pt-BR")}`;
-  if(["faltas","coberturas","postos","os","fts","dispo","restec","checklist"].includes(p)){rTbl(p);updSecCharts(p);}
+  if(["faltas","coberturas","postos","os","fts","dispo","restec","hrextra","checklist"].includes(p)){rTbl(p);updSecCharts(p);}
   else if(p==="ativos"){renderAtivos();}
   else if(p==="efcli"){renderEfCli();}
   else if(p==="clientes"){renderClientes();}
@@ -878,6 +892,7 @@ function updSecCharts(p){
   else if(p==="fts")updFTSC();
   else if(p==="dispo")updDispoC();
   else if(p==="restec")updRestecC();
+  else if(p==="hrextra")updHrExtraC();
   else if(p==="checklist")updChecklistC();
 }
 
@@ -1031,6 +1046,56 @@ function updRestecC(){
   renderMotCards(document.getElementById("rt-mot-disp"),motDisp,false);
   // Gráfico todos os motivos
   mkBar("cRT5",allMot.map(([k])=>k.length>25?k.substring(0,25)+"…":k),allMot.map(([,v])=>v),allMot.map(([k])=>RT_INDISP.has(normTxt(k))?"#dc2626":"#1e4d8c"),true);
+}
+
+function _heMinToStr(min){const h=Math.floor(min/60);const m=min%60;return h+"h"+String(m).padStart(2,"0");}
+const HE_EXTRA=new Set(["EXTRA ENTRADA","EXTRA SAIDA"]);
+function updHrExtraC(){
+  const d=F.hrextra;
+  // KPIs dinâmicos por TIPOEXTRA
+  const tipoMap={};
+  d.forEach(r=>{const t=r.TIPO||"—";if(!tipoMap[t])tipoMap[t]={count:0,min:0};tipoMap[t].count++;tipoMap[t].min+=r.MINUTOS||0;});
+  const tipos=Object.entries(tipoMap).sort((a,b)=>b[1].count-a[1].count);
+  const colors=["sk-bl","sk-gr","sk-or","sk-te","sk-pu","sk-re","sk-ye","sk-dkbl"];
+  const kpiEl=document.getElementById("he-tipos-kpis");
+  if(kpiEl){
+    kpiEl.style.gridTemplateColumns=`repeat(${Math.min(tipos.length,4)},1fr)`;
+    kpiEl.innerHTML=tipos.map(([t,v],i)=>{
+      const c=colors[i%colors.length];
+      return `<div class="sk ${c} clickable" onclick="_heTipoClick('${t.replace(/'/g,"\\'")}',this)"><div class="sk-top"><span class="sk-ic">⏰</span></div><div class="sk-lbl">${t}</div><div class="sk-v">${v.count}</div><div class="sk-sub"><b>${_heMinToStr(v.min)}</b> total</div></div>`;
+    }).join("");
+  }
+  // Gráfico clientes (apenas EXTRA ENTRADA + SAIDA)
+  const extras=d.filter(r=>HE_EXTRA.has((r.TIPO||"").toUpperCase()));
+  const cliMap={};extras.forEach(r=>{const c=r.CLIENTE||"—";cliMap[c]=(cliMap[c]||0)+(r.MINUTOS||0);});
+  const cliRank=Object.entries(cliMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  mkBar("cHE1",cliRank.map(([k])=>k.length>20?k.substring(0,20)+"…":k),cliRank.map(([,v])=>Math.round(v/60*10)/10),blues.slice(0,cliRank.length),true);
+  // Gráfico supervisores (apenas EXTRA ENTRADA + SAIDA)
+  const supMap={};extras.forEach(r=>{const s=r.AREA||"—";supMap[s]=(supMap[s]||0)+(r.MINUTOS||0);});
+  const supRank=Object.entries(supMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  mkBar("cHE2",supRank.map(([k])=>k.length>20?k.substring(0,20)+"…":k),supRank.map(([,v])=>Math.round(v/60*10)/10),blues.slice(0,supRank.length),true);
+  // Por dia
+  const bd=byDay(d);
+  mkLine("cHE3",[{label:"Registros",data:bd.vals,borderColor:"#2e8fef",backgroundColor:"rgba(46,143,239,.1)",borderWidth:2,pointRadius:3,fill:true,tension:.35}],bd.labels);
+}
+function _heTipoClick(tipo,card){
+  const panel=document.getElementById("det-hrextra");if(!panel)return;
+  const wasOpen=panel.classList.contains("open")&&document.getElementById("det-hrextra-title").textContent.includes(tipo);
+  document.querySelectorAll("#he-tipos-kpis .sk").forEach(el=>el.classList.remove("sk-act"));
+  closeDet("hrextra");
+  if(wasOpen)return;
+  card.classList.add("sk-act");
+  const filtered=F.hrextra.filter(r=>(r.TIPO||"—")===tipo);
+  const byCli={};filtered.forEach(r=>{const c=r.CLIENTE||"—";if(!byCli[c])byCli[c]={count:0,min:0};byCli[c].count++;byCli[c].min+=r.MINUTOS||0;});
+  const items=Object.entries(byCli).sort((a,b)=>b[1].min-a[1].min);
+  const mx=items[0]?.[1].min||1;
+  document.getElementById("det-hrextra-title").textContent="⏰ "+tipo+" — por Cliente";
+  document.getElementById("det-hrextra-body").innerHTML=items.length
+    ?`<div class="det-grid">${items.map(([k,v])=>`<div class="di2"><div class="di2-row"><span class="di2-lbl" title="${k}">${k}</span><span class="di2-val">${_heMinToStr(v.min)}</span></div><div class="di2-sub">${v.count} registros</div><div class="di2-bar"><div class="di2-fill" style="width:${Math.round(v.min/mx*100)}%;background:#2e8fef"></div></div></div>`).join("")}</div>`
+    :'<div class="nd">Nenhum registro</div>';
+  const subEl=document.getElementById("det-hrextra-sub");if(subEl){subEl.classList.remove("open");subEl.innerHTML="";}
+  panel.classList.add("open");
+  panel.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
 const CK_MODELOS=new Set(["LIMPEZA","PORTARIA","VISITA DE ROTEIRO"]);
@@ -1329,6 +1394,7 @@ const TCFG={
   fts:{d:()=>F.fts,s:"s-fts",cols:["DATA","NOME","LOCAL","CARGO","AREA","TIPO","TURNO","MOTIVO"],hdrs:["Data","Funcionário","Local","Cargo","Área","Tipo","Turno","Motivo"],b:["TIPO","TURNO"]},
   dispo:{d:()=>F.dispo,s:"s-dispo",cols:["DATA","NOME","TURNO","RESERVA","SITUACAO","AREA"],hdrs:["Data","Funcionário","Turno","Reserva","Situação","Área"],b:["TURNO"]},
   restec:{d:()=>F.restec,s:"s-restec",cols:["NOME","CARGO","TURNO","MOTIVO","STATUS"],hdrs:["Funcionário","Cargo","Turno","Motivo","Status"],b:["TURNO","STATUS"]},
+  hrextra:{d:()=>F.hrextra,s:"s-hrextra",cols:["DATA","NOME","TIPO","CLIENTE","AREA","MINUTOS"],hdrs:["Data","Funcionário","Tipo","Cliente","Supervisor","Minutos"],b:["TIPO"]},
   checklist:{d:()=>F.checklist,s:"s-checklist",cols:["DATA","CLIENTE","MODELO","FUNCIONARIO","TURNO"],hdrs:["Data","Cliente","Modelo","Funcionário","Turno"],b:["MODELO","TURNO"]},
   ativos:{d:()=>DASHBOARD_DATA.ativos||[],s:"s-ativos",cols:["NOME","RE","CARGO","AREA","LOCAL","ESCALA","TURNO","TIPO"],hdrs:["Nome","RE","Cargo","Área","Local","Escala","Turno","Tipo"],b:["TURNO","TIPO"]},
   efcli:{d:()=>aggClientes(),s:"s-efcli",cols:["CLIENTE","TOTAL","DIURNO","NOTURNO","EFETIVO","OUTROS"],hdrs:["Cliente","Total Ativos","Diurno","Noturno","Efetivos","Outros"],b:[]},
@@ -1589,11 +1655,17 @@ function buildDataFromWorkbook(wb){
     LOCAL:r[I["NOMELOCAL"]],AREA:r[I["AREASUPERVISAO"]],
     TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
   }),"cobertura");
-  ext("HR EXTRA",(r,I)=>({
-    NOME:r[I["FUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
-    LOCAL:r[I["LOCAL"]],AREA:r[I["AREASUPERVISAO"]],
-    MOTIVO:r[I["MOTIVO"]],TIPO:r[I["TIPOEXTRA"]]
-  }),"hrextra");
+  ext("HR EXTRA",(r,I)=>{
+    const min=r[I["MINUTOS"]];
+    const horas=typeof min==="number"?Math.round(min*24*60):0;
+    return{
+      NOME:r[I["FUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
+      LOCAL:r[I["LOCAL"]],CLIENTE:r[I["CLIENTE"]]||r[I["LOCAL"]]||"—",
+      AREA:r[I["AREASUPERVISAO"]],CARGO:r[I["NOMECARGOFUNCIONARIO"]]||"—",
+      MOTIVO:r[I["MOTIVO"]],TIPO:r[I["TIPOEXTRA"]],
+      MINUTOS:horas,TURNO:"DIURNO"
+    };
+  },"hrextra");
   ext("JUSTIFICATIVA DE POSTOS",(r,I)=>({
     DATA:isoDate(r[I["DATA"]]),LOCAL:r[I["LOCALSERVICO"]],
     CARGO:r[I["DESCCARGO"]],AREA:r[I["AREA"]],
@@ -1726,7 +1798,7 @@ function refreshAll(){
   ST.sd=min;ST.ed=max;
   if(min&&document.getElementById("dtF"))document.getElementById("dtF").value=ymd(min);
   if(max&&document.getElementById("dtT"))document.getElementById("dtT").value=ymd(max);
-  ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,efcli:1,clientes:1,restec:1,checklist:1};
+  ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,efcli:1,clientes:1,restec:1,hrextra:1,checklist:1};
   refresh();
   updVGCharts();
   const cur=document.querySelector(".page.active");
