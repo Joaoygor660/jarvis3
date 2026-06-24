@@ -1656,14 +1656,17 @@ function buildDataFromWorkbook(wb){
     TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
   }),"cobertura");
   ext("HR EXTRA",(r,I)=>{
-    const min=r[I["MINUTOS"]];
-    const horas=typeof min==="number"?Math.round(min*24*60):0;
+    let minIdx=I["MINUTOS"];
+    if(minIdx===undefined){for(const k of Object.keys(I)){if(k.trim().toUpperCase()==="MINUTOS"){minIdx=I[k];break;}}}
+    const raw=minIdx!==undefined?r[minIdx]:null;
+    let minutos=0;
+    if(typeof raw==="number"){minutos=raw<1?Math.round(raw*24*60):Math.round(raw);}
     return{
       NOME:r[I["FUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
       LOCAL:r[I["LOCAL"]],CLIENTE:r[I["CLIENTE"]]||r[I["LOCAL"]]||"—",
       AREA:r[I["AREASUPERVISAO"]],CARGO:r[I["NOMECARGOFUNCIONARIO"]]||"—",
       MOTIVO:r[I["MOTIVO"]],TIPO:r[I["TIPOEXTRA"]],
-      MINUTOS:horas,TURNO:"DIURNO"
+      MINUTOS:minutos,TURNO:"DIURNO"
     };
   },"hrextra");
   ext("JUSTIFICATIVA DE POSTOS",(r,I)=>({
