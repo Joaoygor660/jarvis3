@@ -1620,7 +1620,7 @@ function findSheet(wb,name){
 }
 function sheetRows(ws){
   if(!ws)return{idx:{},body:[]};
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null,cellDates:false});
   if(!rows.length)return{idx:{},body:[]};
   const hdr=rows[0];
   const idx={};
