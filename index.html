@@ -788,6 +788,7 @@ function doLogin(e){
 }
 if(sessionStorage.getItem("logged")==="1")document.getElementById("loginOverlay").classList.add("hidden");
 function toggleChat(){document.getElementById("chatPanel").classList.toggle("show");document.getElementById("chatFab").classList.toggle("open");if(document.getElementById("chatPanel").classList.contains("show"))document.getElementById("chatInput").focus();}
+function _cnt(arr,key,n){var m={};arr.forEach(function(x){var v=x[key]||"—";m[v]=(m[v]||0)+1;});return Object.entries(m).sort(function(a,b){return b[1]-a[1]}).slice(0,n||10).map(function(e){return e[0]+": "+e[1]}).join("; ");}
 function _chatContext(){
   if(typeof DASHBOARD_DATA==="undefined"||!DASHBOARD_DATA)return"DADOS NÃO CARREGADOS. Peça ao usuário para carregar a planilha.";
   var r="";
@@ -797,26 +798,52 @@ function _chatContext(){
     var faltas=D.faltas||[];
     var pres=D.presenca||[];
     var hr=D.hrextra||[];
+    var cob=D.cobertura||[];
     var rt=D.restec||[];
     var ck=D.checklist||[];
-    r+="FUNCIONÁRIOS ATIVOS: "+at.length+" (Diurno: "+at.filter(function(x){return x.TURNO==="DIURNO"}).length+", Noturno: "+at.filter(function(x){return x.TURNO==="NOTURNO"}).length+"). ";
-    r+="FALTAS NO PERÍODO: "+faltas.length+" registros. ";
-    r+="FALTAS CONTRATO: "+faltas.filter(function(x){return x.TIPO==="CONTRATO"}).length+". ";
-    r+="FALTAS RESERVA: "+faltas.filter(function(x){return x.TIPO==="RESERVA"}).length+". ";
-    r+="COBERTURAS: "+(D.cobertura||[]).length+" registros. ";
-    r+="HORAS EXTRAS: "+hr.length+" registros. ";
-    r+="FTS: "+(D.fts||[]).length+". OS AVULSOS: "+(D.os||[]).length+". ";
-    r+="POSTOS DESCOBERTOS: "+(D.justif||[]).length+". ";
-    r+="SEM ALOCAÇÃO: "+(D.dispo||[]).length+". ";
-    r+="RESERVAS TÉCNICAS: "+rt.length+". ";
-    r+="CHECK LIST: "+ck.length+" visitas. CLIENTES: "+(D.clientes||[]).length+". ";
-    r+="PRESENÇA HOJE - Férias: "+pres.filter(function(x){return String(x.DESCSITUACAO||"").toUpperCase().replace(/[^A-Z]/g,"").indexOf("FERIAS")>=0}).length;
-    r+=", INSS: "+pres.filter(function(x){return String(x.DESCSITUACAO||"").toUpperCase().replace(/[^A-Z]/g,"").indexOf("INSS")>=0}).length;
-    r+=", Folga: "+pres.filter(function(x){return String(x.DESCSITUACAOHOJE||"").toUpperCase().replace(/[^A-Z]/g,"").indexOf("FOLGA")>=0}).length;
-    r+=", Falta: "+pres.filter(function(x){return String(x.DESCSITUACAOHOJE||"").toUpperCase().indexOf("FALTA")>=0}).length;
-    r+=", Trabalho: "+pres.filter(function(x){return String(x.DESCSITUACAOHOJE||"").toUpperCase().replace(/[^A-Z]/g,"").indexOf("TRABALHO")>=0}).length+". ";
+    var fts=D.fts||[];
+    var os=D.os||[];
+    var jus=D.justif||[];
+    var dis=D.dispo||[];
+    r+="=== FUNCIONÁRIOS ATIVOS: "+at.length+" === ";
+    r+="Diurno: "+at.filter(function(x){return x.TURNO==="DIURNO"}).length+", Noturno: "+at.filter(function(x){return x.TURNO==="NOTURNO"}).length+". ";
+    r+="Cargos distintos: "+new Set(at.map(function(x){return x.CARGO})).size+". ";
+    r+="Top cargos: "+_cnt(at,"CARGO",8)+". ";
+    r+="Por área: "+_cnt(at,"AREA",10)+". ";
+    r+="=== PRESENÇA (Ficha): "+pres.length+" registros === ";
+    r+="Férias: "+pres.filter(function(x){return(x.DESCSITUACAO||"").toUpperCase().indexOf("FERIAS")>=0||(x.DESCSITUACAO||"").toUpperCase().indexOf("FÉRIAS")>=0}).length;
+    r+=", INSS: "+pres.filter(function(x){return(x.DESCSITUACAO||"").toUpperCase().indexOf("INSS")>=0}).length;
+    r+=", Folga: "+pres.filter(function(x){return(x.DESCSITUACAOHOJE||"").toUpperCase().indexOf("FOLGA")>=0}).length;
+    r+=", Falta: "+pres.filter(function(x){return(x.DESCSITUACAOHOJE||"").toUpperCase().indexOf("FALTA")>=0}).length;
+    r+=", Trabalho: "+pres.filter(function(x){return(x.DESCSITUACAOHOJE||"").toUpperCase().indexOf("TRABALHO")>=0}).length;
+    r+=", Suspensão: "+pres.filter(function(x){return(x.DESCSITUACAOHOJE||"").toUpperCase().indexOf("SUSPENS")>=0}).length+". ";
+    r+="=== FALTAS: "+faltas.length+" === ";
+    r+="Contrato: "+faltas.filter(function(x){return x.TIPO==="CONTRATO"}).length+", Reserva: "+faltas.filter(function(x){return x.TIPO==="RESERVA"}).length+". ";
+    r+="Top 10 faltantes: "+_cnt(faltas,"NOME",10)+". ";
+    r+="Faltas por área: "+_cnt(faltas,"AREA",10)+". ";
+    r+="Faltas por local: "+_cnt(faltas,"LOCAL",8)+". ";
+    r+="=== COBERTURAS: "+cob.length+" === ";
+    r+="Por motivo: "+_cnt(cob,"MOTIVO",8)+". ";
+    r+="Por área: "+_cnt(cob,"AREA",8)+". ";
+    r+="=== HORAS EXTRAS: "+hr.length+" === ";
+    r+="Por tipo: "+_cnt(hr,"TIPO",5)+". ";
+    var hrES=hr.filter(function(x){return x.TIPO==="EXTRA ENTRADA"||x.TIPO==="EXTRA SAIDA"});
+    r+="Extra Entrada+Saída por supervisor: "+_cnt(hrES,"AREA",8)+". ";
+    r+="Extra Entrada+Saída por cliente: "+_cnt(hrES,"CLIENTE",8)+". ";
+    r+="=== FTS: "+fts.length+" | OS AVULSOS: "+os.length+" === ";
+    r+="FTS por tipo: "+_cnt(fts,"TIPO",5)+". ";
+    r+="=== POSTOS DESCOBERTOS: "+jus.length+" === ";
+    r+="Por local: "+_cnt(jus,"LOCAL",8)+". ";
+    r+="=== SEM ALOCAÇÃO: "+dis.length+" === ";
+    if(dis.length)r+="Por turno: "+_cnt(dis,"TURNO",3)+". ";
+    r+="=== RESERVAS TÉCNICAS: "+rt.length+" === ";
+    r+="Por motivo: "+_cnt(rt,"MOTIVO",10)+". ";
+    r+="Por cargo: "+_cnt(rt,"CARGO",8)+". ";
+    r+="=== CHECK LIST: "+ck.length+" visitas === ";
+    r+="Por cliente: "+_cnt(ck,"CLIENTE",10)+". ";
+    r+="Por supervisor: "+_cnt(ck,"FUNCIONARIO",8)+". ";
+    r+="=== CLIENTES: "+(D.clientes||[]).length+" === ";
   }catch(e){r="Erro ao ler dados: "+e.message;}
-  console.log("[Jarvis] Contexto:",r);
   return r;
 }
 function _addMsg(text,type){
