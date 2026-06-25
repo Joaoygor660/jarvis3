@@ -1657,15 +1657,16 @@ function buildDataFromWorkbook(wb){
   }),"cobertura");
   const wsHE=findSheet(wb,"HR EXTRA");
   if(wsHE){
-    const{idx:HI,body:hBody}=sheetRows(wsHE);
-    let _minCol;for(const k of Object.keys(HI)){if(k.trim().toUpperCase()==="MINUTOS"){_minCol=HI[k];break;}}
-    const _minLetter=_minCol!==undefined?XLSX.utils.encode_col(_minCol):null;
-    data.hrextra=(hBody||[]).filter(r=>r&&r.length).map((r,ri)=>{
+    const rawRows=XLSX.utils.sheet_to_json(wsHE,{header:1,raw:true,defval:null,cellDates:false});
+    const hdr=rawRows[0]||[];
+    const HI={};hdr.forEach((h,i)=>{if(h!=null)HI[String(h).trim()]=i;});
+    let _minIdx;for(const k of Object.keys(HI)){if(k.trim().toUpperCase()==="MINUTOS"){_minIdx=HI[k];break;}}
+    data.hrextra=rawRows.slice(1).filter(r=>r&&r.length).map(r=>{
       let seg=0;
-      if(_minLetter){
-        const cell=wsHE[_minLetter+(ri+2)];
-        if(cell&&typeof cell.v==="number"&&cell.v>0){seg=Math.round(cell.v*24*3600);}
-        else if(cell&&cell.w){const p=String(cell.w).match(/(\d+):(\d+):?(\d+)?/);if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);}
+      if(_minIdx!==undefined){
+        const raw=r[_minIdx];
+        if(typeof raw==="number"&&raw>0){seg=Math.round(raw*24*3600);}
+        else if(typeof raw==="string"){const p=raw.match(/(\d+):(\d+):?(\d+)?/);if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);}
       }
       return{
         NOME:r[HI["FUNCIONARIO"]],DATA:isoDate(r[HI["DATA"]]),
