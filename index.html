@@ -789,47 +789,35 @@ function doLogin(e){
 if(sessionStorage.getItem("logged")==="1")document.getElementById("loginOverlay").classList.add("hidden");
 function toggleChat(){document.getElementById("chatPanel").classList.toggle("show");document.getElementById("chatFab").classList.toggle("open");if(document.getElementById("chatPanel").classList.contains("show"))document.getElementById("chatInput").focus();}
 function _chatContext(){
-  if(!window.DASHBOARD_DATA)return"Nenhum dado carregado.";
-  const D=DASHBOARD_DATA,f=typeof F!=="undefined"?F:null;
-  const ctx={};
+  if(typeof DASHBOARD_DATA==="undefined"||!DASHBOARD_DATA)return"DADOS NÃO CARREGADOS. Peça ao usuário para carregar a planilha.";
+  var r="";
   try{
-    const faltas=f?f.faltas:(D.faltas||[]);
-    const cob=f?f.cobertura:(D.cobertura||[]);
-    const pres=D.presenca||[];
-    const at=D.ativos||[];
-    ctx.periodo=ST.sd&&ST.ed?ymd(ST.sd)+" a "+ymd(ST.ed):"todos";
-    ctx.funcionariosAtivos=at.length;
-    ctx.diurnos=at.filter(r=>r.TURNO==="DIURNO").length;
-    ctx.noturnos=at.filter(r=>r.TURNO==="NOTURNO").length;
-    ctx.cargosDistintos=new Set(at.map(r=>r.CARGO)).size;
-    ctx.totalFaltas=faltas.length;
-    ctx.faltasPorArea=topN(faltas,"AREA",10).map(([k,v])=>k+": "+v).join("; ");
-    ctx.top10Faltantes=topN(faltas,"NOME",10).map(([k,v])=>k+" ("+v+" faltas)").join("; ");
-    ctx.faltasContrato=faltas.filter(r=>r.TIPO==="CONTRATO").length;
-    ctx.faltasReserva=faltas.filter(r=>r.TIPO==="RESERVA").length;
-    ctx.totalCoberturas=cob.length;
-    ctx.coberturasPorMotivo=topN(cob,"MOTIVO",8).map(([k,v])=>k+": "+v).join("; ");
-    ctx.totalHrExtra=(D.hrextra||[]).length;
-    ctx.hrExtraPorTipo=topN(D.hrextra||[],"TIPO",5).map(([k,v])=>k+": "+v).join("; ");
-    ctx.hrExtraPorSupervisor=topN((D.hrextra||[]).filter(r=>r.TIPO==="EXTRA ENTRADA"||r.TIPO==="EXTRA SAIDA"),"AREA",8).map(([k,v])=>k+": "+v).join("; ");
-    ctx.hrExtraPorCliente=topN((D.hrextra||[]).filter(r=>r.TIPO==="EXTRA ENTRADA"||r.TIPO==="EXTRA SAIDA"),"CLIENTE",8).map(([k,v])=>k+": "+v).join("; ");
-    ctx.totalFTS=f?f.fts.length:(D.fts||[]).length;
-    ctx.totalOS=f?f.os.length:(D.os||[]).length;
-    ctx.totalPostosDescobertos=f?f.justif.length:(D.justif||[]).length;
-    ctx.semAlocacao=(D.dispo||[]).length;
-    ctx.totalReservasTecnicas=(D.restec||[]).length;
-    ctx.restecPorMotivo=topN(D.restec||[],"MOTIVO",10).map(([k,v])=>k+": "+v).join("; ");
-    ctx.totalChecklist=(D.checklist||[]).length;
-    ctx.checklistPorCliente=topN(D.checklist||[],"CLIENTE",10).map(([k,v])=>k+": "+v+" visitas").join("; ");
-    ctx.totalClientes=(D.clientes||[]).length;
-    ctx.ferias=pres.filter(r=>normTxt(r.DESCSITUACAO)==="FERIAS").length;
-    ctx.inss=pres.filter(r=>normTxt(r.DESCSITUACAO)==="INSS").length;
-    ctx.folga=pres.filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA").length;
-    ctx.faltaPresenca=pres.filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")).length;
-    ctx.trabalho=pres.filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO").length;
-    ctx.suspensao=pres.filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("SUSPENS")).length;
-  }catch(e){}
-  return JSON.stringify(ctx);
+    var D=DASHBOARD_DATA;
+    var at=D.ativos||[];
+    var faltas=D.faltas||[];
+    var pres=D.presenca||[];
+    var hr=D.hrextra||[];
+    var rt=D.restec||[];
+    var ck=D.checklist||[];
+    r+="FUNCIONÁRIOS ATIVOS: "+at.length+" (Diurno: "+at.filter(function(x){return x.TURNO==="DIURNO"}).length+", Noturno: "+at.filter(function(x){return x.TURNO==="NOTURNO"}).length+"). ";
+    r+="FALTAS NO PERÍODO: "+faltas.length+" registros. ";
+    r+="FALTAS CONTRATO: "+faltas.filter(function(x){return x.TIPO==="CONTRATO"}).length+". ";
+    r+="FALTAS RESERVA: "+faltas.filter(function(x){return x.TIPO==="RESERVA"}).length+". ";
+    r+="COBERTURAS: "+(D.cobertura||[]).length+" registros. ";
+    r+="HORAS EXTRAS: "+hr.length+" registros. ";
+    r+="FTS: "+(D.fts||[]).length+". OS AVULSOS: "+(D.os||[]).length+". ";
+    r+="POSTOS DESCOBERTOS: "+(D.justif||[]).length+". ";
+    r+="SEM ALOCAÇÃO: "+(D.dispo||[]).length+". ";
+    r+="RESERVAS TÉCNICAS: "+rt.length+". ";
+    r+="CHECK LIST: "+ck.length+" visitas. CLIENTES: "+(D.clientes||[]).length+". ";
+    r+="PRESENÇA HOJE - Férias: "+pres.filter(function(x){return String(x.DESCSITUACAO||"").toUpperCase().replace(/[^A-Z]/g,"").indexOf("FERIAS")>=0}).length;
+    r+=", INSS: "+pres.filter(function(x){return String(x.DESCSITUACAO||"").toUpperCase().replace(/[^A-Z]/g,"").indexOf("INSS")>=0}).length;
+    r+=", Folga: "+pres.filter(function(x){return String(x.DESCSITUACAOHOJE||"").toUpperCase().replace(/[^A-Z]/g,"").indexOf("FOLGA")>=0}).length;
+    r+=", Falta: "+pres.filter(function(x){return String(x.DESCSITUACAOHOJE||"").toUpperCase().indexOf("FALTA")>=0}).length;
+    r+=", Trabalho: "+pres.filter(function(x){return String(x.DESCSITUACAOHOJE||"").toUpperCase().replace(/[^A-Z]/g,"").indexOf("TRABALHO")>=0}).length+". ";
+  }catch(e){r="Erro ao ler dados: "+e.message;}
+  console.log("[Jarvis] Contexto:",r);
+  return r;
 }
 function _addMsg(text,type){
   const el=document.getElementById("chatMsgs");
@@ -848,7 +836,9 @@ async function sendChat(){
   const typing=_addMsg("Pensando...","bot typing");
   document.getElementById("chatSend").disabled=true;
   try{
-    const resp=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,context:_chatContext()})});
+    var ctx="Nenhum dado.";
+    try{ctx=_chatContext();}catch(ce){console.error("[Jarvis] Erro contexto:",ce);ctx="Erro ao ler dados: "+ce.message;}
+    const resp=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,context:ctx})});
     const data=await resp.json();
     typing.textContent=data.answer||data.error||"Erro ao obter resposta.";
     typing.classList.remove("typing");
