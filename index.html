@@ -1661,25 +1661,16 @@ const CL_EXCL=new Set(["RESERVA TECNICA","DEPARTAMENTO","SERV CAMP TERCEIRIZACAO
 
 function aggClientesList(){
   const cli=DASHBOARD_DATA.clientes||[];
-  const at=DASHBOARD_DATA.ativos||[];
-  const empMap={};
-  for(const r of at){
-    const cn=normTxt(r.TPCLIENTE);
-    if(!cn||CL_EXCL.has(cn))continue;
-    if(!empMap[cn])empMap[cn]=new Set();
-    if(r.EMPRESA)empMap[cn].add(r.EMPRESA);
-  }
   const m={};
   for(const r of cli){
     const nome=r.NOME||"—";
     const key=normTxt(nome);
-    if(!m[key])m[key]={NOME:nome,AREA:r.AREA||"—",TURNOS:new Set()};
+    if(!m[key])m[key]={NOME:nome,AREA:r.AREA||"—",TURNOS:new Set(),EMPRESAS:new Set()};
     if(r.TURNO)m[key].TURNOS.add(r.TURNO);
+    if(r.EMPRESA&&r.EMPRESA!=="—")m[key].EMPRESAS.add(r.EMPRESA);
   }
   return Object.values(m).map(c=>{
-    const key=normTxt(c.NOME);
-    const emp=empMap[key]?[...empMap[key]].join(" / "):"—";
-    return{NOME:c.NOME,AREA:c.AREA,TURNO:[...c.TURNOS].join(" / ")||"—",EMPRESA:emp};
+    return{NOME:c.NOME,AREA:c.AREA,TURNO:[...c.TURNOS].join(" / ")||"—",EMPRESA:[...c.EMPRESAS].join(" / ")||"—"};
   }).sort((a,b)=>a.NOME.localeCompare(b.NOME));
 }
 
@@ -1697,23 +1688,18 @@ function renderClientes(){
   document.getElementById("cl-no").textContent=no;
   document.getElementById("cl-nos").innerHTML=cli.length?("<b>"+(no/cli.length*100).toFixed(0)+"%</b> dos registros"):"—";
 
-  const empMap={};
-  for(const r of at){
-    const cn=normTxt(r.TPCLIENTE);
-    if(!cn||CL_EXCL.has(cn))continue;
-    if(!empMap[cn])empMap[cn]=new Set();
-    if(r.EMPRESA)empMap[cn].add(r.EMPRESA);
-  }
+  const cliByName={};
+  for(const r of cli){const k=normTxt(r.NOME);if(!cliByName[k])cliByName[k]=new Set();if(r.EMPRESA)cliByName[k].add(r.EMPRESA);}
   let ter=0,fac=0;
-  for(const set of Object.values(empMap)){
+  for(const set of Object.values(cliByName)){
     if(set.has("SERV CAMP TERCEIRIZAÇÃO"))ter++;
     if(set.has("SERV CAMP FACILITES"))fac++;
   }
-  const totalReal=Object.keys(empMap).length;
+  const totalReal=Object.keys(cliByName).length;
   document.getElementById("cl-ter").textContent=ter;
-  document.getElementById("cl-ters").innerHTML=totalReal?("<b>"+(ter/totalReal*100).toFixed(0)+"%</b> dos clientes ativos"):"—";
+  document.getElementById("cl-ters").innerHTML=totalReal?("<b>"+(ter/totalReal*100).toFixed(0)+"%</b> dos clientes"):"—";
   document.getElementById("cl-fac").textContent=fac;
-  document.getElementById("cl-facs").innerHTML=totalReal?("<b>"+(fac/totalReal*100).toFixed(0)+"%</b> dos clientes ativos"):"—";
+  document.getElementById("cl-facs").innerHTML=totalReal?("<b>"+(fac/totalReal*100).toFixed(0)+"%</b> dos clientes"):"—";
 
   rTbl("clientes");
 }
@@ -1837,7 +1823,8 @@ function buildDataFromWorkbook(wb){
   }),"dispo");
   ext("CLIENTES",(r,I)=>({
     NOME:r[I["CLIENTE"]],TPCLIENTE:r[I["TPCLIENTE"]],
-    TURNO:r[I["TURNO"]],AREA:r[I["AREALOCAL"]]
+    TURNO:r[I["TURNO"]],AREA:r[I["AREALOCAL"]],
+    EMPRESA:r[I["EMPRESA"]]||"—"
   }),"clientes");
   ext("FICHA DE PRESENÇA",(r,I)=>{
     const tpc=function(){
