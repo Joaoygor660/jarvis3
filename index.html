@@ -488,12 +488,13 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="sk sk-gr clickable" onclick="skDet('ativos','diurno',this)"><div class="sk-top"><span class="sk-ic">☀️</span></div><div class="sk-lbl">Turno Diurno</div><div class="sk-v" id="at-di">—</div><div class="sk-sub" id="at-dis">—</div></div>
       <div class="sk sk-or clickable" onclick="skDet('ativos','noturno',this)"><div class="sk-top"><span class="sk-ic">🌙</span></div><div class="sk-lbl">Turno Noturno</div><div class="sk-v" id="at-no">—</div><div class="sk-sub" id="at-nos">—</div></div>
     </div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(5,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(6,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('ativos','ferias',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias</div><div class="sk-v" id="at-ferias">—</div><div class="sk-sub" id="at-feriass">—</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('ativos','inss',this)"><div class="sk-top"><span class="sk-ic">🏥</span></div><div class="sk-lbl">INSS</div><div class="sk-v" id="at-inss">—</div><div class="sk-sub" id="at-insss">—</div></div>
       <div class="sk sk-or clickable" onclick="skDet('ativos','folga',this)"><div class="sk-top"><span class="sk-ic">😴</span></div><div class="sk-lbl">Folga</div><div class="sk-v" id="at-folga">—</div><div class="sk-sub" id="at-folgas">—</div></div>
       <div class="sk sk-te clickable" onclick="skDet('ativos','falta',this)"><div class="sk-top"><span class="sk-ic">❌</span></div><div class="sk-lbl">Falta</div><div class="sk-v" id="at-falta">—</div><div class="sk-sub" id="at-faltas">—</div></div>
       <div class="sk sk-pu clickable" onclick="skDet('ativos','trabalho',this)"><div class="sk-top"><span class="sk-ic">💼</span></div><div class="sk-lbl">Trabalho</div><div class="sk-v" id="at-trab">—</div><div class="sk-sub" id="at-trabs">—</div></div>
+      <div class="sk sk-re clickable" onclick="skDet('ativos','suspensao',this)"><div class="sk-top"><span class="sk-ic">⛔</span></div><div class="sk-lbl">Suspensão</div><div class="sk-v" id="at-susp">—</div><div class="sk-sub" id="at-susps">—</div></div>
     </div>
     <div class="det-panel" id="det-ativos"><div class="det-hdr" id="det-ativos-hdr"><span class="det-title" id="det-ativos-title"></span><button class="det-close" onclick="closeDet('ativos')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-ativos-body"></div><div class="det-sub" id="det-ativos-sub"></div></div></div>
     <div class="cc" style="margin-bottom:11px"><div class="ch"><div class="chb"></div><span class="ct">Funcionários Ativos por Cargo</span></div><div class="cw" style="height:320px"><canvas id="cAT1"></canvas></div></div>
@@ -1279,7 +1280,8 @@ function skDet(sec,type,card){
       inss:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS")),t:"🏥 Funcionários no INSS",fill:"#16a34a",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO)==="INSS"),key:"NOME"},
       folga:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA")),t:"😴 Funcionários de Folga",fill:"#f97316",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),key:"NOME"},
       falta:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA"))),t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
-      trabalho:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO")),t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"}
+      trabalho:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO")),t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"},
+      suspensao:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("SUSPENS"))),t:"⛔ Funcionários Suspensos",fill:"#dc2626",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("SUSPENS")),key:"NOME"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
@@ -1488,6 +1490,9 @@ function renderAtivos(){
   document.getElementById("at-faltas").innerHTML=pres.length?`<b>${(falta/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
   document.getElementById("at-trab").textContent=trab;
   document.getElementById("at-trabs").innerHTML=pres.length?`<b>${(trab/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
+  const susp=pres.filter(r=>{const s=normTxt(r.DESCSITUACAOHOJE);return s.includes("SUSPENS");}).length;
+  document.getElementById("at-susp").textContent=susp;
+  document.getElementById("at-susps").innerHTML=pres.length?`<b>${(susp/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
 
   const esc=cnt(at,"ESCALA").slice(0,7);
   const cargoColors=cargo.map((c,i)=>blues[i%blues.length]);
