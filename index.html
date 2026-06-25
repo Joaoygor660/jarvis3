@@ -1856,6 +1856,15 @@ function buildDataFromWorkbook(wb){
     }
   });
   data.ativos=Object.values(emps).sort((a,b)=>String(a.NOME||"").localeCompare(String(b.NOME||"")));
+  const _cargoMap={
+    "PORTEIRO (A)":["CONT ACESSO II","CONTROLADORA DE ACESSO","AUX  ADM II","AUX ADM III","AUX ADM IV","MENSAGEIRO","OPERADORA DE ATENDIMENTO","PORTEIRO (A)","PORTEIRO LÍDER","PORTEIRO LIDER","RECEPCIONISTA"],
+    "AUXILIAR DE SERVIÇOS GERAIS":["AUXILIAR DE SERVIÇOS GERAIS","AUX SERV GERAIS III","AUX SERV GERAIS V","ENCAR LIMPEZA I","ENCARREGADA DE LIMPEZA I","LIDER DE LIMPEZA","PINTOR"],
+    "ZELADOR":["ZELADOR","ZELADOR I","ZELADOR II","ZELADOR III","ZELADOR IV","ZELADOR IX","ZELADOR V","ZELADOR VI","ZELADOR VII","ZELADOR XI","ZELADOR XIII","ZELADOR XV","ZELADORA"],
+    "JARDINEIRO":["JARDINEIRO","JARDINEIRO II","JARDINEIRO III"]
+  };
+  const _cargoLookup={};
+  for(const[grupo,cargos] of Object.entries(_cargoMap)){cargos.forEach(c=>{_cargoLookup[c.toUpperCase().trim()]=grupo;});}
+  data.ativos.forEach(r=>{const u=(r.CARGO||"").toUpperCase().trim();if(_cargoLookup[u])r.CARGO=_cargoLookup[u];});
   const ativosMap={};
   data.ativos.forEach(r=>{if(r.RE!=null)ativosMap[String(r.RE)]=r;});
   (data.presenca||[]).forEach(r=>{
