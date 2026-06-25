@@ -1670,13 +1670,18 @@ function buildDataFromWorkbook(wb){
       const kCargo=fk(["NOMECARGOFUNCIONARIO"]);
       const kMotivo=fk(["MOTIVO"]);
       const kTipo=fk(["TIPOEXTRA"]);
-      console.log("[HR EXTRA] kMin="+kMin,"sample="+JSON.stringify(heRows[0][kMin]),"keys="+keys.length);
+      console.log("[HR EXTRA] kMin="+kMin,"sample="+JSON.stringify(heRows[0][kMin]),"tipo="+typeof heRows[0][kMin],"keys="+keys.length);
       data.hrextra=heRows.map(r=>{
         let seg=0;
         if(kMin){
-          const minStr=String(r[kMin]||"");
-          const p=minStr.match(/(\d+):(\d+):?(\d+)?/);
-          if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);
+          const raw=r[kMin];
+          if(typeof raw==="number"&&raw>0&&raw<2){seg=Math.round(raw*24*3600);}
+          else if(raw instanceof Date){const iso=raw.toISOString();const p=iso.match(/T(\d+):(\d+):(\d+)/);if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+parseInt(p[3]);}
+          else{
+            const minStr=String(raw||"");
+            const p=minStr.match(/(\d+):(\d+):?(\d+)?/);
+            if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);
+          }
         }
         return{
           NOME:kFunc?r[kFunc]:"—",DATA:isoDate(kData?r[kData]:""),
