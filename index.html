@@ -271,7 +271,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 .sb-credit span{font-size:.52rem;color:rgba(255,255,255,.2);letter-spacing:.3px;}
 .sb-credit b{color:rgba(46,143,239,.5);font-weight:700;}
 /* CHATBOT */
-.chat-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1e4d8c,#2e8fef);border:none;color:#fff;font-size:1.5rem;cursor:pointer;box-shadow:0 4px 16px rgba(30,77,140,.4);z-index:998;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;}
+.chat-fab{position:fixed;bottom:20px;right:20px;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1e4d8c,#2e8fef);border:none;color:#fff;font-size:1rem;cursor:pointer;box-shadow:0 3px 12px rgba(30,77,140,.35);z-index:998;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;}
 .chat-fab:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(30,77,140,.5);}
 .chat-fab.open{transform:rotate(45deg);}
 .chat-panel{position:fixed;bottom:90px;right:24px;width:380px;max-height:520px;background:var(--wh);border-radius:16px;box-shadow:0 12px 48px rgba(0,0,0,.2);z-index:998;display:none;flex-direction:column;overflow:hidden;border:1px solid var(--g200);}
@@ -542,9 +542,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <!-- EFETIVOS CLIENTES -->
   <div class="page" id="pg-efcli">
     <div class="sec-hdr"><span class="sec-hdr-ic">🏢</span><div><div class="sec-hdr-t">Efetivos Clientes</div><div class="sec-hdr-sub">Quantidade de funcionários ativos por cliente atendido</div></div></div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(2,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(3,1fr)">
       <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-bl">Principal</span></div><div class="sk-lbl">Funcionários Ativos</div><div class="sk-v" id="ec-tot">—</div><div class="sk-sub" id="ec-tots">—</div></div>
       <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Efetivos</div><div class="sk-v" id="ec-efe">—</div><div class="sk-sub" id="ec-efes">—</div></div>
+      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🔄</span></div><div class="sk-lbl">Plantonistas</div><div class="sk-v" id="ec-plan">—</div><div class="sk-sub" id="ec-plans">—</div></div>
     </div>
     <div class="grid-2">
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Top 10 Clientes por Efetivos</span></div><div class="cw" style="height:250px"><canvas id="cEC1"></canvas></div></div>
@@ -566,10 +567,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="sk sk-te clickable" onclick="skDet('clientes','fac',this)"><div class="sk-top"><span class="sk-ic">🏢</span></div><div class="sk-lbl">SERV CAMP FACILITES</div><div class="sk-v" id="cl-fac">—</div><div class="sk-sub" id="cl-facs">—</div></div>
     </div>
     <div class="det-panel" id="det-clientes"><div class="det-hdr" id="det-clientes-hdr"><span class="det-title" id="det-clientes-title"></span><button class="det-close" onclick="closeDet('clientes')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-clientes-body"></div><div class="det-sub" id="det-clientes-sub"></div></div></div>
-    <div class="grid-2">
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Turno dos Clientes</span></div><div class="cw" style="height:250px"><canvas id="cCL1"></canvas></div></div>
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Clientes por Empresa</span></div><div class="cw" style="height:250px"><canvas id="cCL2"></canvas></div></div>
-    </div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Lista de Clientes</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar cliente..." id="s-clientes" oninput="rTbl('clientes')"></div></div><div id="tbl-clientes"></div><div class="pag"><div class="pi2" id="pi-clientes"></div><div class="pbs" id="pb-clientes"></div></div></div>
   </div>
 
@@ -1279,13 +1276,13 @@ function updChecklistC(){
 function rT10(arr,id,bc){
   const el=document.getElementById(id);if(!el)return;
   const cnt={},meta={};
-  for(const r of arr){cnt[r.NOME]=(cnt[r.NOME]||0)+1;if(!meta[r.NOME])meta[r.NOME]={area:r.AREA||"—",cargo:r.CARGO||"—"};}
+  for(const r of arr){cnt[r.NOME]=(cnt[r.NOME]||0)+1;if(!meta[r.NOME])meta[r.NOME]={area:r.AREA||"—",cargo:r.CARGO||"—",local:r.LOCAL||"",tipo:r.TIPO||""};}
   const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,10);const mx=s[0]?.[1]||1;
   if(!s.length){el.innerHTML='<div class="nd">Nenhum registro</div>';return;}
   el.innerHTML=s.map(([n,v],i)=>`
     <div class="t10i">
       <div class="rn ${i===0?"r1":i===1?"r2":i===2?"r3":"r0"}">${i+1}</div>
-      <div class="t10nf"><div class="t10nm" title="${n}">${n}</div><div class="t10mt">${meta[n].area} · ${meta[n].cargo}</div></div>
+      <div class="t10nf"><div class="t10nm" title="${n}">${n}</div><div class="t10mt">${meta[n].area} · ${meta[n].cargo}${meta[n].local?" · "+meta[n].local:""}${meta[n].tipo?" ("+meta[n].tipo+")":""}</div></div>
       <div class="t10rt"><span class="t10ct">${v}</span><div class="t10bw"><div class="t10b ${bc}" style="width:${Math.round(v/mx*100)}%"></div></div></div>
     </div>`).join("");
 }
@@ -1646,8 +1643,11 @@ function renderEfCli(){
 
   document.getElementById("ec-tot").textContent=at.length;
   document.getElementById("ec-tots").innerHTML=`<b>${nclientes}</b> clientes atendidos`;
+  const plan=at.filter(r=>r.TIPO&&r.TIPO!=="EFETIVO").length;
   document.getElementById("ec-efe").textContent=efe;
   document.getElementById("ec-efes").innerHTML=at.length?`<b>${(efe/at.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("ec-plan").textContent=plan;
+  document.getElementById("ec-plans").innerHTML=at.length?`<b>${(plan/at.length*100).toFixed(0)}%</b> do total`:"—";
 
   const top10=agg.slice(0,10);
   mkBar("cEC1",top10.map(c=>c.CLIENTE.length>18?c.CLIENTE.substring(0,18)+"…":c.CLIENTE),top10.map(c=>c.TOTAL),blues.slice(0,top10.length).reverse(),true);
@@ -1714,9 +1714,6 @@ function renderClientes(){
   document.getElementById("cl-ters").innerHTML=totalReal?("<b>"+(ter/totalReal*100).toFixed(0)+"%</b> dos clientes ativos"):"—";
   document.getElementById("cl-fac").textContent=fac;
   document.getElementById("cl-facs").innerHTML=totalReal?("<b>"+(fac/totalReal*100).toFixed(0)+"%</b> dos clientes ativos"):"—";
-
-  mkDonut("cCL1",["Diurno","Noturno"],[di,no],["#1e4d8c","#1e2d3e"]);
-  mkBar("cCL2",["Terceirização","Facilites"],[ter,fac],["#1d6fc4","#2e8fef"],true);
 
   rTbl("clientes");
 }
