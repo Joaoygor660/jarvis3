@@ -1655,23 +1655,39 @@ function buildDataFromWorkbook(wb){
     LOCAL:r[I["NOMELOCAL"]],AREA:r[I["AREASUPERVISAO"]],
     TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
   }),"cobertura");
-  const wsHE=findSheet(wb,"HR EXTRA");
+  const wsHE=findSheet(wb,"HR EXTRA")||findSheet(wb,"HORAS EXTRAS")||findSheet(wb,"HREXTRA");
   if(wsHE){
     const heRows=XLSX.utils.sheet_to_json(wsHE,{raw:false,defval:""});
-    data.hrextra=heRows.map(r=>{
-      let seg=0;
-      const minStr=String(r["MINUTOS"]||r["Minutos"]||"");
-      const p=minStr.match(/(\d+):(\d+):?(\d+)?/);
-      if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);
-      return{
-        NOME:r["FUNCIONARIO"],DATA:isoDate(r["DATA"]),
-        LOCAL:r["LOCAL"],CLIENTE:r["CLIENTE"]||r["LOCAL"]||"—",
-        AREA:r["AREASUPERVISAO"],CARGO:r["NOMECARGOFUNCIONARIO"]||"—",
-        MOTIVO:r["MOTIVO"],TIPO:r["TIPOEXTRA"],
-        MINUTOS:seg,TURNO:"DIURNO"
-      };
-    }).filter(Boolean);
-  }else{data.hrextra=[];}
+    if(heRows.length){
+      const keys=Object.keys(heRows[0]);
+      const fk=function(names){for(const n of names){const found=keys.find(k=>k.trim().toUpperCase()===n.toUpperCase());if(found)return found;}return null;};
+      const kMin=fk(["MINUTOS"])||keys.find(k=>k.trim().toUpperCase()==="MINUTOS");
+      const kFunc=fk(["FUNCIONARIO","NOMEFUNCIONARIO"]);
+      const kData=fk(["DATA"]);
+      const kLocal=fk(["LOCAL"]);
+      const kCli=fk(["CLIENTE"]);
+      const kArea=fk(["AREASUPERVISAO"]);
+      const kCargo=fk(["NOMECARGOFUNCIONARIO"]);
+      const kMotivo=fk(["MOTIVO"]);
+      const kTipo=fk(["TIPOEXTRA"]);
+      console.log("[HR EXTRA] kMin="+kMin,"sample="+JSON.stringify(heRows[0][kMin]),"keys="+keys.length);
+      data.hrextra=heRows.map(r=>{
+        let seg=0;
+        if(kMin){
+          const minStr=String(r[kMin]||"");
+          const p=minStr.match(/(\d+):(\d+):?(\d+)?/);
+          if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);
+        }
+        return{
+          NOME:kFunc?r[kFunc]:"—",DATA:isoDate(kData?r[kData]:""),
+          LOCAL:kLocal?r[kLocal]:"—",CLIENTE:(kCli?r[kCli]:"")||(kLocal?r[kLocal]:"")||"—",
+          AREA:kArea?r[kArea]:"—",CARGO:kCargo?r[kCargo]:"—",
+          MOTIVO:kMotivo?r[kMotivo]:"—",TIPO:kTipo?r[kTipo]:"—",
+          MINUTOS:seg,TURNO:"DIURNO"
+        };
+      }).filter(Boolean);
+    }else{data.hrextra=[];}
+  }else{data.hrextra=[];console.warn("[HR EXTRA] Guia não encontrada. Guias:",wb.SheetNames.join(", "));}
   ext("JUSTIFICATIVA DE POSTOS",(r,I)=>({
     DATA:isoDate(r[I["DATA"]]),LOCAL:r[I["LOCALSERVICO"]],
     CARGO:r[I["DESCCARGO"]],AREA:r[I["AREA"]],
