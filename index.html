@@ -1620,7 +1620,7 @@ function findSheet(wb,name){
 }
 function sheetRows(ws){
   if(!ws)return{idx:{},body:[]};
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null,cellDates:false});
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
   if(!rows.length)return{idx:{},body:[]};
   const hdr=rows[0];
   const idx={};
@@ -1655,35 +1655,27 @@ function buildDataFromWorkbook(wb){
     LOCAL:r[I["NOMELOCAL"]],AREA:r[I["AREASUPERVISAO"]],
     TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
   }),"cobertura");
-  ext("HR EXTRA",(r,I)=>{
-    let minutos=0;
-    const _allKeys=Object.keys(I);
-    let _minIdx=I["MINUTOS"];
-    if(_minIdx===undefined){for(const k of _allKeys){if(k.trim().toUpperCase()==="MINUTOS"){_minIdx=I[k];break;}}}
-    if(_minIdx!==undefined){
-      const raw=r[_minIdx];
-      if(typeof raw==="number"&&raw>0){minutos=Math.round(raw*24*3600);}
-      else if(raw instanceof Date){minutos=raw.getUTCHours()*3600+raw.getUTCMinutes()*60+raw.getUTCSeconds();}
-      else if(typeof raw==="string"){const p=raw.match(/(\d+):(\d+):?(\d+)?/);if(p)minutos=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);}
-    }else{
-      let _hiIdx,_hfIdx;
-      for(const k of _allKeys){const u=k.trim().toUpperCase();if(u==="HRINICIAL")_hiIdx=I[k];if(u==="HRFINAL")_hfIdx=I[k];}
-      if(_hiIdx!==undefined&&_hfIdx!==undefined){
-        const hi=r[_hiIdx],hf=r[_hfIdx];
-        if(typeof hi==="number"&&typeof hf==="number"&&hf>hi)minutos=Math.round((hf-hi)*24*3600);
+  const wsHE=findSheet(wb,"HR EXTRA");
+  if(wsHE){
+    const{idx:HI,body:hBody}=sheetRows(wsHE);
+    let _minCol;for(const k of Object.keys(HI)){if(k.trim().toUpperCase()==="MINUTOS"){_minCol=HI[k];break;}}
+    const _minLetter=_minCol!==undefined?XLSX.utils.encode_col(_minCol):null;
+    data.hrextra=(hBody||[]).filter(r=>r&&r.length).map((r,ri)=>{
+      let seg=0;
+      if(_minLetter){
+        const cell=wsHE[_minLetter+(ri+2)];
+        if(cell&&typeof cell.v==="number"&&cell.v>0){seg=Math.round(cell.v*24*3600);}
+        else if(cell&&cell.w){const p=String(cell.w).match(/(\d+):(\d+):?(\d+)?/);if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);}
       }
-    }
-    if(_minIdx!==undefined){const _raw=r[_minIdx];if(!minutos)console.warn("[HR EXTRA] MINUTOS raw=",_raw,"tipo=",typeof _raw,"minIdx=",_minIdx);}
-    else{console.warn("[HR EXTRA] Coluna MINUTOS não encontrada. Colunas:",_allKeys.join(", "));}
-    const cli=r[I["CLIENTE"]]||r[I["LOCAL"]]||"—";
-    return{
-      NOME:r[I["FUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
-      LOCAL:r[I["LOCAL"]],CLIENTE:cli,
-      AREA:r[I["AREASUPERVISAO"]],CARGO:r[I["NOMECARGOFUNCIONARIO"]]||"—",
-      MOTIVO:r[I["MOTIVO"]],TIPO:r[I["TIPOEXTRA"]],
-      MINUTOS:minutos,TURNO:"DIURNO"
-    };
-  },"hrextra");
+      return{
+        NOME:r[HI["FUNCIONARIO"]],DATA:isoDate(r[HI["DATA"]]),
+        LOCAL:r[HI["LOCAL"]],CLIENTE:r[HI["CLIENTE"]]||r[HI["LOCAL"]]||"—",
+        AREA:r[HI["AREASUPERVISAO"]],CARGO:r[HI["NOMECARGOFUNCIONARIO"]]||"—",
+        MOTIVO:r[HI["MOTIVO"]],TIPO:r[HI["TIPOEXTRA"]],
+        MINUTOS:seg,TURNO:"DIURNO"
+      };
+    }).filter(Boolean);
+  }else{data.hrextra=[];}
   ext("JUSTIFICATIVA DE POSTOS",(r,I)=>({
     DATA:isoDate(r[I["DATA"]]),LOCAL:r[I["LOCALSERVICO"]],
     CARGO:r[I["DESCCARGO"]],AREA:r[I["AREA"]],
