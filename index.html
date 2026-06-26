@@ -1968,13 +1968,13 @@ function buildDataFromWorkbook(wb){
   const ativosNomeMap={};
   data.ativos.forEach(r=>{
     if(r.RE!=null)ativosMap[String(r.RE)]=r;
-    if(r.NOME)ativosNomeMap[_normCargo(r.NOME)]=r;
+    if(r.NOME){const k=String(r.NOME).trim().toUpperCase().replace(/\s+/g," ");ativosNomeMap[k]=r;}
   });
   (data.presenca||[]).forEach(r=>{
     if(!r.TPCLIENTE&&r.RE!=null){const at=ativosMap[String(r.RE)];if(at)r.TPCLIENTE=at.TIPO||at.TPCLIENTE||"";}
   });
   (data.cobertura||[]).forEach(r=>{
-    const nm=_normCargo(r.NOME||"");
+    const nm=String(r.NOME||"").trim().toUpperCase().replace(/\s+/g," ");
     const at=ativosNomeMap[nm];
     r.CARGO=at?at.CARGO:"—";
   });
