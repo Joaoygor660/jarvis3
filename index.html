@@ -1640,28 +1640,31 @@ function renderAtivos(){
   const csWrap=document.getElementById("cargo-situacao-wrap");
   if(csWrap){
     const reMap={};
-    at.forEach(r=>{if(r.RE!=null)reMap[String(r.RE)]={cargo:r.CARGO,tipo:r.TIPO||"—",escala:r.ESCALA||"—"};});
+    at.forEach(r=>{if(r.RE!=null)reMap[String(r.RE)]={cargo:r.CARGO,tipo:r.TIPO||"—",escala:r.ESCALA||"—",turno:r.TURNO||"DIURNO"};});
     const cargoSit={};
     pres.forEach(r=>{
       if(r.RE==null)return;
       const info=reMap[String(r.RE)];if(!info)return;
       const cg=info.cargo;const tp=info.tipo;
-      if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:{E:0,R:0,D:0,esc:{}},folga:{E:0,R:0,D:0,esc:{}},falta:{E:0,R:0,D:0},ferias:{E:0,R:0,D:0},inss:{E:0,R:0,D:0},suspensao:{E:0,R:0,D:0}};
+      function _newSit(){return{E:0,R:0,D:0,esc:{},DI:{E:0,R:0,D:0},NO:{E:0,R:0,D:0}};}
+    if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:_newSit(),folga:_newSit(),falta:_newSit(),ferias:_newSit(),inss:_newSit(),suspensao:_newSit()};
       cargoSit[cg].total++;
       const bucket=tp==="EFETIVO"?"E":(cg==="ADMINISTRATIVO"?"D":"R");
       const sit=normTxt(r.DESCSITUACAOHOJE);const sit2=normTxt(r.DESCSITUACAO);
       const esc=info.escala;
+      const turno=info.turno==="NOTURNO"?"NO":"DI";
       const sitRaw=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();
       const sit2Raw=(r.DESCSITUACAO||"").toUpperCase().trim();
       const isWork=sitRaw==="TRABALHO"||sitRaw.includes("LIB. PAR")||sitRaw.includes("LIB.PAR");
       const isFolga=sitRaw==="FOLGA"||sitRaw.includes("LIB. TOTAL")||sitRaw.includes("LIB.TOTAL");
       const isAviso=sit2Raw.includes("AVISO")||sit2Raw.includes("FERIAS TRAB");
-      if(isWork||isAviso){cargoSit[cg].trabalho[bucket]++;cargoSit[cg].trabalho.esc[esc]=(cargoSit[cg].trabalho.esc[esc]||0)+1;}
-      else if(isFolga){cargoSit[cg].folga[bucket]++;cargoSit[cg].folga.esc[esc]=(cargoSit[cg].folga.esc[esc]||0)+1;}
-      else if(sit.includes("FALTA"))cargoSit[cg].falta[bucket]++;
-      else if(sit.includes("SUSPENS"))cargoSit[cg].suspensao[bucket]++;
-      if(sit2==="FERIAS"&&!isAviso)cargoSit[cg].ferias[bucket]++;
-      else if(sit2==="INSS")cargoSit[cg].inss[bucket]++;
+      function _add(obj){obj[bucket]++;obj[turno][bucket]++;}
+      if(isWork||isAviso){_add(cargoSit[cg].trabalho);cargoSit[cg].trabalho.esc[esc]=(cargoSit[cg].trabalho.esc[esc]||0)+1;}
+      else if(isFolga){_add(cargoSit[cg].folga);cargoSit[cg].folga.esc[esc]=(cargoSit[cg].folga.esc[esc]||0)+1;}
+      else if(sit.includes("FALTA"))_add(cargoSit[cg].falta);
+      else if(sit.includes("SUSPENS"))_add(cargoSit[cg].suspensao);
+      if(sit2==="FERIAS"&&!isAviso)_add(cargoSit[cg].ferias);
+      else if(sit2==="INSS")_add(cargoSit[cg].inss);
     });
     const icons={"PORTEIRO (A)":"🛡️","AUXILIAR DE SERVIÇOS GERAIS":"🧹","ADMINISTRATIVO":"💼","ZELADOR":"🏠","JARDINEIRO":"🌿"};
     const colors={trabalho:{bg:"#f0fdf4",bc:"#bbf7d0",tc:"#16a34a"},folga:{bg:"#fff7ed",bc:"#fed7aa",tc:"#f97316"},falta:{bg:"#fff5f5",bc:"#fecaca",tc:"#dc2626"},ferias:{bg:"#eff6ff",bc:"#bfdbfe",tc:"#1e4d8c"},inss:{bg:"#f0f9ff",bc:"#bae6fd",tc:"#0891b2"},suspensao:{bg:"#faf5ff",bc:"#e9d5ff",tc:"#7c3aed"}};
@@ -1673,17 +1676,29 @@ function renderAtivos(){
       for(const[key,lbl] of Object.entries(labels)){
         const d=data[key];const tot=d.E+d.R+d.D;if(!tot&&key!=="trabalho"&&key!=="folga")continue;
         const c=colors[key];
-        const tags=[];
-        if(d.E)tags.push('<span class="cargo-tipo-tag" style="background:#dcfce7;color:#16a34a">Efetivo: '+d.E+'</span>');
-        if(d.R)tags.push('<span class="cargo-tipo-tag" style="background:#fee2e2;color:#dc2626">Reserva: '+d.R+'</span>');
-        if(d.D)tags.push('<span class="cargo-tipo-tag" style="background:#e0e5ef;color:#4a5c70">Depto: '+d.D+'</span>');
+        const di=d.DI||{E:0,R:0,D:0};const no=d.NO||{E:0,R:0,D:0};
+        const diTot=di.E+di.R+di.D;const noTot=no.E+no.R+no.D;
+        function _tags(o){
+          var t=[];
+          if(o.E)t.push('<span class="cargo-tipo-tag" style="background:#dcfce7;color:#16a34a">Efetivo: '+o.E+'</span>');
+          if(o.R)t.push('<span class="cargo-tipo-tag" style="background:#fee2e2;color:#dc2626">Reserva: '+o.R+'</span>');
+          if(o.D)t.push('<span class="cargo-tipo-tag" style="background:#e0e5ef;color:#4a5c70">Depto: '+o.D+'</span>');
+          return t.join("");
+        }
+        let turnoHtml="";
+        if(diTot||noTot){
+          turnoHtml='<div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">';
+          if(diTot)turnoHtml+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:.6rem;font-weight:800;color:#d97706">☀️ Diurno: '+diTot+'</span>'+_tags(di)+'</div>';
+          if(noTot)turnoHtml+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:.6rem;font-weight:800;color:#1e2d3e">🌙 Noturno: '+noTot+'</span>'+_tags(no)+'</div>';
+          turnoHtml+='</div>';
+        }
         let escHtml="";
         if(d.esc&&(key==="trabalho"||key==="folga")){
           const escArr=Object.entries(d.esc).sort(function(a,b){return b[1]-a[1]}).slice(0,5);
           if(escArr.length)escHtml='<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">'+escArr.map(function(e){return'<span style="background:rgba(0,0,0,.06);padding:1px 6px;border-radius:8px;font-size:.55rem;font-weight:600;color:var(--g600)">'+e[0]+': '+e[1]+'</span>'}).join("")+'</div>';
         }
         body+=`<div class="cargo-sit-card" style="background:${c.bg};border:1px solid ${c.bc}">
-          <div><div class="sit-label" style="color:${c.tc}">${lbl}</div><div class="cargo-tipo-row">${tags.join("")}</div>${escHtml}</div>
+          <div><div class="sit-label" style="color:${c.tc}">${lbl}</div>${turnoHtml}${escHtml}</div>
           <div class="sit-val" style="color:${c.tc}">${tot}</div></div>`;
       }
       return `<div class="cargo-sec"><div class="cargo-sec-hdr" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
