@@ -1941,6 +1941,9 @@ function buildDataFromWorkbook(wb){
     DESCSITUACAO:r[I["DESCSITUACAO"]],DESCSITUACAOHOJE:r[I["DESCSITUACAOHOJE"]],
     TPCLIENTE:tpc||""};
   },"presenca");
+  const _presDedup={};
+  (data.presenca||[]).forEach(r=>{if(r.RE!=null){const k=String(r.RE);if(!_presDedup[k])_presDedup[k]=r;}});
+  data.presenca=Object.values(_presDedup);
   const wsA=findSheet(wb,"FUNCIONARIOS ATIVOS");
   const sa=sheetRows(wsA);
   const emps={};
