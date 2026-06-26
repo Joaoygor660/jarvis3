@@ -1375,7 +1375,15 @@ function skDet(sec,type,card){
       res:{rows:()=>byName(F.faltas.filter(r=>r.TIPO==="RESERVA"),"AREA"),t:"🔖 Reservas — Funcionários com Mais Faltas",fill:"#7c3aed",arr:()=>F.faltas.filter(r=>r.TIPO==="RESERVA"),key:"NOME"}
     },
     coberturas:{
-      total:{rows:()=>cnt(F.cobertura,"MOTIVO").map(([k,v])=>({NOME:k,v})),t:"🛡️ Coberturas por Motivo",arr:()=>F.cobertura,key:"MOTIVO"},
+      total:{rows:()=>{
+        const byMot={};
+        F.cobertura.forEach(r=>{const m=r.MOTIVO||"—";const c=r.CARGO||"—";if(!byMot[m])byMot[m]={total:0,cargos:{}};byMot[m].total++;byMot[m].cargos[c]=(byMot[m].cargos[c]||0)+1;});
+        const grp=[];
+        Object.entries(byMot).sort((a,b)=>b[1].total-a[1].total).forEach(([m,d])=>{
+          grp.push({NOME:m,v:d.total,sub:Object.entries(d.cargos).sort((a,b)=>b[1]-a[1]).map(([c,n])=>c+": "+n).join(" · ")});
+        });
+        return grp;
+      },t:"🛡️ Coberturas por Motivo",arr:()=>F.cobertura,key:"MOTIVO"},
       dias:{rows:()=>{const bd=byDay(F.cobertura);return bd.keys.map((k,i)=>({NOME:fd(k),v:bd.vals[i],rawKey:k})).sort((a,b)=>b.v-a.v);},t:"📅 Coberturas por Dia",arr:()=>F.cobertura,key:"DATA"},
       areas:{rows:()=>cnt(F.cobertura,"AREA").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🗺️ Coberturas por Área",arr:()=>F.cobertura,key:"AREA"},
       locais:{rows:()=>cnt(F.cobertura,"LOCAL").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🏢 Locais com Mais Coberturas",arr:()=>F.cobertura,key:"LOCAL"},
@@ -1957,9 +1965,18 @@ function buildDataFromWorkbook(wb){
   for(const[grupo,cargos] of Object.entries(_cargoMap)){cargos.forEach(c=>{_cargoLookup[_normCargo(c)]=grupo;});}
   data.ativos.forEach(r=>{const u=_normCargo(r.CARGO);if(_cargoLookup[u])r.CARGO=_cargoLookup[u];});
   const ativosMap={};
-  data.ativos.forEach(r=>{if(r.RE!=null)ativosMap[String(r.RE)]=r;});
+  const ativosNomeMap={};
+  data.ativos.forEach(r=>{
+    if(r.RE!=null)ativosMap[String(r.RE)]=r;
+    if(r.NOME)ativosNomeMap[_normCargo(r.NOME)]=r;
+  });
   (data.presenca||[]).forEach(r=>{
     if(!r.TPCLIENTE&&r.RE!=null){const at=ativosMap[String(r.RE)];if(at)r.TPCLIENTE=at.TIPO||at.TPCLIENTE||"";}
+  });
+  (data.cobertura||[]).forEach(r=>{
+    const nm=_normCargo(r.NOME||"");
+    const at=ativosNomeMap[nm];
+    r.CARGO=at?at.CARGO:"—";
   });
   ext("RESERVAS TECNICAS",(r,I)=>{
     const mot=String(r[I["MOTIVO"]]||r[I["MOTIVOS"]]||"").trim();
