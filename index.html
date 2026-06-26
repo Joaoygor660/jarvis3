@@ -1380,7 +1380,7 @@ function skDet(sec,type,card){
         F.cobertura.forEach(r=>{const m=r.MOTIVO||"—";const c=r.CARGO||"—";if(!byMot[m])byMot[m]={total:0,cargos:{}};byMot[m].total++;byMot[m].cargos[c]=(byMot[m].cargos[c]||0)+1;});
         const grp=[];
         Object.entries(byMot).sort((a,b)=>b[1].total-a[1].total).forEach(([m,d])=>{
-          grp.push({NOME:m,v:d.total,sub:Object.entries(d.cargos).sort((a,b)=>b[1]-a[1]).map(([c,n])=>c+": "+n).join(" · ")});
+          grp.push({NOME:m,v:d.total,sub:'<span style="color:#e74c3c">'+Object.entries(d.cargos).sort((a,b)=>b[1]-a[1]).map(([c,n])=>c+": "+n).join(" · ")+'</span>'});
         });
         return grp;
       },t:"🛡️ Coberturas por Motivo",arr:()=>F.cobertura,key:"MOTIVO"},
