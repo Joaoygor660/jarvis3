@@ -1982,6 +1982,16 @@ function buildDataFromWorkbook(wb){
     const at=ativosNomeMap[nm];
     r.CARGO=at?at.CARGO:"—";
   });
+  (data.fts||[]).forEach(r=>{
+    const nm=String(r.NOME||"").trim().toUpperCase().replace(/\s+/g," ");
+    const at=ativosNomeMap[nm];
+    if(at)r.TURNO=at.TURNO||"DIURNO";
+  });
+  (data.faltas||[]).forEach(r=>{
+    const nm=String(r.NOME||"").trim().toUpperCase().replace(/\s+/g," ");
+    const at=ativosNomeMap[nm];
+    if(at&&!r.TURNO)r.TURNO=at.TURNO||"DIURNO";
+  });
   ext("RESERVAS TECNICAS",(r,I)=>{
     const mot=String(r[I["MOTIVO"]]||r[I["MOTIVOS"]]||"").trim();
     const status=RT_INDISP.has(normTxt(mot))?"INDISPONÍVEL":"TRABALHO";
