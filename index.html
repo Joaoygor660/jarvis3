@@ -1624,7 +1624,7 @@ function renderAtivos(){
   const inss=pres.filter(r=>normTxt(r.DESCSITUACAO)==="INSS").length;
   const folga=pres.filter(r=>{const s=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();return s==="FOLGA"||s.includes("LIB. TOTAL")||s.includes("LIB.TOTAL");}).length;
   const falta=pres.filter(r=>(r.DESCSITUACAOHOJE||"").toUpperCase().includes("FALTA")).length;
-  const trab=pres.filter(r=>{const s=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();const s2=(r.DESCSITUACAO||"").toUpperCase().trim();return s==="TRABALHO"||s.includes("LIB. PAR")||s.includes("LIB.PAR")||s2.includes("AVISO")||s2.includes("FERIAS TRAB");}).length;
+  const trab=pres.filter(r=>{const s=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();const s2=(r.DESCSITUACAO||"").toUpperCase().trim();return s==="TRABALHO"||s2.includes("AVISO")||s2.includes("FERIAS TRAB");}).length;
   document.getElementById("at-ferias").textContent=ferias;
   document.getElementById("at-feriass").innerHTML=pres.length?`<b>${(ferias/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
   document.getElementById("at-inss").textContent=inss;
@@ -1663,7 +1663,7 @@ function renderAtivos(){
       const turno=info.turno==="NOTURNO"?"NO":"DI";
       const sitRaw=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();
       const sit2Raw=(r.DESCSITUACAO||"").toUpperCase().trim();
-      const isWork=sitRaw==="TRABALHO"||sitRaw.includes("LIB. PAR")||sitRaw.includes("LIB.PAR");
+      const isWork=sitRaw==="TRABALHO";
       const isFolga=sitRaw==="FOLGA"||sitRaw.includes("LIB. TOTAL")||sitRaw.includes("LIB.TOTAL");
       const isAviso=sit2Raw.includes("AVISO")||sit2Raw.includes("FERIAS TRAB");
       function _add(obj){obj[bucket]++;obj[turno][bucket]++;}
