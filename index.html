@@ -506,6 +506,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="oc c2" onclick="navTo('coberturas',null)"><div class="oc-ic">🛡️</div><div class="oc-lb">Coberturas</div><div class="oc-v" id="oc2">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c3" onclick="navTo('os',null)"><div class="oc-ic">📋</div><div class="oc-lb">OS Avulsos</div><div class="oc-v" id="oc3">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
+      <div class="oc c5" onclick="navTo('postos',null)"><div class="oc-ic">⚠️</div><div class="oc-lb">Postos Desc.</div><div class="oc-v" id="oc5">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c6 oc-alert" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c7"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c8"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
@@ -540,15 +541,17 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="sk sk-gr clickable" onclick="skDet('ativos','diurno',this)"><div class="sk-top"><span class="sk-ic">☀️</span></div><div class="sk-lbl">Turno Diurno</div><div class="sk-v" id="at-di">—</div><div class="sk-sub" id="at-dis">—</div></div>
       <div class="sk sk-or clickable" onclick="skDet('ativos','noturno',this)"><div class="sk-top"><span class="sk-ic">🌙</span></div><div class="sk-lbl">Turno Noturno</div><div class="sk-v" id="at-no">—</div><div class="sk-sub" id="at-nos">—</div></div>
     </div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(6,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(7,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('ativos','ferias',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias</div><div class="sk-v" id="at-ferias">—</div><div class="sk-sub" id="at-feriass">—</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('ativos','inss',this)"><div class="sk-top"><span class="sk-ic">🏥</span></div><div class="sk-lbl">INSS</div><div class="sk-v" id="at-inss">—</div><div class="sk-sub" id="at-insss">—</div></div>
       <div class="sk sk-or clickable" onclick="skDet('ativos','folga',this)"><div class="sk-top"><span class="sk-ic">😴</span></div><div class="sk-lbl">Folga</div><div class="sk-v" id="at-folga">—</div><div class="sk-sub" id="at-folgas">—</div></div>
       <div class="sk sk-te clickable" onclick="skDet('ativos','falta',this)"><div class="sk-top"><span class="sk-ic">❌</span></div><div class="sk-lbl">Falta</div><div class="sk-v" id="at-falta">—</div><div class="sk-sub" id="at-faltas">—</div></div>
       <div class="sk sk-pu clickable" onclick="skDet('ativos','trabalho',this)"><div class="sk-top"><span class="sk-ic">💼</span></div><div class="sk-lbl">Trabalho</div><div class="sk-v" id="at-trab">—</div><div class="sk-sub" id="at-trabs">—</div></div>
       <div class="sk sk-re clickable" onclick="skDet('ativos','suspensao',this)"><div class="sk-top"><span class="sk-ic">⛔</span></div><div class="sk-lbl">Suspensão</div><div class="sk-v" id="at-susp">—</div><div class="sk-sub" id="at-susps">—</div></div>
+      <div class="sk sk-ye clickable" onclick="skDet('ativos','liberado',this)"><div class="sk-top"><span class="sk-ic">🔓</span></div><div class="sk-lbl">Liberado</div><div class="sk-v" id="at-lib">—</div><div class="sk-sub" id="at-libs">—</div></div>
     </div>
     <div class="det-panel" id="det-ativos"><div class="det-hdr" id="det-ativos-hdr"><span class="det-title" id="det-ativos-title"></span><button class="det-close" onclick="closeDet('ativos')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-ativos-body"></div><div class="det-sub" id="det-ativos-sub"></div></div></div>
+    <div class="cc" style="margin-bottom:11px"><div class="ch"><div class="chb"></div><span class="ct">Funcionários Ativos por Cargo</span></div><div class="cw" style="height:320px"><canvas id="cAT1"></canvas></div></div>
     <div id="cargo-situacao-wrap"></div>
     <div class="cc" style="margin-bottom:11px"><div class="ch"><div class="chb"></div><span class="ct">Top Escalas</span></div><div class="cw" style="height:260px"><canvas id="cAT4"></canvas></div></div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Lista de Funcionários Ativos</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-ativos" oninput="rTbl('ativos')"></div></div><div id="tbl-ativos"></div><div class="pag"><div class="pi2" id="pi-ativos"></div><div class="pbs" id="pb-ativos"></div></div></div>
@@ -1424,7 +1427,8 @@ function skDet(sec,type,card){
       folga:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA")),t:"😴 Funcionários de Folga",fill:"#f97316",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="FOLGA"),key:"NOME"},
       falta:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA"))),t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
       trabalho:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO")),t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"},
-      suspensao:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao")),t:"⛔ Funcionários Suspensos",fill:"#dc2626",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao"),key:"NOME"}
+      suspensao:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao")),t:"⛔ Funcionários Suspensos",fill:"#dc2626",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao"),key:"NOME"},
+      liberado:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado")),t:"🔓 Funcionários Liberados",fill:"#d97706",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado"),key:"NOME"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
@@ -1628,12 +1632,12 @@ function renderAtivos(){
     if(h==="FALTA"||h.includes("FALTA"))return"falta";
     if(h==="FOLGA"||h.includes("LIB. TOTAL")||h.includes("LIB.TOTAL"))return"folga";
     if(h==="TRABALHO")return"trabalho";
-    if(h.includes("LIB. PAR")||h.includes("LIB.PAR"))return null;
+    if(h.includes("LIB. PAR")||h.includes("LIB.PAR"))return"liberado";
     if(h==="")return"ferias";
     return"trabalho";
   }
-  const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0};
-  pres.forEach(r=>{const c=_categorizaPres(r);if(c)_pc[c]++;});
+  const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0};
+  pres.forEach(r=>{_pc[_categorizaPres(r)]++;});
   const trab=_pc.trabalho,folga=_pc.folga,falta=_pc.falta,ferias=_pc.ferias,inss=_pc.inss;
   document.getElementById("at-ferias").textContent=ferias;
   document.getElementById("at-feriass").innerHTML=pres.length?`<b>${(ferias/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
@@ -1648,6 +1652,8 @@ function renderAtivos(){
   const susp=_pc.suspensao;const liber=_pc.liberado;
   document.getElementById("at-susp").textContent=susp;
   document.getElementById("at-susps").innerHTML=pres.length?`<b>${(susp/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
+  document.getElementById("at-lib").textContent=liber;
+  document.getElementById("at-libs").innerHTML=pres.length?`<b>${(liber/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
 
   const esc=cnt(at,"ESCALA").slice(0,7);
   const cargoColors=cargo.map((c,i)=>blues[i%blues.length]);
@@ -1665,7 +1671,7 @@ function renderAtivos(){
       const info=reMap[String(r.RE)];if(!info)return;
       const cg=info.cargo;const tp=info.tipo;
       function _newSit(){return{E:0,R:0,D:0,esc:{},DI:{E:0,R:0,D:0},NO:{E:0,R:0,D:0}};}
-    if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:_newSit(),folga:_newSit(),falta:_newSit(),ferias:_newSit(),inss:_newSit(),suspensao:_newSit()};
+    if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:_newSit(),folga:_newSit(),falta:_newSit(),ferias:_newSit(),inss:_newSit(),suspensao:_newSit(),liberado:_newSit()};
       cargoSit[cg].total++;
       const bucket=tp==="EFETIVO"?"E":(cg==="ADMINISTRATIVO"?"D":"R");
       const sit=normTxt(r.DESCSITUACAOHOJE);const sit2=normTxt(r.DESCSITUACAO);
@@ -1673,7 +1679,6 @@ function renderAtivos(){
       const turno=info.turno==="NOTURNO"?"NO":"DI";
       function _add(obj){obj[bucket]++;obj[turno][bucket]++;}
       const cat=_categorizaPres(r);
-      if(!cat){cargoSit[cg].total--;return;}
       const target=cargoSit[cg][cat];
       if(target){_add(target);if(target.esc&&(cat==="trabalho"||cat==="folga"))target.esc[esc]=(target.esc[esc]||0)+1;}
     });
