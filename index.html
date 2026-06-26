@@ -1646,9 +1646,9 @@ function renderAtivos(){
       if(r.RE==null)return;
       const info=reMap[String(r.RE)];if(!info)return;
       const cg=info.cargo;const tp=info.tipo;
-      if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:{E:0,P:0},folga:{E:0,P:0},falta:{E:0,P:0},ferias:{E:0,P:0},inss:{E:0,P:0},suspensao:{E:0,P:0}};
+      if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:{E:0,R:0,D:0},folga:{E:0,R:0,D:0},falta:{E:0,R:0,D:0},ferias:{E:0,R:0,D:0},inss:{E:0,R:0,D:0},suspensao:{E:0,R:0,D:0}};
       cargoSit[cg].total++;
-      const bucket=tp==="EFETIVO"?"E":"P";
+      const bucket=tp==="EFETIVO"?"E":tp==="RESERVA"?"R":"D";
       const sit=normTxt(r.DESCSITUACAOHOJE);const sit2=normTxt(r.DESCSITUACAO);
       if(sit==="TRABALHO")cargoSit[cg].trabalho[bucket]++;
       else if(sit==="FOLGA")cargoSit[cg].folga[bucket]++;
@@ -1669,7 +1669,8 @@ function renderAtivos(){
         const c=colors[key];
         const tags=[];
         if(d.E)tags.push('<span class="cargo-tipo-tag" style="background:#dcfce7;color:#16a34a">Efetivo: '+d.E+'</span>');
-        if(d.P)tags.push('<span class="cargo-tipo-tag" style="background:#fef3c7;color:#d97706">Plantonista: '+d.P+'</span>');
+        if(d.R)tags.push('<span class="cargo-tipo-tag" style="background:#fee2e2;color:#dc2626">Reserva: '+d.R+'</span>');
+        if(d.D)tags.push('<span class="cargo-tipo-tag" style="background:#e0e5ef;color:#4a5c70">Depto: '+d.D+'</span>');
         body+=`<div class="cargo-sit-card" style="background:${c.bg};border:1px solid ${c.bc}">
           <div><div class="sit-label" style="color:${c.tc}">${lbl}</div><div class="cargo-tipo-row">${tags.join("")}</div></div>
           <div class="sit-val" style="color:${c.tc}">${tot}</div></div>`;
