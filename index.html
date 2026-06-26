@@ -270,6 +270,22 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 .sb-credit{padding:8px 14px 10px;text-align:center;border-top:1px solid rgba(255,255,255,.06);}
 .sb-credit span{font-size:.52rem;color:rgba(255,255,255,.2);letter-spacing:.3px;}
 .sb-credit b{color:rgba(46,143,239,.5);font-weight:700;}
+/* CARGO SITUAÇÃO */
+.cargo-sec{background:var(--wh);border-radius:var(--r);border:1px solid var(--g200);box-shadow:var(--sh);margin-bottom:11px;overflow:hidden;}
+.cargo-sec-hdr{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s;}
+.cargo-sec-hdr:hover{background:var(--g50);}
+.cargo-sec-title{display:flex;align-items:center;gap:10px;}
+.cargo-sec-ic{font-size:1.2rem;}
+.cargo-sec-name{font-size:.82rem;font-weight:800;color:var(--g800);text-transform:uppercase;letter-spacing:.3px;}
+.cargo-sec-total{font-size:.82rem;font-weight:900;color:var(--b7);}
+.cargo-sec-body{padding:0 16px 14px;}
+.cargo-sit-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+.cargo-sit-card{border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.cargo-sit-card .sit-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+.cargo-sit-card .sit-val{font-size:1.3rem;font-weight:900;}
+.cargo-sit-card .sit-sub{font-size:.6rem;margin-top:2px;}
+.cargo-tipo-row{display:flex;gap:6px;margin-top:6px;}
+.cargo-tipo-tag{padding:3px 8px;border-radius:12px;font-size:.6rem;font-weight:700;}
 /* CHATBOT */
 .chat-fab{position:fixed;bottom:20px;right:20px;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#1e4d8c,#2e8fef);border:none;color:#fff;font-size:1rem;cursor:pointer;box-shadow:0 3px 12px rgba(30,77,140,.35);z-index:998;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;justify-content:center;}
 .chat-fab:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(30,77,140,.5);}
@@ -535,6 +551,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="det-panel" id="det-ativos"><div class="det-hdr" id="det-ativos-hdr"><span class="det-title" id="det-ativos-title"></span><button class="det-close" onclick="closeDet('ativos')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-ativos-body"></div><div class="det-sub" id="det-ativos-sub"></div></div></div>
     <div class="cc" style="margin-bottom:11px"><div class="ch"><div class="chb"></div><span class="ct">Funcionários Ativos por Cargo</span></div><div class="cw" style="height:320px"><canvas id="cAT1"></canvas></div></div>
+    <div id="cargo-situacao-wrap"></div>
     <div class="cc" style="margin-bottom:11px"><div class="ch"><div class="chb"></div><span class="ct">Top Escalas</span></div><div class="cw" style="height:260px"><canvas id="cAT4"></canvas></div></div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Lista de Funcionários Ativos</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-ativos" oninput="rTbl('ativos')"></div></div><div id="tbl-ativos"></div><div class="pag"><div class="pi2" id="pi-ativos"></div><div class="pbs" id="pb-ativos"></div></div></div>
   </div>
@@ -1618,6 +1635,52 @@ function renderAtivos(){
   const cargoColors=cargo.map((c,i)=>blues[i%blues.length]);
   mkBar("cAT1",cargo.map(c=>c[0]),cargo.map(c=>c[1]),cargoColors,true);
   mkBar("cAT4",esc.map(c=>c[0]),esc.map(c=>c[1]),blues.slice(0,esc.length).reverse(),false);
+
+  // Situação por cargo
+  const csWrap=document.getElementById("cargo-situacao-wrap");
+  if(csWrap){
+    const reMap={};
+    at.forEach(r=>{if(r.RE!=null)reMap[String(r.RE)]={cargo:r.CARGO,tipo:r.TIPO||"—"};});
+    const cargoSit={};
+    pres.forEach(r=>{
+      if(r.RE==null)return;
+      const info=reMap[String(r.RE)];if(!info)return;
+      const cg=info.cargo;const tp=info.tipo;
+      if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:{E:0,R:0,D:0},folga:{E:0,R:0,D:0},falta:{E:0,R:0,D:0},ferias:{E:0,R:0,D:0},inss:{E:0,R:0,D:0},suspensao:{E:0,R:0,D:0}};
+      cargoSit[cg].total++;
+      const bucket=tp==="EFETIVO"?"E":tp==="RESERVA"?"R":"D";
+      const sit=normTxt(r.DESCSITUACAOHOJE);const sit2=normTxt(r.DESCSITUACAO);
+      if(sit==="TRABALHO")cargoSit[cg].trabalho[bucket]++;
+      else if(sit==="FOLGA")cargoSit[cg].folga[bucket]++;
+      else if(sit.includes("FALTA"))cargoSit[cg].falta[bucket]++;
+      else if(sit.includes("SUSPENS"))cargoSit[cg].suspensao[bucket]++;
+      if(sit2==="FERIAS")cargoSit[cg].ferias[bucket]++;
+      else if(sit2==="INSS")cargoSit[cg].inss[bucket]++;
+    });
+    const icons={"PORTEIRO (A)":"🛡️","AUXILIAR DE SERVIÇOS GERAIS":"🧹","ADMINISTRATIVO":"💼","ZELADOR":"🏠","JARDINEIRO":"🌿"};
+    const colors={trabalho:{bg:"#f0fdf4",bc:"#bbf7d0",tc:"#16a34a"},folga:{bg:"#fff7ed",bc:"#fed7aa",tc:"#f97316"},falta:{bg:"#fff5f5",bc:"#fecaca",tc:"#dc2626"},ferias:{bg:"#eff6ff",bc:"#bfdbfe",tc:"#1e4d8c"},inss:{bg:"#f0f9ff",bc:"#bae6fd",tc:"#0891b2"},suspensao:{bg:"#faf5ff",bc:"#e9d5ff",tc:"#7c3aed"}};
+    const labels={trabalho:"💼 Trabalho",folga:"😴 Folga",falta:"❌ Falta",ferias:"🏖️ Férias",inss:"🏥 INSS",suspensao:"⛔ Suspensão"};
+    const sorted=Object.entries(cargoSit).sort((a,b)=>b[1].total-a[1].total);
+    csWrap.innerHTML=sorted.map(([cg,data])=>{
+      const ic=icons[cg]||"👤";
+      let body="";
+      for(const[key,lbl] of Object.entries(labels)){
+        const d=data[key];const tot=d.E+d.R+d.D;if(!tot&&key!=="trabalho"&&key!=="folga")continue;
+        const c=colors[key];
+        const tags=[];
+        if(d.E)tags.push('<span class="cargo-tipo-tag" style="background:#dcfce7;color:#16a34a">Efetivo: '+d.E+'</span>');
+        if(d.R)tags.push('<span class="cargo-tipo-tag" style="background:#fee2e2;color:#dc2626">Reserva: '+d.R+'</span>');
+        if(d.D)tags.push('<span class="cargo-tipo-tag" style="background:#e0e5ef;color:#4a5c70">Depto: '+d.D+'</span>');
+        body+=`<div class="cargo-sit-card" style="background:${c.bg};border:1px solid ${c.bc}">
+          <div><div class="sit-label" style="color:${c.tc}">${lbl}</div><div class="cargo-tipo-row">${tags.join("")}</div></div>
+          <div class="sit-val" style="color:${c.tc}">${tot}</div></div>`;
+      }
+      return `<div class="cargo-sec"><div class="cargo-sec-hdr" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <div class="cargo-sec-title"><span class="cargo-sec-ic">${ic}</span><span class="cargo-sec-name">${cg}</span></div>
+        <div class="cargo-sec-total">${data.total} na ficha</div></div>
+        <div class="cargo-sec-body"><div class="cargo-sit-grid">${body}</div></div></div>`;
+    }).join("");
+  }
 
   rTbl("ativos");
 }
