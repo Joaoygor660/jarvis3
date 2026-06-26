@@ -1941,7 +1941,7 @@ function buildDataFromWorkbook(wb){
     TPCLIENTE:tpc||""};
   },"presenca");
   const _presDedup={};
-  (data.presenca||[]).forEach(r=>{if(r.RE!=null){const k=String(r.RE);if(!_presDedup[k])_presDedup[k]=r;}});
+  (data.presenca||[]).forEach(r=>{if(r.RE!=null){const k=String(r.RE)+"|"+String(r.NOME||"");if(!_presDedup[k])_presDedup[k]=r;}});
   data.presenca=Object.values(_presDedup);
   const wsA=findSheet(wb,"FUNCIONARIOS ATIVOS");
   const sa=sheetRows(wsA);
