@@ -1614,9 +1614,9 @@ function renderAtivos(){
   const pres=DASHBOARD_DATA.presenca||[];
   const ferias=pres.filter(r=>{const s=normTxt(r.DESCSITUACAO);return s==="FERIAS"&&!s.includes("TRAB")&&!normTxt(r.DESCSITUACAO).includes("FERIASTRAB");}).length;
   const inss=pres.filter(r=>normTxt(r.DESCSITUACAO)==="INSS").length;
-  const folga=pres.filter(r=>{const s=normTxt(r.DESCSITUACAOHOJE);return s==="FOLGA"||s.includes("LIBTOTAL")||s.includes("LIB TOTAL");}).length;
-  const falta=pres.filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")).length;
-  const trab=pres.filter(r=>{const s=normTxt(r.DESCSITUACAOHOJE);const s2=normTxt(r.DESCSITUACAO);return s==="TRABALHO"||s.includes("LIBPAR")||s.includes("LIB PAR")||s2.includes("AVISO")||s2.includes("FERIASTRAB")||s2==="FERIAS TRAB";}).length;
+  const folga=pres.filter(r=>{const s=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();return s==="FOLGA"||s.includes("LIB. TOTAL")||s.includes("LIB.TOTAL");}).length;
+  const falta=pres.filter(r=>(r.DESCSITUACAOHOJE||"").toUpperCase().includes("FALTA")).length;
+  const trab=pres.filter(r=>{const s=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();const s2=(r.DESCSITUACAO||"").toUpperCase().trim();return s==="TRABALHO"||s.includes("LIB. PAR")||s.includes("LIB.PAR")||s2.includes("AVISO")||s2.includes("FERIAS TRAB");}).length;
   document.getElementById("at-ferias").textContent=ferias;
   document.getElementById("at-feriass").innerHTML=pres.length?`<b>${(ferias/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
   document.getElementById("at-inss").textContent=inss;
@@ -1651,9 +1651,11 @@ function renderAtivos(){
       const bucket=tp==="EFETIVO"?"E":(cg==="ADMINISTRATIVO"?"D":"R");
       const sit=normTxt(r.DESCSITUACAOHOJE);const sit2=normTxt(r.DESCSITUACAO);
       const esc=info.escala;
-      const isWork=sit==="TRABALHO"||sit.includes("LIB PAR")||sit.includes("LIBPAR");
-      const isFolga=sit==="FOLGA"||sit.includes("LIB TOTAL")||sit.includes("LIBTOTAL");
-      const isAviso=sit2.includes("AVISO")||sit2.includes("FERIASTRAB")||sit2==="FERIAS TRAB";
+      const sitRaw=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();
+      const sit2Raw=(r.DESCSITUACAO||"").toUpperCase().trim();
+      const isWork=sitRaw==="TRABALHO"||sitRaw.includes("LIB. PAR")||sitRaw.includes("LIB.PAR");
+      const isFolga=sitRaw==="FOLGA"||sitRaw.includes("LIB. TOTAL")||sitRaw.includes("LIB.TOTAL");
+      const isAviso=sit2Raw.includes("AVISO")||sit2Raw.includes("FERIAS TRAB");
       if(isWork||isAviso){cargoSit[cg].trabalho[bucket]++;cargoSit[cg].trabalho.esc[esc]=(cargoSit[cg].trabalho.esc[esc]||0)+1;}
       else if(isFolga){cargoSit[cg].folga[bucket]++;cargoSit[cg].folga.esc[esc]=(cargoSit[cg].folga.esc[esc]||0)+1;}
       else if(sit.includes("FALTA"))cargoSit[cg].falta[bucket]++;
