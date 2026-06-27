@@ -548,6 +548,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="sk sk-te clickable" onclick="skDet('ativos','falta',this)"><div class="sk-top"><span class="sk-ic">❌</span></div><div class="sk-lbl">Falta</div><div class="sk-v" id="at-falta">—</div><div class="sk-sub" id="at-faltas">—</div></div>
       <div class="sk sk-pu clickable" onclick="skDet('ativos','trabalho',this)"><div class="sk-top"><span class="sk-ic">💼</span></div><div class="sk-lbl">Trabalho</div><div class="sk-v" id="at-trab">—</div><div class="sk-sub" id="at-trabs">—</div></div>
       <div class="sk sk-re clickable" onclick="skDet('ativos','suspensao',this)"><div class="sk-top"><span class="sk-ic">⛔</span></div><div class="sk-lbl">Suspensão</div><div class="sk-v" id="at-susp">—</div><div class="sk-sub" id="at-susps">—</div></div>
+      <div class="sk sk-dkbl clickable" onclick="skDet('ativos','abandono',this)"><div class="sk-top"><span class="sk-ic">🚷</span></div><div class="sk-lbl">Abandono</div><div class="sk-v" id="at-aband">—</div><div class="sk-sub" id="at-abands">—</div></div>
       <div class="sk sk-ye clickable" onclick="skDet('ativos','liberado',this)"><div class="sk-top"><span class="sk-ic">🔓</span></div><div class="sk-lbl">Liberado</div><div class="sk-v" id="at-lib">—</div><div class="sk-sub" id="at-libs">—</div></div>
     </div>
     <div class="det-panel" id="det-ativos"><div class="det-hdr" id="det-ativos-hdr"><span class="det-title" id="det-ativos-title"></span><button class="det-close" onclick="closeDet('ativos')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-ativos-body"></div><div class="det-sub" id="det-ativos-sub"></div></div></div>
@@ -1427,7 +1428,8 @@ function skDet(sec,type,card){
       falta:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA"))),t:"❌ Funcionários com Falta",fill:"#0891b2",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE).includes("FALTA")),key:"NOME"},
       trabalho:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO")),t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"},
       suspensao:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao")),t:"⛔ Funcionários Suspensos",fill:"#dc2626",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao"),key:"NOME"},
-      liberado:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado")),t:"🔓 Funcionários Liberados",fill:"#d97706",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado"),key:"NOME"}
+      liberado:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado")),t:"🔓 Funcionários Liberados",fill:"#d97706",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado"),key:"NOME"},
+      abandono:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono")),t:"🚷 Funcionários em Abandono",fill:"#1e2d3e",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono"),key:"NOME"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
@@ -1624,6 +1626,8 @@ function renderAtivos(){
   function _categorizaPres(r){
     const h=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();
     const g=(r.DESCSITUACAO||"").toUpperCase().trim();
+    const loc=(r.NOMELOCAL||"").toUpperCase().trim();
+    if(loc.includes("ABANDONO"))return"abandono";
     if(g.includes("INSS"))return"inss";
     if(g.includes("SUSPENS"))return"suspensao";
     if(g==="FÉRIAS"||g==="FERIAS"){if(g.includes("TRAB")||h==="TRABALHO")return"trabalho";return"ferias";}
@@ -1635,7 +1639,7 @@ function renderAtivos(){
     if(h==="")return"ferias";
     return"trabalho";
   }
-  const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0};
+  const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0,abandono:0};
   pres.forEach(r=>{_pc[_categorizaPres(r)]++;});
   const trab=_pc.trabalho,folga=_pc.folga,falta=_pc.falta,ferias=_pc.ferias,inss=_pc.inss;
   document.getElementById("at-ferias").textContent=ferias;
@@ -1648,9 +1652,11 @@ function renderAtivos(){
   document.getElementById("at-faltas").innerHTML=pres.length?`<b>${(falta/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
   document.getElementById("at-trab").textContent=trab;
   document.getElementById("at-trabs").innerHTML=pres.length?`<b>${(trab/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
-  const susp=_pc.suspensao;const liber=_pc.liberado;
+  const susp=_pc.suspensao;const liber=_pc.liberado;const aband=_pc.abandono;
   document.getElementById("at-susp").textContent=susp;
   document.getElementById("at-susps").innerHTML=pres.length?`<b>${(susp/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
+  document.getElementById("at-aband").textContent=aband;
+  document.getElementById("at-abands").innerHTML=pres.length?`<b>${(aband/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
   document.getElementById("at-lib").textContent=liber;
   document.getElementById("at-libs").innerHTML=pres.length?`<b>${(liber/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
 
@@ -1670,7 +1676,7 @@ function renderAtivos(){
       const info=reMap[String(r.RE)];if(!info)return;
       const cg=info.cargo;const tp=info.tipo;
       function _newSit(){return{E:0,R:0,D:0,esc:{},DI:{E:0,R:0,D:0},NO:{E:0,R:0,D:0}};}
-    if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:_newSit(),folga:_newSit(),falta:_newSit(),ferias:_newSit(),inss:_newSit(),suspensao:_newSit(),liberado:_newSit()};
+    if(!cargoSit[cg])cargoSit[cg]={total:0,trabalho:_newSit(),folga:_newSit(),falta:_newSit(),ferias:_newSit(),inss:_newSit(),suspensao:_newSit(),liberado:_newSit(),abandono:_newSit()};
       cargoSit[cg].total++;
       const bucket=tp==="EFETIVO"?"E":(cg==="ADMINISTRATIVO"?"D":"R");
       const sit=normTxt(r.DESCSITUACAOHOJE);const sit2=normTxt(r.DESCSITUACAO);
@@ -1682,8 +1688,8 @@ function renderAtivos(){
       if(target){_add(target);if(target.esc&&(cat==="trabalho"||cat==="folga"))target.esc[esc]=(target.esc[esc]||0)+1;}
     });
     const icons={"PORTEIRO (A)":"🛡️","AUXILIAR DE SERVIÇOS GERAIS":"🧹","ADMINISTRATIVO":"💼","ZELADOR":"🏠","JARDINEIRO":"🌿"};
-    const colors={trabalho:{bg:"#f0fdf4",bc:"#bbf7d0",tc:"#16a34a"},folga:{bg:"#fff7ed",bc:"#fed7aa",tc:"#f97316"},falta:{bg:"#fff5f5",bc:"#fecaca",tc:"#dc2626"},ferias:{bg:"#eff6ff",bc:"#bfdbfe",tc:"#1e4d8c"},inss:{bg:"#f0f9ff",bc:"#bae6fd",tc:"#0891b2"},suspensao:{bg:"#faf5ff",bc:"#e9d5ff",tc:"#7c3aed"},liberado:{bg:"#fffbeb",bc:"#fde68a",tc:"#d97706"}};
-    const labels={trabalho:"💼 Trabalho",folga:"😴 Folga",falta:"❌ Falta",ferias:"🏖️ Férias",inss:"🏥 INSS",suspensao:"⛔ Suspensão",liberado:"🔓 Liberado"};
+    const colors={trabalho:{bg:"#f0fdf4",bc:"#bbf7d0",tc:"#16a34a"},folga:{bg:"#fff7ed",bc:"#fed7aa",tc:"#f97316"},falta:{bg:"#fff5f5",bc:"#fecaca",tc:"#dc2626"},ferias:{bg:"#eff6ff",bc:"#bfdbfe",tc:"#1e4d8c"},inss:{bg:"#f0f9ff",bc:"#bae6fd",tc:"#0891b2"},suspensao:{bg:"#faf5ff",bc:"#e9d5ff",tc:"#7c3aed"},liberado:{bg:"#fffbeb",bc:"#fde68a",tc:"#d97706"},abandono:{bg:"#f1f5f9",bc:"#cbd5e1",tc:"#1e2d3e"}};
+    const labels={trabalho:"💼 Trabalho",folga:"😴 Folga",falta:"❌ Falta",ferias:"🏖️ Férias",inss:"🏥 INSS",suspensao:"⛔ Suspensão",liberado:"🔓 Liberado",abandono:"🚷 Abandono"};
     const sorted=Object.entries(cargoSit).sort((a,b)=>b[1].total-a[1].total);
     csWrap.innerHTML=sorted.map(([cg,data])=>{
       const ic=icons[cg]||"👤";
@@ -1938,6 +1944,7 @@ function buildDataFromWorkbook(wb){
     return{RE:r[I["RE"]],NOME:r[I["FUNCIONARIO"]]!==undefined?r[I["FUNCIONARIO"]]:r[I["NOMEFUNCIONARIO"]],
     DATA:isoDate(r[I["DATA"]]),
     DESCSITUACAO:r[I["DESCSITUACAO"]],DESCSITUACAOHOJE:r[I["DESCSITUACAOHOJE"]],
+    NOMELOCAL:r[I["NOMELOCAL"]]||"",
     TPCLIENTE:tpc||""};
   },"presenca");
   const _presDedup={};
