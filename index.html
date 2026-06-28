@@ -1312,6 +1312,22 @@ function rT10(arr,id,bc){
     </div>`).join("");
 }
 
+function _categorizaPres(r){
+  const h=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();
+  const g=(r.DESCSITUACAO||"").toUpperCase().trim();
+  const loc=(r.NOMELOCAL||"").toUpperCase().trim();
+  if(loc.includes("ABANDONO"))return"abandono";
+  if(g.includes("INSS"))return"inss";
+  if(g.includes("SUSPENS"))return"suspensao";
+  if(g==="FÉRIAS"||g==="FERIAS"){if(g.includes("TRAB")||h==="TRABALHO")return"trabalho";return"ferias";}
+  if(g.includes("AVISO"))return"trabalho";
+  if(h==="FALTA"||h.includes("FALTA"))return"falta";
+  if(h==="FOLGA"||h.includes("LIB. TOTAL")||h.includes("LIB.TOTAL"))return"folga";
+  if(h==="TRABALHO")return"trabalho";
+  if(h.includes("LIB. PAR")||h.includes("LIB.PAR"))return"liberado";
+  if(h==="")return"ferias";
+  return"trabalho";
+}
 function _grpByTipo(all){
   const tipos={CONTRATO:[],RESERVA:[],DEPARTAMENTO:[]};
   const outros=[];
@@ -1635,22 +1651,6 @@ function renderAtivos(){
   document.getElementById("at-nos").innerHTML=at.length?`<b>${(no/at.length*100).toFixed(0)}%</b> do total`:"—";
 
   const pres=DASHBOARD_DATA.presenca||[];
-  function _categorizaPres(r){
-    const h=(r.DESCSITUACAOHOJE||"").toUpperCase().trim();
-    const g=(r.DESCSITUACAO||"").toUpperCase().trim();
-    const loc=(r.NOMELOCAL||"").toUpperCase().trim();
-    if(loc.includes("ABANDONO"))return"abandono";
-    if(g.includes("INSS"))return"inss";
-    if(g.includes("SUSPENS"))return"suspensao";
-    if(g==="FÉRIAS"||g==="FERIAS"){if(g.includes("TRAB")||h==="TRABALHO")return"trabalho";return"ferias";}
-    if(g.includes("AVISO"))return"trabalho";
-    if(h==="FALTA"||h.includes("FALTA"))return"falta";
-    if(h==="FOLGA"||h.includes("LIB. TOTAL")||h.includes("LIB.TOTAL"))return"folga";
-    if(h==="TRABALHO")return"trabalho";
-    if(h.includes("LIB. PAR")||h.includes("LIB.PAR"))return"liberado";
-    if(h==="")return"ferias";
-    return"trabalho";
-  }
   const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0,abandono:0};
   pres.forEach(r=>{_pc[_categorizaPres(r)]++;});
   const trab=_pc.trabalho,folga=_pc.folga,falta=_pc.falta,ferias=_pc.ferias,inss=_pc.inss;
