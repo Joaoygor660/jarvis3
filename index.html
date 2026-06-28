@@ -280,7 +280,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 .cargo-sec-total{font-size:.82rem;font-weight:900;color:var(--b7);}
 .cargo-sec-body{padding:0 16px 14px;}
 .cargo-sit-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
-.cargo-sit-card{border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.cargo-sit-card{border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.cargo-sit-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1);}
 .cargo-sit-card .sit-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
 .cargo-sit-card .sit-val{font-size:1.3rem;font-weight:900;}
 .cargo-sit-card .sit-sub{font-size:.6rem;margin-top:2px;}
@@ -1724,7 +1725,7 @@ function renderAtivos(){
           const escArr=Object.entries(d.esc).sort(function(a,b){return b[1]-a[1]}).slice(0,5);
           if(escArr.length)escHtml='<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">'+escArr.map(function(e){return'<span style="background:rgba(0,0,0,.06);padding:1px 6px;border-radius:8px;font-size:.55rem;font-weight:600;color:var(--g600)">'+e[0]+': '+e[1]+'</span>'}).join("")+'</div>';
         }
-        body+=`<div class="cargo-sit-card" style="background:${c.bg};border:1px solid ${c.bc}">
+        body+=`<div class="cargo-sit-card" style="background:${c.bg};border:1px solid ${c.bc}" onclick="_cargoSitClick('${cg.replace(/'/g,"\\'")}','${key}')">
           <div><div class="sit-label" style="color:${c.tc}">${lbl}</div>${turnoHtml}${escHtml}</div>
           <div class="sit-val" style="color:${c.tc}">${tot}</div></div>`;
       }
@@ -1734,6 +1735,49 @@ function renderAtivos(){
         <div class="cargo-sec-body"><div class="cargo-sit-grid">${body}</div></div></div>`;
     }).join("");
   }
+
+function _cargoSitClick(cargo,situacao){
+  var pres=DASHBOARD_DATA.presenca||[];
+  var at=DASHBOARD_DATA.ativos||[];
+  var reMap={};
+  at.forEach(function(r){if(r.RE!=null)reMap[String(r.RE)]={cargo:r.CARGO,tipo:r.TIPO||"—",turno:r.TURNO||"DIURNO",escala:r.ESCALA||"—",local:r.LOCAL||"—",area:r.AREA||"—"};});
+  var filtered=[];
+  pres.forEach(function(r){
+    var cat=_categorizaPres(r);
+    if(cat!==situacao)return;
+    if(r.RE==null)return;
+    var info=reMap[String(r.RE)];
+    if(!info||info.cargo!==cargo)return;
+    filtered.push({nome:r.NOME||"—",cargo:info.cargo,tipo:info.tipo,turno:info.turno,escala:info.escala,local:info.local,area:info.area});
+  });
+  var lbls={trabalho:"💼 Trabalho",folga:"😴 Folga",falta:"❌ Falta",ferias:"🏖️ Férias",inss:"🏥 INSS",suspensao:"⛔ Suspensão",liberado:"🔓 Liberado",abandono:"🚷 Abandono"};
+  var title=(lbls[situacao]||situacao)+" — "+cargo+" ("+filtered.length+")";
+  var html='<div style="max-height:400px;overflow-y:auto;padding:8px">';
+  if(!filtered.length){html+='<div style="color:var(--g400);font-size:.75rem;padding:12px">Nenhum registro</div>';}
+  else{
+    html+='<table style="width:100%;border-collapse:collapse;font-size:.7rem"><thead><tr style="border-bottom:2px solid #e0e5ef;text-align:left">';
+    html+='<th style="padding:6px">Nome</th><th style="padding:6px">Tipo</th><th style="padding:6px">Turno</th><th style="padding:6px">Escala</th><th style="padding:6px">Local</th><th style="padding:6px">Área</th></tr></thead><tbody>';
+    filtered.sort(function(a,b){return a.nome.localeCompare(b.nome);}).forEach(function(f){
+      var tipoCor=f.tipo==="EFETIVO"?"#16a34a":"#dc2626";
+      html+='<tr style="border-bottom:1px solid #edf0f5">';
+      html+='<td style="padding:5px;font-weight:700;color:#1e2d3e">'+f.nome+'</td>';
+      html+='<td style="padding:5px"><span style="color:'+tipoCor+';font-weight:700;font-size:.6rem">'+f.tipo+'</span></td>';
+      html+='<td style="padding:5px;font-size:.65rem">'+f.turno+'</td>';
+      html+='<td style="padding:5px;font-size:.65rem">'+f.escala+'</td>';
+      html+='<td style="padding:5px;font-size:.65rem">'+f.local+'</td>';
+      html+='<td style="padding:5px;font-size:.65rem">'+f.area+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  }
+  html+='</div>';
+  var existing=document.getElementById("cargo-sit-detail");
+  if(existing)existing.remove();
+  var div=document.createElement("div");
+  div.id="cargo-sit-detail";
+  div.style.cssText="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:800px;background:white;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;overflow:hidden";
+  div.innerHTML='<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="color:white;font-size:.82rem;font-weight:800">'+title+'</span><button onclick="document.getElementById(\'cargo-sit-detail\').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem">✕</button></div>'+html;
+  document.body.appendChild(div);
+}
 
   rTbl("ativos");
 }
