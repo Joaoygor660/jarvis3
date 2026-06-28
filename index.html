@@ -1725,7 +1725,7 @@ function renderAtivos(){
           const escArr=Object.entries(d.esc).sort(function(a,b){return b[1]-a[1]}).slice(0,5);
           if(escArr.length)escHtml='<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px">'+escArr.map(function(e){return'<span style="background:rgba(0,0,0,.06);padding:1px 6px;border-radius:8px;font-size:.55rem;font-weight:600;color:var(--g600)">'+e[0]+': '+e[1]+'</span>'}).join("")+'</div>';
         }
-        body+=`<div class="cargo-sit-card" style="background:${c.bg};border:1px solid ${c.bc}" onclick="_cargoSitClick(&quot;${cg.replace(/"/g,"")}&quot;,&quot;${key}&quot;)">
+        body+=`<div class="cargo-sit-card" style="background:${c.bg};border:1px solid ${c.bc}" data-cargo="${cg}" data-sit="${key}" onclick="_cargoSitClick(this.dataset.cargo,this.dataset.sit)">
           <div><div class="sit-label" style="color:${c.tc}">${lbl}</div>${turnoHtml}${escHtml}</div>
           <div class="sit-val" style="color:${c.tc}">${tot}</div></div>`;
       }
