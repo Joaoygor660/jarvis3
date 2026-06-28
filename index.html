@@ -591,13 +591,14 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <!-- FALTAS -->
   <div class="page" id="pg-faltas">
     <div class="sec-hdr"><span class="sec-hdr-ic">🚫</span><div><div class="sec-hdr-t">Faltas &amp; Top 10</div><div class="sec-hdr-sub">Análise completa de ausências no período</div></div></div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(6,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(7,1fr)">
       <div class="sk sk-re clickable" onclick="skDet('faltas','total',this)"><div class="sk-top"><span class="sk-ic">📊</span><span class="sk-tag t-re">Total</span></div><div class="sk-lbl">Total Faltas</div><div class="sk-v" id="f-tot">—</div><div class="sk-sub" id="f-tots">—</div></div>
       <div class="sk sk-re clickable" onclick="skDet('faltas','inj',this)"><div class="sk-top"><span class="sk-ic">❌</span></div><div class="sk-lbl">Injustificadas</div><div class="sk-v" id="f-inj">—</div><div class="sk-sub">tipo I</div></div>
       <div class="sk sk-or clickable" onclick="skDet('faltas','aba',this)"><div class="sk-top"><span class="sk-ic">🚪</span></div><div class="sk-lbl">Abonado</div><div class="sk-v" id="f-aba">—</div><div class="sk-sub">tipo A</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('faltas','jus',this)"><div class="sk-top"><span class="sk-ic">📄</span></div><div class="sk-lbl">Justificadas</div><div class="sk-v" id="f-jus">—</div><div class="sk-sub">tipo J</div></div>
       <div class="sk sk-bl clickable" onclick="skDet('faltas','con',this)"><div class="sk-top"><span class="sk-ic">📌</span></div><div class="sk-lbl">Contratos</div><div class="sk-v" id="f-con">—</div><div class="sk-sub" id="f-cons">—</div></div>
       <div class="sk sk-pu clickable" onclick="skDet('faltas','res',this)"><div class="sk-top"><span class="sk-ic">🔖</span></div><div class="sk-lbl">Reservas</div><div class="sk-v" id="f-res">—</div><div class="sk-sub" id="f-ress">—</div></div>
+      <div class="sk sk-dkbl clickable" onclick="skDet('faltas','abandono',this)"><div class="sk-top"><span class="sk-ic">🚷</span></div><div class="sk-lbl">Abandono</div><div class="sk-v" id="f-aband">—</div><div class="sk-sub" id="f-abands">—</div></div>
     </div>
     <div class="det-panel" id="det-faltas"><div class="det-hdr red" id="det-faltas-hdr"><span class="det-title" id="det-faltas-title"></span><button class="det-close" onclick="closeDet('faltas')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-faltas-body"></div><div class="det-sub" id="det-faltas-sub"></div></div></div>
     <div class="grid-21">
@@ -913,7 +914,9 @@ function full(arr){return arr.filter(r=>inR(r.DATA)&&mT(r)&&mA(r));}
 function filterAll(){
   const D=DASHBOARD_DATA;
   F={
-    faltas:full(D.faltas),fts:full(D.fts),os:full(D.os),
+    faltas:full(D.faltas).filter(r=>!(r.LOCAL||"").toUpperCase().includes("ABANDONO")),
+    abandono:full(D.faltas).filter(r=>(r.LOCAL||"").toUpperCase().includes("ABANDONO")),
+    fts:full(D.fts),os:full(D.os),
     cobertura:full(D.cobertura),hrextra:full(D.hrextra||[]),
     justif:full(D.justif),
     clientes:(ST.turno==="TODOS"?D.clientes:D.clientes.filter(c=>c.TURNO===ST.turno)).filter(c=>c.TPCLIENTE==="CLIENTE"),
@@ -1044,6 +1047,10 @@ function updFaltasC(){
   document.getElementById("f-inj").textContent=inj;document.getElementById("f-aba").textContent=aba;document.getElementById("f-jus").textContent=jus;
   document.getElementById("f-con").textContent=con.length;document.getElementById("f-cons").innerHTML=`<b>${new Set(con.map(r=>r.NOME)).size}</b> func.`;
   document.getElementById("f-res").textContent=res.length;document.getElementById("f-ress").innerHTML=`<b>${new Set(res.map(r=>r.NOME)).size}</b> func.`;
+  const aband=F.abandono||[];
+  const abandPessoas=new Set(aband.map(r=>r.NOME)).size;
+  document.getElementById("f-aband").textContent=abandPessoas;
+  document.getElementById("f-abands").innerHTML=`<b>${aband.length}</b> registros`;
   const injD=byDay(faltas.filter(r=>r.ABONO==="I")),abaD=byDay(faltas.filter(r=>r.ABONO==="A")),jusD=byDay(faltas.filter(r=>r.ABONO==="J"));
   const allD=[...new Set([...injD.keys,...abaD.keys,...jusD.keys])].sort();
   dc2("cF1");CH["cF1"]=new Chart(document.getElementById("cF1"),{type:"line",data:{labels:allD.map(d=>d.slice(5).replace("-","/")),datasets:[
@@ -1373,7 +1380,12 @@ function skDet(sec,type,card){
       aba:{rows:()=>byName(F.faltas.filter(r=>r.ABONO==="A"),"AREA"),t:"🚪 Funcionários — Abonado",fill:"#f97316",arr:()=>F.faltas.filter(r=>r.ABONO==="A"),key:"NOME"},
       jus:{rows:()=>byName(F.faltas.filter(r=>r.ABONO==="J"),"AREA"),t:"📄 Funcionários — Justificadas",fill:"#16a34a",arr:()=>F.faltas.filter(r=>r.ABONO==="J"),key:"NOME"},
       con:{rows:()=>cnt(F.faltas.filter(r=>r.TIPO==="CONTRATO"),"LOCAL").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"📌 Contratos — Locais com Mais Faltas",fill:"#1e4d8c",arr:()=>F.faltas.filter(r=>r.TIPO==="CONTRATO"),key:"LOCAL"},
-      res:{rows:()=>byName(F.faltas.filter(r=>r.TIPO==="RESERVA"),"AREA"),t:"🔖 Reservas — Funcionários com Mais Faltas",fill:"#7c3aed",arr:()=>F.faltas.filter(r=>r.TIPO==="RESERVA"),key:"NOME"}
+      res:{rows:()=>byName(F.faltas.filter(r=>r.TIPO==="RESERVA"),"AREA"),t:"🔖 Reservas — Funcionários com Mais Faltas",fill:"#7c3aed",arr:()=>F.faltas.filter(r=>r.TIPO==="RESERVA"),key:"NOME"},
+      abandono:{rows:()=>{
+        const ab=F.abandono||[];
+        const m={};ab.forEach(r=>{const n=r.NOME||"—";if(!m[n])m[n]={cargo:"—",area:"—"};m[n].cargo=r.CARGO||"—";m[n].area=r.AREA||"—";});
+        return Object.entries(m).map(([k,v])=>({NOME:k,v:1,sub:v.cargo+" · "+v.area}));
+      },t:"🚷 Funcionários em Abandono",fill:"#1e2d3e"}
     },
     coberturas:{
       total:{rows:()=>{
