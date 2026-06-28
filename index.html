@@ -1670,10 +1670,6 @@ function renderAtivos(){
   document.getElementById("at-lib").textContent=liber;
   document.getElementById("at-libs").innerHTML=pres.length?`<b>${(liber/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
 
-  const esc=cnt(at,"ESCALA").slice(0,7);
-  const cargoColors=cargo.map((c,i)=>blues[i%blues.length]);
-  mkBar("cAT1",cargo.map(c=>c[0]),cargo.map(c=>c[1]),cargoColors,true);
-  mkBar("cAT4",esc.map(c=>c[0]),esc.map(c=>c[1]),blues.slice(0,esc.length).reverse(),false);
 
   // Situação por cargo
   const csWrap=document.getElementById("cargo-situacao-wrap");
