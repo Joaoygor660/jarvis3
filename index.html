@@ -1970,7 +1970,7 @@ function buildDataFromWorkbook(wb){
       }).filter(Boolean);
     }else{data.hrextra=[];}
   }else{data.hrextra=[];console.warn("[HR EXTRA] Guia não encontrada. Guias:",wb.SheetNames.join(", "));}
-  ext("JUSTIFICATIVA DE POSTOS",(r,I)=>({
+  ext("JUSTIFICATIVA VAGA DESCOBERTA",(r,I)=>({
     DATA:isoDate(r[I["DATA"]]),LOCAL:r[I["LOCALSERVICO"]],
     CARGO:r[I["DESCCARGO"]],AREA:r[I["AREA"]],
     TURNO:r[I["DESCTURNO"]],MOTIVO:r[I["DESCMOTIVO"]]
