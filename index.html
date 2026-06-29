@@ -639,6 +639,19 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Top Clientes</span></div><div class="cw" style="height:220px"><canvas id="cC5"></canvas></div></div>
     </div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Registro de Coberturas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-coberturas" oninput="rTbl('coberturas')"></div></div><div id="tbl-coberturas"></div><div class="pag"><div class="pi2" id="pi-coberturas"></div><div class="pbs" id="pb-coberturas"></div></div></div>
+
+    <div class="sec-hdr" style="margin-top:16px"><span class="sec-hdr-ic">🚗</span><div><div class="sec-hdr-t">Coberturas Realizadas pelo Supervisor</div><div class="sec-hdr-sub">Supervisores que foram pessoalmente ao local realizar a cobertura (BDV)</div></div></div>
+    <div class="sec-kpis" style="grid-template-columns:repeat(3,1fr)">
+      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🚗</span><span class="sk-tag t-bl">BDV</span></div><div class="sk-lbl">Total Coberturas</div><div class="sk-v" id="bdv-tot">—</div><div class="sk-sub" id="bdv-tots">—</div></div>
+      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">👤</span></div><div class="sk-lbl">Supervisores</div><div class="sk-v" id="bdv-sups">—</div><div class="sk-sub">que realizaram</div></div>
+      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">📍</span></div><div class="sk-lbl">Destinos</div><div class="sk-v" id="bdv-dest">—</div><div class="sk-sub">locais atendidos</div></div>
+    </div>
+    <div class="grid-2" style="margin-top:11px">
+      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Coberturas por Supervisor</span></div><div class="cw" style="height:250px"><canvas id="cBDV1"></canvas></div></div>
+      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Coberturas por Dia</span></div><div class="cw" style="height:250px"><canvas id="cBDV2"></canvas></div></div>
+    </div>
+    <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb"></div><span class="ct">Destinos Atendidos</span></div><div class="cw" style="height:280px"><canvas id="cBDV3"></canvas></div></div>
+    <div class="ts" style="margin-top:11px"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Registro de Coberturas BDV</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-bdvcob" oninput="rTbl('bdvcob')"></div></div><div id="tbl-bdvcob"></div><div class="pag"><div class="pi2" id="pi-bdvcob"></div><div class="pbs" id="pb-bdvcob"></div></div></div>
   </div>
 
   <!-- POSTOS -->
@@ -922,6 +935,7 @@ function filterAll(){
     clientes:(ST.turno==="TODOS"?D.clientes:D.clientes.filter(c=>c.TURNO===ST.turno)).filter(c=>c.TPCLIENTE==="CLIENTE"),
     dispo:D.dispo||[],
     restec:(D.restec||[]).filter(r=>mT(r)),
+    bdvCobertura:full(D.bdvCobertura||[]),
     checklist:(D.checklist||[]).filter(r=>mT(r))
   };
 }
@@ -1081,6 +1095,19 @@ function updCobC(){
   const ae=topN(cobertura,"AREA",8);mkBar("cC3",ae.map(([k])=>k.length>13?k.substring(0,13)+"…":k),ae.map(([,v])=>v),blues.slice(0,ae.length),true);
   const me=topN(cobertura,"MOTIVO",12);mkBar("cC4",me.map(([k])=>k.replace("COBERTURA DE ","").replace("COBERTURA ","").substring(0,30)),me.map(([,v])=>v),blues.slice(0,me.length).reverse(),true);
   const le=topN(cobertura,"LOCAL",8);mkBar("cC5",le.map(([k])=>k.length>16?k.substring(0,16)+"…":k),le.map(([,v])=>v),blues.slice(0,le.length),true);
+  // BDV Coberturas
+  const bdv=F.bdvCobertura||[];
+  document.getElementById("bdv-tot").textContent=bdv.length;
+  document.getElementById("bdv-tots").innerHTML=`<b>${new Set(bdv.map(r=>r.NOME)).size}</b> supervisores`;
+  document.getElementById("bdv-sups").textContent=new Set(bdv.map(r=>r.NOME)).size;
+  document.getElementById("bdv-dest").textContent=new Set(bdv.map(r=>r.DESTINO)).size;
+  const bdvSup=topN(bdv,"NOME",10);
+  mkBar("cBDV1",bdvSup.map(([k])=>k.length>20?k.substring(0,20)+"…":k),bdvSup.map(([,v])=>v),blues.slice(0,bdvSup.length),true);
+  const bdvDay=byDay(bdv);
+  mkLine("cBDV2",[{label:"Coberturas BDV",data:bdvDay.vals,borderColor:"#16a34a",backgroundColor:"rgba(22,163,74,.1)",borderWidth:2,pointRadius:3,fill:true,tension:.35}],bdvDay.labels);
+  const bdvDest=topN(bdv,"DESTINO",12);
+  mkBar("cBDV3",bdvDest.map(([k])=>{const s=k.split("/")[0];return s.length>22?s.substring(0,22)+"…":s;}),bdvDest.map(([,v])=>v),blues.slice(0,bdvDest.length),true);
+  rTbl("bdvcob");
 }
 
 function updPostosC(){
@@ -1567,6 +1594,7 @@ function closeDet(sec){
 const TCFG={
   faltas:{d:()=>F.faltas,s:"s-faltas",cols:["DATA","NOME","LOCAL","CARGO","AREA","ABONO","TIPO","TURNO"],hdrs:["Data","Funcionário","Local","Cargo","Área","Abono","Tipo","Turno"],b:["ABONO","TIPO","TURNO"]},
   coberturas:{d:()=>F.cobertura,s:"s-coberturas",cols:["DATA","NOME","LOCAL","AREA","TURNO","MOTIVO"],hdrs:["Data","Funcionário","Local","Área","Turno","Motivo"],b:["TURNO"]},
+  bdvcob:{d:()=>F.bdvCobertura||[],s:"s-bdvcob",cols:["DATA","NOME","DESTINO","KM","TEMPO"],hdrs:["Data","Supervisor","Destino","KM Rodado","Tempo"],b:[]},
   postos:{d:()=>F.justif,s:"s-postos",cols:["DATA","LOCAL","CARGO","AREA","TURNO","MOTIVO"],hdrs:["Data","Local","Cargo","Área","Turno","Motivo"],b:["TURNO"]},
   os:{d:()=>F.os,s:"s-os",cols:["DATA","LOCAL","CARGO","TIPO","TURNO","STATUS","RESPONSAVEL"],hdrs:["Data","Local","Cargo","Tipo OS","Turno","Status","Responsável"],b:["TIPO","TURNO"]},
   fts:{d:()=>F.fts,s:"s-fts",cols:["DATA","NOME","LOCAL","CARGO","AREA","TIPO","TURNO","MOTIVO"],hdrs:["Data","Funcionário","Local","Cargo","Área","Tipo","Turno","Motivo"],b:["TIPO","TURNO"]},
@@ -2061,6 +2089,16 @@ function buildDataFromWorkbook(wb){
     const at=ativosNomeMap[nm];
     if(at&&!r.TURNO)r.TURNO=at.TURNO||"DIURNO";
   });
+  const wsBDV=findSheet(wb,"BDV - LANÇAMENTOS")||findSheet(wb,"BDV LANÇAMENTOS")||findSheet(wb,"BDV LANCAMENTOS");
+  if(wsBDV){
+    const bdvRows=XLSX.utils.sheet_to_json(wsBDV,{raw:false,defval:""});
+    data.bdvCobertura=bdvRows.filter(r=>(r["MOTIVO"]||"").toUpperCase().includes("COBERTURA")).map(r=>{
+      const dtRaw=(r["DTHRINICIO"]||r["DATA"]||"").toString().trim();
+      const dtMatch=dtRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+      const dt=dtMatch?(dtMatch[3].length===2?"20"+dtMatch[3]:dtMatch[3])+"-"+String(dtMatch[1]).padStart(2,"0")+"-"+String(dtMatch[2]).padStart(2,"0"):dtRaw;
+      return{NOME:r["FUNCIONARIO"]||"—",DATA:dt,DESTINO:r["DESTINO"]||"—",KM:r["KMRODADO"]||"0",TEMPO:r["TEMPO"]||"—",MOTIVO:r["MOTIVO"]||"—",TURNO:"DIURNO"};
+    });
+  }else{data.bdvCobertura=[];}
   ext("RESERVAS TECNICAS",(r,I)=>{
     const mot=String(r[I["MOTIVO"]]||r[I["MOTIVOS"]]||"").trim();
     const status=RT_INDISP.has(normTxt(mot))?"INDISPONÍVEL":"TRABALHO";
@@ -2137,7 +2175,7 @@ function refreshAll(){
   ST.sd=min;ST.ed=max;
   if(min&&document.getElementById("dtF"))document.getElementById("dtF").value=ymd(min);
   if(max&&document.getElementById("dtT"))document.getElementById("dtT").value=ymd(max);
-  ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,efcli:1,clientes:1,restec:1,hrextra:1,checklist:1};
+  ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,efcli:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
   refresh();
   updVGCharts();
   const cur=document.querySelector(".page.active");
