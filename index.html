@@ -1877,7 +1877,12 @@ function isoDate(v){
   if(typeof v==="number"){
     try{const d=XLSX.SSF.parse_date_code(v);if(d)return `${d.y}-${String(d.m).padStart(2,"0")}-${String(d.d).padStart(2,"0")}`;}catch(e){}
   }
-  return String(v);
+  const s=String(v).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);
+  const p=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(p){const yr=p[3].length===2?"20"+p[3]:p[3];return yr+"-"+String(p[1]).padStart(2,"0")+"-"+String(p[2]).padStart(2,"0");}
+  const p2=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  return s;
 }
 function turnoFromEscala(esc){
   return esc&&String(esc).includes("12X36")?"NOTURNO":"DIURNO";
