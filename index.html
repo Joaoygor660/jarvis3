@@ -849,24 +849,69 @@ const USERS={
   "raphaelvictor":{nome:"Raphael Victor",cargo:"Auxiliar ADM",senha:"servcamp2026",admin:false}
 };
 function _normUser(s){return(s||"").toUpperCase().trim().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Z0-9]/g,"").toLowerCase();}
-function doLogin(e){
+async function doLogin(e){
   e.preventDefault();
   const u=_normUser(document.getElementById("loginUser").value);
   const p=document.getElementById("loginPass").value;
   const usr=USERS[u];
-  if(usr&&usr.senha===p){
-    document.getElementById("loginOverlay").classList.add("hidden");
-    sessionStorage.setItem("logged","1");
-    sessionStorage.setItem("userKey",u);
-    sessionStorage.setItem("userNome",usr.nome);
-    sessionStorage.setItem("userCargo",usr.cargo);
-    sessionStorage.setItem("userAdmin",usr.admin?"1":"0");
-    applyUserUI();
-    showWelcome();
+  if(!usr){document.getElementById("loginError").textContent="Usuário ou senha incorretos";return false;}
+  const btn=document.querySelector("#loginOverlay .login-btn");
+  if(btn){btn.disabled=true;btn.textContent="Entrando...";}
+  let override=null;
+  try{
+    const r=await fetch("/api/users?userKey="+encodeURIComponent(u));
+    if(r.ok)override=await r.json();
+  }catch(err){}
+  if(btn){btn.disabled=false;btn.textContent="Entrar";}
+  const senhaValida=override&&override.custom_password?override.custom_password===p:usr.senha===p;
+  if(!senhaValida){
+    document.getElementById("loginError").textContent="Usuário ou senha incorretos";
     return false;
   }
-  document.getElementById("loginError").textContent="Usuário ou senha incorretos";
+  document.getElementById("loginOverlay").classList.add("hidden");
+  sessionStorage.setItem("logged","1");
+  sessionStorage.setItem("userKey",u);
+  sessionStorage.setItem("userNome",usr.nome);
+  sessionStorage.setItem("userCargo",usr.cargo);
+  sessionStorage.setItem("userAdmin",usr.admin?"1":"0");
+  applyUserUI();
+  const mustChange=override?override.must_change!==false:!usr.admin;
+  if(mustChange){showForcePasswordChange(u);}
+  else{showWelcome();}
   return false;
+}
+function showForcePasswordChange(userKey){
+  const div=document.createElement("div");
+  div.id="pwChangeOverlay";
+  div.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.92);z-index:99999;display:flex;align-items:center;justify-content:center";
+  div.innerHTML='<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);border-radius:18px;padding:36px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);max-width:400px;width:90%">'+
+    '<div style="font-size:2.2rem;margin-bottom:10px">🔒</div>'+
+    '<div style="color:#fff;font-size:1.15rem;font-weight:900;margin-bottom:6px">Primeiro Acesso</div>'+
+    '<div style="color:#b9cce8;font-size:.8rem;margin-bottom:22px;line-height:1.5">Por segurança, crie uma nova senha pessoal para continuar.</div>'+
+    '<input id="pwNew1" type="password" placeholder="Nova senha (mín. 6 caracteres)" style="width:100%;padding:11px 14px;border-radius:8px;border:none;margin-bottom:10px;font-size:.85rem;box-sizing:border-box">'+
+    '<input id="pwNew2" type="password" placeholder="Confirme a nova senha" style="width:100%;padding:11px 14px;border-radius:8px;border:none;margin-bottom:14px;font-size:.85rem;box-sizing:border-box">'+
+    '<div id="pwError" style="color:#fca5a5;font-size:.72rem;margin-bottom:10px;min-height:14px"></div>'+
+    '<button id="pwSaveBtn" onclick="_savePassword(\''+userKey+'\')" style="width:100%;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#2e8fef,#1e4d8c);color:#fff;font-weight:800;font-size:.85rem;cursor:pointer">Salvar e Continuar</button>'+
+    '</div>';
+  document.body.appendChild(div);
+}
+async function _savePassword(userKey){
+  const p1=document.getElementById("pwNew1").value;
+  const p2=document.getElementById("pwNew2").value;
+  const errEl=document.getElementById("pwError");
+  if(p1.length<6){errEl.textContent="A senha deve ter ao menos 6 caracteres.";return;}
+  if(p1!==p2){errEl.textContent="As senhas não coincidem.";return;}
+  const btn=document.getElementById("pwSaveBtn");
+  btn.disabled=true;btn.textContent="Salvando...";
+  try{
+    const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userKey:userKey,newPassword:p1})});
+    if(!r.ok){const d=await r.json().catch(()=>({}));errEl.textContent=d.error||"Erro ao salvar senha.";btn.disabled=false;btn.textContent="Salvar e Continuar";return;}
+    document.getElementById("pwChangeOverlay").remove();
+    showWelcome();
+  }catch(err){
+    errEl.textContent="Falha de conexão. Tente novamente.";
+    btn.disabled=false;btn.textContent="Salvar e Continuar";
+  }
 }
 function applyUserUI(){
   const isAdmin=sessionStorage.getItem("userAdmin")==="1";
