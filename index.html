@@ -512,6 +512,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="oc c6 oc-alert" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c7"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c8"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
+      <div class="oc c2" onclick="_showNovosClientes()"><div class="oc-ic">✨</div><div class="oc-lb">Novos Clientes</div><div class="oc-v" id="oc9">—</div><div class="oc-sb">implantados</div></div>
     </div>
     <div class="snav">
       <button class="snt active" onclick="navTo('visao',null)">📊 Visão Geral</button>
@@ -1077,6 +1078,31 @@ function updOC(){
   document.getElementById("oc6").textContent=F.dispo.length;
   document.getElementById("oc7").textContent=F.faltas.filter(r=>r.TIPO==="CONTRATO").length;
   document.getElementById("oc8").textContent=F.faltas.filter(r=>r.TIPO==="RESERVA").length;
+  document.getElementById("oc9").textContent=(DASHBOARD_DATA.novosClientes||[]).length;
+}
+function _showNovosClientes(){
+  const lista=(DASHBOARD_DATA.novosClientes||[]).slice().sort((a,b)=>(b.DATA||"").localeCompare(a.DATA||""));
+  let html='<div style="max-height:400px;overflow-y:auto;padding:8px">';
+  if(!lista.length){html+='<div style="color:#9aabc2;font-size:.75rem;padding:12px">Nenhum cliente novo cadastrado</div>';}
+  else{
+    html+='<table style="width:100%;border-collapse:collapse;font-size:.75rem"><thead><tr style="border-bottom:2px solid #e0e5ef;text-align:left">';
+    html+='<th style="padding:8px">Cliente</th><th style="padding:8px">Data da Implantação</th></tr></thead><tbody>';
+    lista.forEach(function(f){
+      const dt=f.DATA?f.DATA.split("-").reverse().join("/"):"—";
+      html+='<tr style="border-bottom:1px solid #edf0f5">';
+      html+='<td style="padding:8px;font-weight:700;color:#1e2d3e">✨ '+f.CLIENTE+'</td>';
+      html+='<td style="padding:8px;font-weight:700;color:#16a34a">'+dt+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  }
+  html+='</div>';
+  const existing=document.getElementById("novos-clientes-detail");
+  if(existing)existing.remove();
+  const div=document.createElement("div");
+  div.id="novos-clientes-detail";
+  div.style.cssText="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:520px;background:white;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;overflow:hidden";
+  div.innerHTML='<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="color:white;font-size:.82rem;font-weight:800">✨ Novos Clientes ('+lista.length+')</span><button onclick="document.getElementById(\'novos-clientes-detail\').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem">✕</button></div>'+html;
+  document.body.appendChild(div);
 }
 function updSN(){
   document.getElementById("sn1").textContent=F.faltas.length;
@@ -2072,6 +2098,11 @@ function buildDataFromWorkbook(wb){
       }).filter(Boolean);
     }else{data.hrextra=[];}
   }else{data.hrextra=[];console.warn("[HR EXTRA] Guia não encontrada. Guias:",wb.SheetNames.join(", "));}
+  ext("NOVOS CLIENTES",(r,I)=>{
+    const cli=r[I["CLIENTE"]];
+    if(cli===null||cli===undefined||String(cli).trim()==="")return null;
+    return{CLIENTE:cli,DATA:isoDate(r[I["DATA DA IMPLANTAÇÃO"]])};
+  },"novosClientes");
   ext("JUSTIFICATIVA VAGA DESCOBERTA",(r,I)=>({
     DATA:isoDate(r[I["DATA"]]),LOCAL:r[I["LOCALSERVICO"]],
     CARGO:r[I["DESCCARGO"]],AREA:r[I["AREA"]],
