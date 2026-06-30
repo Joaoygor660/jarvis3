@@ -499,8 +499,15 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="cnt">
   <!-- VISÃO GERAL -->
   <div class="page active" id="pg-visao">
-    <div class="vg-kpis" style="grid-template-columns:repeat(2,1fr)">
+    <div class="vg-kpis" style="grid-template-columns:repeat(3,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('vg','clientes',this)"><div class="sk-top"><span class="sk-ic">🏢</span><span class="sk-tag t-bl">Fixo</span></div><div class="sk-lbl">Clientes Ativos</div><div class="sk-v" id="vg-cl">—</div><div class="sk-sub" id="vg-cls">—</div></div>
+      <div class="sk clickable" onclick="_showNovosClientes()" style="background:linear-gradient(135deg,#fff7e6,#ffedcc);border:2px solid #f5a623;box-shadow:0 4px 18px rgba(245,166,35,.25);position:relative;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(245,166,35,.15)"></div>
+        <div class="sk-top"><span class="sk-ic">✨</span><span class="sk-tag" style="background:#f5a623;color:#fff">Novo</span></div>
+        <div class="sk-lbl" style="color:#a3650c">Novos Clientes</div>
+        <div class="sk-v" id="vg-novoscli" style="color:#d97706">—</div>
+        <div class="sk-sub" id="vg-novosclis" style="color:#b5790f">—</div>
+      </div>
       <div class="sk sk-gr clickable" onclick="skDet('vg','funcs',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-gr">Fixo</span></div><div class="sk-lbl">Funcionários Ativos</div><div class="sk-v" id="vg-fn">—</div><div class="sk-sub" id="vg-fns">—</div></div>
     </div>
     <div class="det-panel" id="det-vg"><div class="det-hdr" id="det-vg-hdr"><span class="det-title" id="det-vg-title"></span><button class="det-close" onclick="closeDet('vg')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-vg-body"></div><div class="det-sub" id="det-vg-sub"></div></div></div>
@@ -512,7 +519,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="oc c6 oc-alert" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c7"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c8"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
-      <div class="oc c2" onclick="_showNovosClientes()"><div class="oc-ic">✨</div><div class="oc-lb">Novos Clientes</div><div class="oc-v" id="oc9">—</div><div class="oc-sb">implantados</div></div>
     </div>
     <div class="snav">
       <button class="snt active" onclick="navTo('visao',null)">📊 Visão Geral</button>
@@ -1078,7 +1084,9 @@ function updOC(){
   document.getElementById("oc6").textContent=F.dispo.length;
   document.getElementById("oc7").textContent=F.faltas.filter(r=>r.TIPO==="CONTRATO").length;
   document.getElementById("oc8").textContent=F.faltas.filter(r=>r.TIPO==="RESERVA").length;
-  document.getElementById("oc9").textContent=(DASHBOARD_DATA.novosClientes||[]).length;
+  const _ncList=DASHBOARD_DATA.novosClientes||[];
+  document.getElementById("vg-novoscli").textContent=_ncList.length;
+  document.getElementById("vg-novosclis").innerHTML=_ncList.length?`<b>${_ncList[_ncList.length-1].CLIENTE}</b>`:"nenhum ainda";
 }
 function _showNovosClientes(){
   const lista=(DASHBOARD_DATA.novosClientes||[]).slice().sort((a,b)=>(b.DATA||"").localeCompare(a.DATA||""));
