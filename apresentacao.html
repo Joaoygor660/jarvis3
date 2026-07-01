@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>ServCamp — Inteligência Operacional</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#060614}
+body{
+  color:#fff;
+  font-family:'Segoe UI',system-ui,sans-serif;
+  cursor:pointer;user-select:none;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;
+}
+#stage{
+  position:relative;
+  width:1280px;height:720px;
+  flex-shrink:0;
+  overflow:hidden;
+  box-shadow:0 0 80px rgba(0,0,0,0.8);
+}
+canvas#stars{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+#progress{
+  position:absolute;top:0;left:0;height:4px;
+  background:linear-gradient(90deg,#f0a500,#ffd700,#00d4ff);
+  z-index:200;box-shadow:0 0 12px rgba(240,165,0,0.6);
+  transition:width 0.05s linear;
+}
+#slidecnt{
+  position:absolute;bottom:22px;right:30px;
+  color:rgba(255,255,255,0.2);font-size:11px;letter-spacing:3px;z-index:200;
+}
+#hint{
+  position:absolute;bottom:22px;left:30px;
+  color:rgba(255,255,255,0.18);font-size:11px;letter-spacing:1px;z-index:200;
+}
+
+/* ── SLIDES ── */
+.slide{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;z-index:10;padding:60px 100px;
+  transition:opacity 0.9s ease;pointer-events:none;
+}
+.slide.active{opacity:1;pointer-events:all}
+
+/* typography helpers */
+.lbl{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:#f0a500;font-weight:600;margin-bottom:14px;opacity:0}
+.slide.active .lbl{animation:fadeUp 0.6s 0.25s forwards}
+.ttl{font-size:52px;font-weight:900;text-align:center;line-height:1.1;letter-spacing:-1px;opacity:0}
+.slide.active .ttl{animation:fadeUp 0.7s 0.45s forwards}
+.sub{font-size:19px;color:rgba(255,255,255,0.55);text-align:center;margin-top:14px;font-weight:300;opacity:0;line-height:1.5}
+.slide.active .sub{animation:fadeUp 0.7s 0.65s forwards}
+
+.gold{color:#ffd700}.cyan{color:#00d4ff}.green{color:#00ff88}.red{color:#ff4d6d}
+
+/* keyframes */
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.82)}to{opacity:1;transform:scale(1)}}
+@keyframes slideL{from{opacity:0;transform:translateX(-36px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideR{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:translateX(0)}}
+@keyframes expandW{from{width:0}to{width:160px}}
+@keyframes shimmer{0%,100%{opacity:.8}50%{opacity:1;text-shadow:0 0 40px #ffd700,0 0 80px rgba(240,165,0,.5)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes bgPulse{0%,100%{opacity:0.06}50%{opacity:0.12}}
+
+/* ══════════════════════════════
+   SLIDE 1 — ABERTURA
+══════════════════════════════ */
+#s1 .sc-group{display:flex;flex-direction:column;align-items:center;gap:0}
+#s1 .logo-sup{font-size:13px;letter-spacing:7px;color:rgba(255,255,255,0.3);text-transform:uppercase;font-weight:300;opacity:0;margin-bottom:28px}
+#s1.active .logo-sup{animation:fadeIn 1s 0.4s forwards}
+#s1 .jarvis{
+  font-size:100px;font-weight:900;letter-spacing:18px;text-transform:uppercase;
+  background:linear-gradient(135deg,#f0a500 0%,#ffd700 35%,#fff 65%,#00d4ff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;opacity:0;
+}
+#s1.active .jarvis{animation:scaleIn 1s 0.6s forwards,shimmer 3s 1.8s infinite}
+#s1 .divline{height:2px;background:linear-gradient(90deg,transparent,#f0a500,#ffd700,transparent);margin:22px auto;width:0}
+#s1.active .divline{animation:expandW 1s 1.4s forwards}
+#s1 .tagline{font-size:20px;letter-spacing:4px;color:rgba(255,255,255,0.65);font-weight:300;text-transform:uppercase;opacity:0}
+#s1.active .tagline{animation:fadeIn 1s 1.8s forwards}
+#s1 .badge{
+  margin-top:48px;padding:8px 20px;border-radius:100px;
+  background:rgba(240,165,0,0.1);border:1px solid rgba(240,165,0,0.3);
+  font-size:11px;letter-spacing:3px;color:#f0a500;text-transform:uppercase;
+  opacity:0;
+}
+#s1.active .badge{animation:fadeIn 1s 2.2s forwards}
+
+/* ══════════════════════════════
+   SLIDE 2 — ANTES
+══════════════════════════════ */
+#s2{padding:50px 120px}
+.pain-list{margin-top:36px;width:100%;max-width:920px}
+.pain-item{
+  display:flex;align-items:flex-start;gap:22px;
+  padding:18px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+  opacity:0;
+}
+#s2.active .pain-item:nth-child(1){animation:slideL 0.55s 0.4s forwards}
+#s2.active .pain-item:nth-child(2){animation:slideL 0.55s 0.65s forwards}
+#s2.active .pain-item:nth-child(3){animation:slideL 0.55s 0.9s forwards}
+#s2.active .pain-item:nth-child(4){animation:slideL 0.55s 1.15s forwards}
+.pain-icon{font-size:34px;min-width:52px;line-height:1}
+.pain-text h3{font-size:20px;font-weight:700;margin-bottom:4px}
+.pain-text p{font-size:14px;color:rgba(255,255,255,0.45);font-weight:300}
+
+/* ══════════════════════════════
+   SLIDE 3 — NÚMEROS
+══════════════════════════════ */
+.metrics-row{display:flex;gap:32px;margin-top:48px;width:100%;max-width:1060px}
+.mc{
+  flex:1;text-align:center;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px;padding:36px 24px;opacity:0;
+}
+#s3.active .mc:nth-child(1){animation:scaleIn 0.6s 0.35s forwards}
+#s3.active .mc:nth-child(2){animation:scaleIn 0.6s 0.6s forwards}
+#s3.active .mc:nth-child(3){animation:scaleIn 0.6s 0.85s forwards}
+.mc-icon{font-size:36px;margin-bottom:16px}
+.mc-num{font-size:68px;font-weight:900;letter-spacing:-2px;line-height:1;margin-bottom:10px}
+.mc-lbl{font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:.5px;line-height:1.4}
+
+/* ══════════════════════════════
+   SLIDE 4 — FEATURES
+══════════════════════════════ */
+.feat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:18px;margin-top:36px;width:100%;max-width:1060px;
+}
+.fc{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+  border-radius:16px;padding:26px 22px;opacity:0;
+  transition:border-color .3s;
+}
+.fc:hover{border-color:rgba(240,165,0,0.4)}
+#s4.active .fc:nth-child(1){animation:fadeUp 0.45s 0.25s forwards}
+#s4.active .fc:nth-child(2){animation:fadeUp 0.45s 0.35s forwards}
+#s4.active .fc:nth-child(3){animation:fadeUp 0.45s 0.45s forwards}
+#s4.active .fc:nth-child(4){animation:fadeUp 0.45s 0.55s forwards}
+#s4.active .fc:nth-child(5){animation:fadeUp 0.45s 0.65s forwards}
+#s4.active .fc:nth-child(6){animation:fadeUp 0.45s 0.75s forwards}
+.fc-icon{font-size:26px;margin-bottom:10px}
+.fc-name{font-size:14px;font-weight:700;margin-bottom:5px}
+.fc-desc{font-size:12px;color:rgba(255,255,255,0.38);line-height:1.55}
+
+/* ══════════════════════════════
+   SLIDE 5 — TIMELINE
+══════════════════════════════ */
+.tl{display:flex;align-items:flex-start;gap:0;margin-top:56px;width:100%;max-width:1100px;position:relative}
+.tl-item{flex:1;text-align:center;position:relative;opacity:0}
+#s5.active .tl-item:nth-child(1){animation:fadeUp 0.5s 0.3s forwards}
+#s5.active .tl-item:nth-child(2){animation:fadeUp 0.5s 0.6s forwards}
+#s5.active .tl-item:nth-child(3){animation:fadeUp 0.5s 0.9s forwards}
+#s5.active .tl-item:nth-child(4){animation:fadeUp 0.5s 1.2s forwards}
+.tl-line{position:absolute;top:10px;left:50%;right:-50%;height:2px;background:rgba(255,255,255,0.1);z-index:1}
+.tl-item:last-child .tl-line{display:none}
+.tl-dot{width:20px;height:20px;border-radius:50%;margin:0 auto 18px;position:relative;z-index:2}
+.tl-ep{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);margin-bottom:8px;text-transform:uppercase}
+.tl-t{font-size:16px;font-weight:700;margin-bottom:7px}
+.tl-d{font-size:12px;color:rgba(255,255,255,0.4);line-height:1.55;padding:0 8px}
+
+/* ══════════════════════════════
+   SLIDES 6-8 — PRÓXIMAS FEATURES
+══════════════════════════════ */
+.cb{
+  display:inline-block;
+  background:linear-gradient(135deg,#f0a500,#ffd700);
+  color:#000;font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;
+  padding:6px 18px;border-radius:100px;margin-bottom:20px;opacity:0;
+}
+.slide.active .cb{animation:scaleIn 0.5s 0.2s forwards}
+.vc{
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);
+  border-radius:24px;padding:44px 52px;max-width:760px;width:100%;
+  text-align:center;margin-top:28px;opacity:0;
+}
+.slide.active .vc{animation:scaleIn 0.8s 0.55s forwards}
+.vc-desc{font-size:18px;color:rgba(255,255,255,0.65);line-height:1.7}
+.vc-desc strong{font-weight:700}
+
+/* ══════════════════════════════
+   SLIDE 9 — AUTOMAÇÃO
+══════════════════════════════ */
+#s9{background:radial-gradient(ellipse at center,rgba(240,165,0,0.07) 0%,transparent 70%)}
+.auto-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:40px;width:100%;max-width:1020px}
+.ai{
+  display:flex;align-items:flex-start;gap:18px;
+  padding:24px;background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.07);border-radius:16px;opacity:0;
+}
+#s9.active .ai:nth-child(1){animation:slideL 0.5s 0.35s forwards}
+#s9.active .ai:nth-child(2){animation:slideR 0.5s 0.55s forwards}
+#s9.active .ai:nth-child(3){animation:slideL 0.5s 0.75s forwards}
+#s9.active .ai:nth-child(4){animation:slideR 0.5s 0.95s forwards}
+.ai-icon{font-size:32px;min-width:46px}
+.ai-t{display:flex;flex-direction:column;gap:5px}
+.ai-t h4{font-size:16px;font-weight:700}
+.ai-t p{font-size:13px;color:rgba(255,255,255,0.48);line-height:1.55}
+
+/* ══════════════════════════════
+   SLIDE 10 — ACESSO
+══════════════════════════════ */
+.abox{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(240,165,0,0.35);
+  border-radius:24px;padding:44px 56px;max-width:720px;width:100%;
+  text-align:center;margin-top:28px;opacity:0;
+}
+.slide.active .abox{animation:scaleIn 0.7s 0.5s forwards}
+.aurl{
+  font-size:26px;font-weight:800;color:#ffd700;letter-spacing:1px;
+  margin:20px 0 6px;text-shadow:0 0 24px rgba(255,215,0,0.4);
+}
+.asteps{display:flex;gap:28px;justify-content:center;margin-top:32px}
+.astep{text-align:center}
+.anum{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(240,165,0,0.12);border:1px solid rgba(240,165,0,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#f0a500;margin:0 auto 10px;
+}
+.atxt{font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5}
+
+/* ══════════════════════════════
+   SLIDE 11 — FECHAMENTO
+══════════════════════════════ */
+#s11{background:radial-gradient(ellipse at center,rgba(0,212,255,0.06) 0%,transparent 65%)}
+#s11 .end-sup{font-size:12px;letter-spacing:6px;color:rgba(255,255,255,0.25);text-transform:uppercase;margin-bottom:28px;opacity:0}
+#s11.active .end-sup{animation:fadeIn 1s 0.35s forwards}
+#s11 .end-big{
+  font-size:78px;font-weight:900;text-align:center;line-height:1;
+  background:linear-gradient(135deg,#fff 25%,#ffd700 55%,#00d4ff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  opacity:0;
+}
+#s11.active .end-big{animation:scaleIn 1s 0.65s forwards}
+#s11 .end-sub{font-size:20px;color:rgba(255,255,255,0.45);font-weight:300;margin-top:22px;letter-spacing:.5px;opacity:0}
+#s11.active .end-sub{animation:fadeUp 0.8s 1.3s forwards}
+#s11 .end-tag{margin-top:48px;font-size:11px;letter-spacing:4px;color:rgba(240,165,0,0.5);text-transform:uppercase;opacity:0}
+#s11.active .end-tag{animation:fadeIn 1s 2s forwards}
+</style>
+</head>
+<body>
+
+<div id="stage">
+<canvas id="stars"></canvas>
+<div id="progress"></div>
+<div id="slidecnt"></div>
+<div id="hint">CLIQUE PARA AVANÇAR &nbsp;·&nbsp; ESPAÇO PARA PAUSAR &nbsp;·&nbsp; ← → PARA NAVEGAR</div>
+
+<!-- ══ SLIDE 1 — ANTES ══ -->
+<div class="slide" id="s2">
+  <div class="lbl">O desafio que enfrentávamos</div>
+  <div class="ttl">Como era <span class="red">antes...</span></div>
+  <div class="pain-list">
+    <div class="pain-item">
+      <div class="pain-icon">⏱</div>
+      <div class="pain-text">
+        <h3>Horas perdidas compilando relatórios manualmente</h3>
+        <p>Dados espalhados em múltiplas planilhas — horas gastas para montar algo que durava um dia</p>
+      </div>
+    </div>
+    <div class="pain-item">
+      <div class="pain-icon">🔍</div>
+      <div class="pain-text">
+        <h3>Informações desatualizadas na hora da decisão</h3>
+        <p>Gestores decidiam com dados do dia anterior — ou adivinhavam o que estava acontecendo</p>
+      </div>
+    </div>
+    <div class="pain-item">
+      <div class="pain-icon">📞</div>
+      <div class="pain-text">
+        <h3>Coberturas e postos gerenciados no improviso</h3>
+        <p>Controle reativo: somente depois do problema é que a equipe tinha visibilidade</p>
+      </div>
+    </div>
+    <div class="pain-item">
+      <div class="pain-icon">🔗</div>
+      <div class="pain-text">
+        <h3>Zero integração entre as áreas da operação</h3>
+        <p>RH, operacional e financeiro trabalhavam em silos — sem visão conjunta</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 3 — NÚMEROS ══ -->
+<div class="slide" id="s3">
+  <div class="lbl">A transformação em números</div>
+  <div class="ttl">Resultados <span class="gold">reais</span></div>
+  <div class="metrics-row">
+    <div class="mc">
+      <div class="mc-icon">⚡</div>
+      <div class="mc-num gold" data-target="87" data-suffix="%">0%</div>
+      <div class="mc-lbl">Redução no tempo gasto<br>com relatórios manuais</div>
+    </div>
+    <div class="mc">
+      <div class="mc-icon">👥</div>
+      <div class="mc-num cyan" data-target="593" data-suffix="+">0</div>
+      <div class="mc-lbl">Funcionários monitorados<br>em tempo real</div>
+    </div>
+    <div class="mc">
+      <div class="mc-icon">🖱</div>
+      <div class="mc-num green" data-target="1" data-suffix=" clique">0</div>
+      <div class="mc-lbl">Para atualizar todos os<br>dados da operação</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 4 — FEATURES ══ -->
+<div class="slide" id="s4">
+  <div class="lbl">O sistema hoje</div>
+  <div class="ttl">6 módulos. <span class="gold">Uma plataforma.</span></div>
+  <div class="feat-grid">
+    <div class="fc">
+      <div class="fc-icon">🏠</div>
+      <div class="fc-name">Visão Geral</div>
+      <div class="fc-desc">KPIs operacionais em tempo real — clientes, funcionários e novos contratos</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">👥</div>
+      <div class="fc-name">Funcionários Ativos</div>
+      <div class="fc-desc">Situação de cada colaborador: trabalho, falta, férias, suspensão e abandono</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">📋</div>
+      <div class="fc-name">Faltas & Abandono</div>
+      <div class="fc-desc">Separados por contrato e reserva, com rastreio individual por nome</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">🚗</div>
+      <div class="fc-name">Coberturas & BDV</div>
+      <div class="fc-desc">Supervisor, destino, KM rodado e tempo — tudo registrado e filtrável</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">⏰</div>
+      <div class="fc-name">Horas Extras</div>
+      <div class="fc-desc">Controle de entrada, saída e horas extras com filtro por data e área</div>
+    </div>
+    <div class="fc">
+      <div class="fc-icon">📍</div>
+      <div class="fc-name">Postos & OS</div>
+      <div class="fc-desc">Postos descobertos, justificativas e ordens de serviço centralizadas</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 5 — TIMELINE ══ -->
+<div class="slide" id="s5">
+  <div class="lbl">Nossa jornada</div>
+  <div class="ttl">De onde viemos. <span class="cyan">Para onde vamos.</span></div>
+  <div class="tl">
+    <div class="tl-item">
+      <div class="tl-line"></div>
+      <div class="tl-dot" style="background:#444"></div>
+      <div class="tl-ep">Passado</div>
+      <div class="tl-t" style="color:rgba(255,255,255,0.5)">Planilhas Manuais</div>
+      <div class="tl-d">Controle fragmentado, sem visão consolidada, alto risco de erro</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-line" style="background:linear-gradient(90deg,rgba(240,165,0,0.5),rgba(255,255,255,0.1))"></div>
+      <div class="tl-dot" style="background:#f0a500;box-shadow:0 0 12px rgba(240,165,0,0.6)"></div>
+      <div class="tl-ep" style="color:#f0a500">Agora ✓</div>
+      <div class="tl-t" style="color:#ffd700">Dashboard JARVIS</div>
+      <div class="tl-d">Operação inteira em tempo real — com 1 upload por dia</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-line" style="background:linear-gradient(90deg,rgba(0,212,255,0.3),rgba(255,255,255,0.05))"></div>
+      <div class="tl-dot" style="background:#00d4ff;box-shadow:0 0 14px rgba(0,212,255,0.7)"></div>
+      <div class="tl-ep" style="color:#00d4ff">Em breve</div>
+      <div class="tl-t" style="color:#00d4ff">Inteligência de Clientes</div>
+      <div class="tl-d">Mensagens, feedback e acompanhamento de satisfação</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-dot" style="background:rgba(255,255,255,0.1);border:2px dashed rgba(255,255,255,0.25)"></div>
+      <div class="tl-ep">Futuro</div>
+      <div class="tl-t" style="color:rgba(255,255,255,0.35)">IA Operacional Total</div>
+      <div class="tl-d" style="color:rgba(255,255,255,0.25)">Predição, automação e integração completa de sistemas</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 6 — MENSAGEM AOS CLIENTES ══ -->
+<div class="slide" id="s6">
+  <div class="cb">✨ Próxima versão</div>
+  <div class="lbl">O que vem por aí</div>
+  <div class="ttl">📩 Mensagem <span class="gold">aos Clientes</span></div>
+  <div class="vc">
+    <div class="vc-desc">
+      Envie comunicados, avisos e relatórios operacionais diretamente para seus clientes
+      <strong style="color:#ffd700"> pelo próprio sistema</strong> — sem e-mail avulso, sem WhatsApp manual, sem retrabalho.<br><br>
+      Histórico de todas as comunicações centralizado. Rastreabilidade total de quem recebeu e quando.
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 7 — FEEDBACK DE CLIENTES ══ -->
+<div class="slide" id="s7">
+  <div class="cb">✨ Próxima versão</div>
+  <div class="lbl">O que vem por aí</div>
+  <div class="ttl">⭐ Acompanhamento de <span class="cyan">Feedback</span></div>
+  <div class="vc" style="border-color:rgba(0,212,255,0.3)">
+    <div class="vc-desc">
+      Colete avaliações e satisfação dos seus clientes de forma estruturada.
+      Saiba <strong style="color:#00d4ff">o que está funcionando</strong> e onde a operação precisa melhorar — com dados reais, não achismos.<br><br>
+      Painel de NPS por contrato. Histórico de feedbacks. Alertas automáticos de insatisfação.
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 8 — SUPERVISORES ══ -->
+<div class="slide" id="s8">
+  <div class="cb">✨ Próxima versão</div>
+  <div class="lbl">O que vem por aí</div>
+  <div class="ttl">📊 Dados Conjuntos para <span class="green">Supervisores</span></div>
+  <div class="vc" style="border-color:rgba(0,255,136,0.25)">
+    <div class="vc-desc">
+      Chega de dados separados. O supervisor acessa
+      <strong style="color:#00ff88"> rota, coberturas, postos e equipe</strong> em uma única tela.<br><br>
+      Menos deslocamento desnecessário. Menos ligação para confirmar informação.
+      Mais tempo tomando decisão certa na hora certa.
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 9 — AUTOMAÇÃO ══ -->
+<div class="slide" id="s9">
+  <div class="lbl">A grande visão</div>
+  <div class="ttl">O poder da <span class="gold">Automação</span></div>
+  <div class="auto-grid">
+    <div class="ai">
+      <div class="ai-icon">🤖</div>
+      <div class="ai-t">
+        <h4>Alertas automáticos em tempo real</h4>
+        <p>Sistema detecta postos descobertos e notifica os responsáveis — antes que o cliente perceba</p>
+      </div>
+    </div>
+    <div class="ai">
+      <div class="ai-icon">📈</div>
+      <div class="ai-t">
+        <h4>Relatórios que se geram sozinhos</h4>
+        <p>Documentos prontos com 1 clique — enviados automaticamente para o e-mail dos gestores</p>
+      </div>
+    </div>
+    <div class="ai">
+      <div class="ai-icon">🎯</div>
+      <div class="ai-t">
+        <h4>Predição de faltas e coberturas</h4>
+        <p>Antecipe problemas antes que aconteçam usando histórico e padrões da sua operação</p>
+      </div>
+    </div>
+    <div class="ai">
+      <div class="ai-icon">🔗</div>
+      <div class="ai-t">
+        <h4>Integração total sem retrabalho</h4>
+        <p>Todos os dados da operação conectados — eliminando entrada manual e erros humanos</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 10 — ACESSO ══ -->
+<div class="slide" id="s10">
+  <div class="lbl">Pronto para começar</div>
+  <div class="ttl">Acesse <span class="gold">agora mesmo</span></div>
+  <div class="abox">
+    <div style="font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:3px;margin-bottom:6px">SEU DASHBOARD</div>
+    <div class="aurl">jarvis3.vercel.app</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px">Acesse de qualquer dispositivo — computador, tablet ou celular</div>
+    <div class="asteps">
+      <div class="astep">
+        <div class="anum">1</div>
+        <div class="atxt">Abra a URL<br>no navegador</div>
+      </div>
+      <div class="astep">
+        <div class="anum">2</div>
+        <div class="atxt">Insira seu<br>usuário e senha</div>
+      </div>
+      <div class="astep">
+        <div class="anum">3</div>
+        <div class="atxt">Crie sua senha<br>pessoal segura</div>
+      </div>
+      <div class="astep">
+        <div class="anum">4</div>
+        <div class="atxt">Explore o<br>sistema! 🚀</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 11 — FECHAMENTO ══ -->
+<div class="slide" id="s11">
+  <div class="end-sup">Grupo ServCamp · Convert Vision · 2026</div>
+  <div class="end-big">O futuro<br>é agora.</div>
+  <div class="end-sub">Inteligência operacional que transforma dados em decisões.</div>
+  <div class="end-tag">Automação Inteligente &nbsp;·&nbsp; Menos operação &nbsp;·&nbsp; Mais estratégia</div>
+</div>
+</div><!-- /stage -->
+
+<script>
+/* ── Stars ── */
+const canvas=document.getElementById('stars');
+const ctx=canvas.getContext('2d');
+canvas.width=1280;canvas.height=720;
+const stars=Array.from({length:180},()=>({
+  x:Math.random()*1280,y:Math.random()*720,
+  r:Math.random()*1.4+0.2,
+  o:Math.random()*0.4+0.08,
+  s:Math.random()*0.25+0.04
+}));
+(function animStars(){
+  ctx.clearRect(0,0,1280,720);
+  stars.forEach(s=>{
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${s.o})`;ctx.fill();
+    s.o+=s.s*0.018;
+    if(s.o>0.65||s.o<0.07)s.s=-s.s;
+  });
+  requestAnimationFrame(animStars);
+})();
+
+/* ── Slide config ── */
+const SLIDES=[
+  {id:'s2', dur:8500},
+  {id:'s3', dur:8000},
+  {id:'s4', dur:9000},
+  {id:'s5', dur:8500},
+  {id:'s6', dur:7500},
+  {id:'s7', dur:7500},
+  {id:'s8', dur:7500},
+  {id:'s9', dur:8500},
+  {id:'s10',dur:8000},
+  {id:'s11',dur:9000},
+];
+const TOTAL=SLIDES.reduce((a,s)=>a+s.dur,0);
+
+let cur=0,paused=false,elapsed=0,lastTs=null,globalEl=0,slideStartG=0;
+const progEl=document.getElementById('progress');
+const cntEl=document.getElementById('slidecnt');
+const hintEl=document.getElementById('hint');
+
+function showSlide(i){
+  SLIDES.forEach((s,j)=>{
+    document.getElementById(s.id).classList.toggle('active',j===i);
+  });
+  cntEl.textContent=`${i+1} / ${SLIDES.length}`;
+  if(i===1)animCounters();
+}
+
+function animCounters(){
+  document.querySelectorAll('#s3 .mc-num[data-target]').forEach(el=>{
+    const tgt=parseInt(el.dataset.target);
+    const sfx=el.dataset.suffix||'';
+    let t0=null;const DUR=1600;
+    function step(ts){
+      if(!t0)t0=ts;
+      const p=Math.min((ts-t0)/DUR,1);
+      const e=1-Math.pow(1-p,3);
+      el.textContent=Math.round(e*tgt)+sfx;
+      if(p<1)requestAnimationFrame(step);
+    }
+    setTimeout(()=>requestAnimationFrame(step),500);
+  });
+}
+
+function tick(ts){
+  if(!lastTs)lastTs=ts;
+  if(!paused){
+    const dt=ts-lastTs;
+    elapsed+=dt;globalEl+=dt;
+    const globalPct=Math.min((slideStartG+elapsed)/TOTAL*100,100);
+    progEl.style.width=globalPct+'%';
+    if(elapsed>=SLIDES[cur].dur){
+      if(cur<SLIDES.length-1){
+        slideStartG+=SLIDES[cur].dur;elapsed=0;cur++;showSlide(cur);
+      } else {
+        elapsed=SLIDES[cur].dur;progEl.style.width='100%';
+      }
+    }
+  }
+  lastTs=ts;
+  requestAnimationFrame(tick);
+}
+
+function next(){if(cur<SLIDES.length-1){slideStartG+=SLIDES[cur].dur;elapsed=0;cur++;showSlide(cur);}}
+function prev(){if(cur>0){slideStartG-=SLIDES[cur].dur;elapsed=0;cur--;showSlide(cur);}}
+
+document.body.addEventListener('click',next);
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'){
+    paused=!paused;lastTs=null;
+    hintEl.textContent=paused
+      ?'⏸ PAUSADO  ·  CLIQUE PARA CONTINUAR'
+      :'CLIQUE PARA AVANÇAR  ·  ESPAÇO PARA PAUSAR  ·  ← → PARA NAVEGAR';
+    e.preventDefault();
+  }
+  if(e.code==='ArrowRight')next();
+  if(e.code==='ArrowLeft')prev();
+});
+
+showSlide(0);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
