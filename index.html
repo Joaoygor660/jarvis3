@@ -753,8 +753,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="det-panel" id="det-rtmot"><div class="det-hdr" id="det-rtmot-hdr"><span class="det-title" id="det-rtmot-title"></span><button class="det-close" onclick="closeDet('rtmot')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-rtmot-body"></div><div class="det-sub" id="det-rtmot-sub"></div></div></div>
     <div class="grid-2" style="margin-top:11px">
-      <div class="cc"><div class="ch"><div class="chb" style="background:#16a34a"></div><span class="ct">Trabalhando — por Cargo</span></div><div class="cw" style="height:250px"><canvas id="cRT3"></canvas></div></div>
       <div class="cc"><div class="ch"><div class="chb" style="background:#dc2626"></div><span class="ct">Indisponíveis — por Motivo</span></div><div class="cw" style="height:250px"><canvas id="cRT4"></canvas></div></div>
+      <div class="cc"><div class="ch"><div class="chb" style="background:#16a34a"></div><span class="ct">Trabalhando — por Cargo</span></div><div class="cw" style="height:250px"><canvas id="cRT3"></canvas></div></div>
     </div>
     <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb" style="background:#1e4d8c"></div><span class="ct">Todos os Motivos</span></div><div class="cw" style="height:300px"><canvas id="cRT5"></canvas></div></div>
     <div class="ts" style="margin-top:11px"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Lista de Reservas Técnicas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-restec" oninput="rTbl('restec')"></div></div><div id="tbl-restec"></div><div class="pag"><div class="pi2" id="pi-restec"></div><div class="pbs" id="pb-restec"></div></div></div>
@@ -1416,7 +1416,7 @@ function updDispoC(){
   const re=topN(d,"RESERVA",8);mkBar("cD2",re.map(([k])=>k.length>14?k.substring(0,14)+"…":k),re.map(([,v])=>v),"#ef4444",true);
 }
 
-const RT_INDISP=new Set(["INSS","ABANDONO","FALTA","FOLGA","SUSPENSAO","SUSPENSÃO"]);
+const RT_INDISP=new Set(["INSS","ABANDONO","FALTA","FOLGA","SUSPENSAO","SUSPENSÃO","FERIAS"]);
 function _rtIndisp(r){return RT_INDISP.has(normTxt(r.MOTIVO));}
 function updRestecC(){
   const d=F.restec;
