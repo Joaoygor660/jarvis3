@@ -519,6 +519,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="oc c6 oc-alert" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c7"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c8"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
+      <div class="oc oc-alert" onclick="_postoVagoClick()" style="cursor:pointer;border-color:#e53e3e;background:linear-gradient(135deg,#fff5f5,#fed7d7)"><div class="oc-ic">🚨</div><div class="oc-lb" style="color:#c53030">Posto Descoberto</div><div class="oc-v" id="oc9" style="color:#e53e3e">—</div><div class="oc-sb" style="color:#e53e3e">vago sem cobertura</div></div>
     </div>
     <div class="snav">
       <button class="snt active" onclick="navTo('visao',null)">📊 Visão Geral</button>
@@ -1130,6 +1131,7 @@ function updOC(){
   document.getElementById("oc6").textContent=F.dispo.length;
   document.getElementById("oc7").textContent=F.faltas.filter(r=>r.TIPO==="CONTRATO").length;
   document.getElementById("oc8").textContent=F.faltas.filter(r=>r.TIPO==="RESERVA").length;
+  document.getElementById("oc9").textContent=(F.justif||[]).filter(r=>(r.MOTIVO||"").toUpperCase().includes("VAGO SEM COBERTURA")).length;
   const _ncList=DASHBOARD_DATA.novosClientes||[];
   document.getElementById("vg-novoscli").textContent=_ncList.length;
   document.getElementById("vg-novosclis").innerHTML=_ncList.length?`<b>${_ncList[_ncList.length-1].CLIENTE}</b>`:"nenhum ainda";
