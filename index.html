@@ -2285,7 +2285,7 @@ function buildDataFromWorkbook(wb){
       RESPONSAVEL:r[I["NOMESOLICITACAONTE"]],NOME:r[I["NOMEFUNC"]]
     };
   },"os");
-  ext("DISPO DE PLANTÃO",(r,I)=>({
+  ext("DISPONIBILIDADE DE PLANTÃO",(r,I)=>({
     DATA:isoDate(r[I["DATA"]]),NOME:r[I["FUNCIONARIO"]],
     TURNO:r[I["TURNO"]],RESERVA:r[I["RESERVA"]],
     SITUACAO:r[I["SITUACAOPONTO"]],AREA:r[I["AREASUPERVISAO"]],
