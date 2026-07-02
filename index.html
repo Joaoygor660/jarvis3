@@ -2161,12 +2161,18 @@ function buildDataFromWorkbook(wb){
     CARGO:r[I["DESCCARGO"]],AREA:r[I["AREA"]],
     TURNO:r[I["DESCTURNO"]],MOTIVO:r[I["DESCMOTIVO"]]
   }),"justif");
-  ext("OS AVULSOS",(r,I)=>({
-    DATA:isoDate(r[I["DTINICIO"]]),LOCAL:r[I["NOMELOCAL"]],
-    CARGO:r[I["CARGO"]],TIPO:r[I["TIPO DE OS"]],
-    TURNO:r[I["TURNO"]],STATUS:r[I["SITSOLICITACAO"]],
-    RESPONSAVEL:r[I["NOMESOLICITACAONTE"]],NOME:r[I["NOMEFUNC"]]
-  }),"os");
+  ext("OS AVULSOS",(r,I)=>{
+    const tipoCol=I["TIPO DE OS"]??I["TIPO OS"]??I["TIPOOS"]??I["TIPO"];
+    const tipo=(r[tipoCol]||"").toString().toUpperCase().trim();
+    const dtCol=I["DTINICIO"]??I["DATA INICIO"]??I["DATA"];
+    return{
+      DATA:isoDate(r[dtCol]),LOCAL:r[I["NOMELOCAL"]],
+      CARGO:r[I["CARGO"]],TIPO:tipo,
+      TURNO:(r[I["TURNO"]]||"").toString().toUpperCase().trim(),
+      STATUS:r[I["SITSOLICITACAO"]],
+      RESPONSAVEL:r[I["NOMESOLICITACAONTE"]],NOME:r[I["NOMEFUNC"]]
+    };
+  },"os");
   ext("DISPO DE PLANTÃO",(r,I)=>({
     DATA:isoDate(r[I["DATA"]]),NOME:r[I["FUNCIONARIO"]],
     TURNO:r[I["TURNO"]],RESERVA:r[I["RESERVA"]],
