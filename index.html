@@ -650,9 +650,9 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 
     <div class="sec-hdr" style="margin-top:16px"><span class="sec-hdr-ic">🚗</span><div><div class="sec-hdr-t">Coberturas Realizadas pelo Supervisor</div><div class="sec-hdr-sub">Supervisores que foram pessoalmente ao local realizar a cobertura (BDV)</div></div></div>
     <div class="sec-kpis" style="grid-template-columns:repeat(3,1fr)">
-      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🚗</span><span class="sk-tag t-bl">BDV</span></div><div class="sk-lbl">Total Coberturas</div><div class="sk-v" id="bdv-tot">—</div><div class="sk-sub" id="bdv-tots">—</div></div>
-      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">👤</span></div><div class="sk-lbl">Supervisores</div><div class="sk-v" id="bdv-sups">—</div><div class="sk-sub">que realizaram</div></div>
-      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">📍</span></div><div class="sk-lbl">Destinos</div><div class="sk-v" id="bdv-dest">—</div><div class="sk-sub">locais atendidos</div></div>
+      <div class="sk sk-bl clickable" onclick="_bdvClick('total')"><div class="sk-top"><span class="sk-ic">🚗</span><span class="sk-tag t-bl">BDV</span></div><div class="sk-lbl">Total Coberturas</div><div class="sk-v" id="bdv-tot">—</div><div class="sk-sub" id="bdv-tots">—</div></div>
+      <div class="sk sk-gr clickable" onclick="_bdvClick('sups')"><div class="sk-top"><span class="sk-ic">👤</span></div><div class="sk-lbl">Supervisores</div><div class="sk-v" id="bdv-sups">—</div><div class="sk-sub">que realizaram</div></div>
+      <div class="sk sk-or clickable" onclick="_bdvClick('dest')"><div class="sk-top"><span class="sk-ic">📍</span></div><div class="sk-lbl">Destinos</div><div class="sk-v" id="bdv-dest">—</div><div class="sk-sub">locais atendidos</div></div>
     </div>
     <div class="grid-2" style="margin-top:11px">
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Coberturas por Supervisor</span></div><div class="cw" style="height:250px"><canvas id="cBDV1"></canvas></div></div>
@@ -1155,6 +1155,72 @@ function _showNovosClientes(){
   div.id="novos-clientes-detail";
   div.style.cssText="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:520px;background:white;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;overflow:hidden";
   div.innerHTML='<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="color:white;font-size:.82rem;font-weight:800">✨ Novos Clientes ('+lista.length+')</span><button onclick="document.getElementById(\'novos-clientes-detail\').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem">✕</button></div>'+html;
+  document.body.appendChild(div);
+}
+function _bdvClick(tipo){
+  const bdv=(F.bdvCobertura||[]).slice().sort((a,b)=>(a.DATA||"").localeCompare(b.DATA||""));
+  const fmtDt=d=>d?d.split("-").reverse().join("/"):"—";
+  let titulo,html='';
+  const thStyle='padding:8px 10px;text-align:left;font-size:.72rem;color:#9aabc2;font-weight:600;letter-spacing:.5px;border-bottom:2px solid #e0e5ef';
+  const tdStyle='padding:8px 10px;font-size:.75rem;border-bottom:1px solid #edf0f5';
+
+  if(tipo==='total'){
+    titulo='🚗 Coberturas BDV — Detalhes ('+bdv.length+')';
+    html='<div style="max-height:420px;overflow-y:auto;padding:8px"><table style="width:100%;border-collapse:collapse"><thead><tr>';
+    html+='<th style="'+thStyle+'">Data</th><th style="'+thStyle+'">Supervisor</th><th style="'+thStyle+'">Cliente / Destino</th><th style="'+thStyle+'">Horário</th></tr></thead><tbody>';
+    bdv.forEach(r=>{
+      html+='<tr>';
+      html+='<td style="'+tdStyle+';color:#5a7a9a">'+fmtDt(r.DATA)+'</td>';
+      html+='<td style="'+tdStyle+';font-weight:700;color:#1e2d3e">'+r.NOME+'</td>';
+      html+='<td style="'+tdStyle+';color:#1d6fc4">📍 '+r.DESTINO+'</td>';
+      html+='<td style="'+tdStyle+';font-weight:800;color:#16a34a;font-size:.82rem">⏰ '+(r.HORARIO||"—")+'</td>';
+      html+='</tr>';
+    });
+    html+='</tbody></table></div>';
+  } else if(tipo==='sups'){
+    titulo='👤 Coberturas por Supervisor';
+    const grp={};
+    bdv.forEach(r=>{const k=r.NOME||"—";if(!grp[k])grp[k]=[];grp[k].push(r);});
+    html='<div style="max-height:420px;overflow-y:auto;padding:8px">';
+    Object.entries(grp).sort((a,b)=>b[1].length-a[1].length).forEach(([sup,rows])=>{
+      html+='<div style="margin-bottom:16px"><div style="font-size:.78rem;font-weight:800;color:#1e2d3e;padding:6px 8px;background:#f0f4ff;border-radius:6px;margin-bottom:6px">👤 '+sup+' <span style="color:#1d6fc4;font-weight:400">('+rows.length+' cobertura'+(rows.length>1?'s':'')+')</span></div>';
+      html+='<table style="width:100%;border-collapse:collapse"><thead><tr>';
+      html+='<th style="'+thStyle+'">Data</th><th style="'+thStyle+'">Cliente / Destino</th><th style="'+thStyle+'">Horário</th></tr></thead><tbody>';
+      rows.forEach(r=>{
+        html+='<tr>';
+        html+='<td style="'+tdStyle+';color:#5a7a9a">'+fmtDt(r.DATA)+'</td>';
+        html+='<td style="'+tdStyle+';color:#1d6fc4">📍 '+r.DESTINO+'</td>';
+        html+='<td style="'+tdStyle+';font-weight:800;color:#16a34a">⏰ '+(r.HORARIO||"—")+'</td>';
+        html+='</tr>';
+      });
+      html+='</tbody></table></div>';
+    });
+    html+='</div>';
+  } else {
+    titulo='📍 Destinos Atendidos';
+    const grp={};
+    bdv.forEach(r=>{const k=r.DESTINO||"—";if(!grp[k])grp[k]=[];grp[k].push(r);});
+    html='<div style="max-height:420px;overflow-y:auto;padding:8px"><table style="width:100%;border-collapse:collapse"><thead><tr>';
+    html+='<th style="'+thStyle+'">Cliente / Destino</th><th style="'+thStyle+'">Data</th><th style="'+thStyle+'">Horário</th><th style="'+thStyle+'">Supervisor</th></tr></thead><tbody>';
+    Object.entries(grp).sort((a,b)=>b[1].length-a[1].length).forEach(([dest,rows])=>{
+      rows.forEach((r,i)=>{
+        html+='<tr>';
+        if(i===0)html+='<td style="'+tdStyle+';font-weight:700;color:#1d6fc4" rowspan="'+rows.length+'">📍 '+dest+'</td>';
+        html+='<td style="'+tdStyle+';color:#5a7a9a">'+fmtDt(r.DATA)+'</td>';
+        html+='<td style="'+tdStyle+';font-weight:800;color:#16a34a">⏰ '+(r.HORARIO||"—")+'</td>';
+        html+='<td style="'+tdStyle+';color:#1e2d3e">'+r.NOME+'</td>';
+        html+='</tr>';
+      });
+    });
+    html+='</tbody></table></div>';
+  }
+
+  const id='bdv-modal-det';
+  const ex=document.getElementById(id);if(ex)ex.remove();
+  const div=document.createElement('div');
+  div.id=id;
+  div.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;max-width:680px;background:white;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:9999;overflow:hidden';
+  div.innerHTML='<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="color:white;font-size:.82rem;font-weight:800">'+titulo+'</span><button onclick="document.getElementById(\'bdv-modal-det\').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem">✕</button></div>'+html;
   document.body.appendChild(div);
 }
 function updSN(){
@@ -1749,7 +1815,7 @@ function closeDet(sec){
 const TCFG={
   faltas:{d:()=>F.faltas,s:"s-faltas",cols:["DATA","NOME","LOCAL","CARGO","AREA","ABONO","TIPO","TURNO"],hdrs:["Data","Funcionário","Local","Cargo","Área","Abono","Tipo","Turno"],b:["ABONO","TIPO","TURNO"]},
   coberturas:{d:()=>F.cobertura,s:"s-coberturas",cols:["DATA","NOME","LOCAL","AREA","TURNO","MOTIVO"],hdrs:["Data","Funcionário","Local","Área","Turno","Motivo"],b:["TURNO"]},
-  bdvcob:{d:()=>F.bdvCobertura||[],s:"s-bdvcob",cols:["DATA","NOME","DESTINO","KM","TEMPO"],hdrs:["Data","Supervisor","Destino","KM Rodado","Tempo"],b:[]},
+  bdvcob:{d:()=>F.bdvCobertura||[],s:"s-bdvcob",cols:["DATA","NOME","DESTINO","HORARIO","KM","TEMPO"],hdrs:["Data","Supervisor","Destino","Horário","KM Rodado","Tempo"],b:[]},
   postos:{d:()=>F.justif,s:"s-postos",cols:["DATA","LOCAL","CARGO","AREA","TURNO","MOTIVO"],hdrs:["Data","Local","Cargo","Área","Turno","Motivo"],b:["TURNO"]},
   os:{d:()=>F.os,s:"s-os",cols:["DATA","LOCAL","CARGO","TIPO","TURNO","STATUS","RESPONSAVEL"],hdrs:["Data","Local","Cargo","Tipo OS","Turno","Status","Responsável"],b:["TIPO","TURNO"]},
   fts:{d:()=>F.fts,s:"s-fts",cols:["DATA","NOME","LOCAL","CARGO","AREA","TIPO","TURNO","MOTIVO"],hdrs:["Data","Funcionário","Local","Cargo","Área","Tipo","Turno","Motivo"],b:["TIPO","TURNO"]},
@@ -2262,7 +2328,7 @@ function buildDataFromWorkbook(wb){
       const dtRaw=(r["DTHRINICIO"]||r["DATA"]||"").toString().trim();
       const dtMatch=dtRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
       const dt=dtMatch?(dtMatch[3].length===2?"20"+dtMatch[3]:dtMatch[3])+"-"+String(dtMatch[1]).padStart(2,"0")+"-"+String(dtMatch[2]).padStart(2,"0"):dtRaw;
-      return{NOME:r["FUNCIONARIO"]||"—",DATA:dt,DESTINO:r["DESTINO"]||"—",KM:r["KMRODADO"]||"0",TEMPO:r["TEMPO"]||"—",MOTIVO:r["MOTIVO"]||"—",TURNO:"DIURNO"};
+      return{NOME:r["FUNCIONARIO"]||"—",DATA:dt,DESTINO:r["DESTINO"]||"—",KM:r["KMRODADO"]||"0",TEMPO:r["TEMPO"]||"—",MOTIVO:r["MOTIVO"]||"—",TURNO:"DIURNO",HORARIO:r["HORARIO"]||r["HORÁRIO"]||"—"};
     });
   }else{data.bdvCobertura=[];}
   ext("RESERVAS TECNICAS",(r,I)=>{
