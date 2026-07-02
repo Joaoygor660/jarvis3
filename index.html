@@ -442,10 +442,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ni" onclick="navTo('ativos',this)"><span class="ni-ic">👤</span><span>Funcionários Ativos</span></div>
   </div>
   <div class="nav-sec">
-    <div class="nav-lbl">Funcionarios</div>
-    <div class="ni" onclick="navTo('efcli',this)"><span class="ni-ic">🏢</span><span>Efetivos Clientes</span></div>
-  </div>
-  <div class="nav-sec">
     <div class="nav-lbl">Operações</div>
     <div class="ni" onclick="navTo('faltas',this)"><span class="ni-ic">🚫</span><span>Faltas &amp; Top 10</span></div>
     <div class="ni" onclick="navTo('coberturas',this)"><span class="ni-ic">🛡️</span><span>Coberturas</span></div>
@@ -546,10 +542,12 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <!-- FUNCIONÁRIOS ATIVOS -->
   <div class="page" id="pg-ativos">
     <div class="sec-hdr"><span class="sec-hdr-ic">👤</span><div><div class="sec-hdr-t">Funcionários Ativos</div><div class="sec-hdr-sub">Quadro completo de pessoal ativo no Grupo ServCamp</div></div></div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(3,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(5,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('ativos','total',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-bl">Fixo</span></div><div class="sk-lbl">Total Ativos</div><div class="sk-v" id="at-tot">—</div><div class="sk-sub" id="at-tots">—</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('ativos','diurno',this)"><div class="sk-top"><span class="sk-ic">☀️</span></div><div class="sk-lbl">Turno Diurno</div><div class="sk-v" id="at-di">—</div><div class="sk-sub" id="at-dis">—</div></div>
       <div class="sk sk-or clickable" onclick="skDet('ativos','noturno',this)"><div class="sk-top"><span class="sk-ic">🌙</span></div><div class="sk-lbl">Turno Noturno</div><div class="sk-v" id="at-no">—</div><div class="sk-sub" id="at-nos">—</div></div>
+      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Efetivos</div><div class="sk-v" id="at-efe">—</div><div class="sk-sub" id="at-efes">—</div></div>
+      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🔄</span></div><div class="sk-lbl">Plantonistas</div><div class="sk-v" id="at-plan">—</div><div class="sk-sub" id="at-plans">—</div></div>
     </div>
     <div class="sec-kpis" style="grid-template-columns:repeat(7,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('ativos','ferias',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias</div><div class="sk-v" id="at-ferias">—</div><div class="sk-sub" id="at-feriass">—</div></div>
@@ -564,21 +562,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="det-panel" id="det-ativos"><div class="det-hdr" id="det-ativos-hdr"><span class="det-title" id="det-ativos-title"></span><button class="det-close" onclick="closeDet('ativos')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-ativos-body"></div><div class="det-sub" id="det-ativos-sub"></div></div></div>
     <div id="cargo-situacao-wrap"></div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Lista de Funcionários Ativos</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-ativos" oninput="rTbl('ativos')"></div></div><div id="tbl-ativos"></div><div class="pag"><div class="pi2" id="pi-ativos"></div><div class="pbs" id="pb-ativos"></div></div></div>
-  </div>
-
-  <!-- EFETIVOS CLIENTES -->
-  <div class="page" id="pg-efcli">
-    <div class="sec-hdr"><span class="sec-hdr-ic">🏢</span><div><div class="sec-hdr-t">Efetivos Clientes</div><div class="sec-hdr-sub">Quantidade de funcionários ativos por cliente atendido</div></div></div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(3,1fr)">
-      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-bl">Principal</span></div><div class="sk-lbl">Funcionários Ativos</div><div class="sk-v" id="ec-tot">—</div><div class="sk-sub" id="ec-tots">—</div></div>
-      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Efetivos</div><div class="sk-v" id="ec-efe">—</div><div class="sk-sub" id="ec-efes">—</div></div>
-      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🔄</span></div><div class="sk-lbl">Plantonistas</div><div class="sk-v" id="ec-plan">—</div><div class="sk-sub" id="ec-plans">—</div></div>
-    </div>
-    <div class="grid-2">
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Top 10 Clientes por Efetivos</span></div><div class="cw" style="height:250px"><canvas id="cEC1"></canvas></div></div>
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Turno</span></div><div class="cw" style="height:250px"><canvas id="cEC3"></canvas></div></div>
-    </div>
-    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Efetivos por Cliente</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar cliente..." id="s-efcli" oninput="rTbl('efcli')"></div></div><div id="tbl-efcli"></div><div class="pag"><div class="pi2" id="pi-efcli"></div><div class="pbs" id="pb-efcli"></div></div></div>
   </div>
 
   <!-- CLIENTES -->
@@ -1033,7 +1016,7 @@ function toggleSb(){const sb=document.getElementById("sidebar"),ov=document.getE
 const _origNavTo=typeof navTo==="function"?navTo:null;
 document.querySelectorAll(".ni").forEach(el=>{const orig=el.getAttribute("onclick");el.addEventListener("click",()=>{if(window.innerWidth<=768){document.getElementById("sidebar").classList.remove("open");document.getElementById("mobOverlay").classList.remove("show");}});});
 </script><script>
-const ST={period:"all",turno:"TODOS",area:"",pg:"visao",tpg:{faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,efcli:1,clientes:1},ps:15,sd:null,ed:null};
+const ST={period:"all",turno:"TODOS",area:"",pg:"visao",tpg:{faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1},ps:15,sd:null,ed:null};
 let CH={},F={},_detAct={},_detRows={},_detSubAct={};
 const pd=s=>s?new Date(s+"T00:00:00"):null;
 const ymd=d=>d?d.toISOString().split("T")[0]:"";
@@ -1084,13 +1067,13 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",efcli:"Efetivos Clientes",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento"};
 
 function navTo(p,btn){
   ST.pg=p;
   document.querySelectorAll(".ni").forEach(n=>n.classList.remove("active"));
   if(btn){btn.classList.add("active");}
-  else{const keys=["visao","clientes","ativos","efcli","faltas","coberturas","postos","os","fts","dispo","restec","hrextra","checklist","painelacomp"];document.querySelectorAll(".ni")[keys.indexOf(p)]?.classList.add("active");}
+  else{const keys=["visao","clientes","ativos","faltas","coberturas","postos","os","fts","dispo","restec","hrextra","checklist","painelacomp"];document.querySelectorAll(".ni")[keys.indexOf(p)]?.classList.add("active");}
   document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
   document.getElementById("pg-"+p)?.classList.add("active");
   document.getElementById("pgTitle").textContent=PTITLES[p]||p;
@@ -1098,7 +1081,6 @@ function navTo(p,btn){
   if(s&&e)document.getElementById("pgSub").textContent=`Grupo ServCamp · ${s.toLocaleDateString("pt-BR")} – ${e.toLocaleDateString("pt-BR")}`;
   if(["faltas","coberturas","postos","os","fts","dispo","restec","hrextra","checklist"].includes(p)){rTbl(p);updSecCharts(p);}
   else if(p==="ativos"){renderAtivos();}
-  else if(p==="efcli"){renderEfCli();}
   else if(p==="clientes"){renderClientes();}
   else if(p==="painelacomp"){}
   else{updVGCharts();}
@@ -1868,7 +1850,6 @@ const TCFG={
   hrextra:{d:()=>F.hrextra,s:"s-hrextra",cols:["DATA","NOME","TIPO","CLIENTE","AREA","MINUTOS"],hdrs:["Data","Funcionário","Tipo","Cliente","Supervisor","Minutos"],b:["TIPO"]},
   checklist:{d:()=>F.checklist,s:"s-checklist",cols:["DATA","CLIENTE","MODELO","FUNCIONARIO","TURNO"],hdrs:["Data","Cliente","Modelo","Funcionário","Turno"],b:["MODELO","TURNO"]},
   ativos:{d:()=>DASHBOARD_DATA.ativos||[],s:"s-ativos",cols:["NOME","RE","CARGO","AREA","LOCAL","ESCALA","TURNO","TIPO"],hdrs:["Nome","RE","Cargo","Área","Local","Escala","Turno","Tipo"],b:["TURNO","TIPO"]},
-  efcli:{d:()=>aggClientes(),s:"s-efcli",cols:["CLIENTE","TOTAL","DIURNO","NOTURNO","EFETIVO","OUTROS"],hdrs:["Cliente","Total Ativos","Diurno","Noturno","Efetivos","Outros"],b:[]},
   clientes:{d:()=>aggClientesList(),s:"s-clientes",cols:["NOME","TURNO","AREA","EMPRESA"],hdrs:["Cliente","Turno","Supervisor/Área","Empresa"],b:["TURNO"]}
 };
 
@@ -1942,6 +1923,11 @@ function renderAtivos(){
   document.getElementById("at-dis").innerHTML=at.length?`<b>${(di/at.length*100).toFixed(0)}%</b> do total`:"—";
   document.getElementById("at-no").textContent=no;
   document.getElementById("at-nos").innerHTML=at.length?`<b>${(no/at.length*100).toFixed(0)}%</b> do total`:"—";
+  const efe=at.filter(r=>r.TIPO==="EFETIVO").length,plan=at.filter(r=>r.TIPO&&r.TIPO!=="EFETIVO").length;
+  document.getElementById("at-efe").textContent=efe;
+  document.getElementById("at-efes").innerHTML=at.length?`<b>${(efe/at.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("at-plan").textContent=plan;
+  document.getElementById("at-plans").innerHTML=at.length?`<b>${(plan/at.length*100).toFixed(0)}%</b> do total`:"—";
 
   const pres=DASHBOARD_DATA.presenca||[];
   const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0,abandono:0};
@@ -2076,40 +2062,6 @@ function _cargoSitClick(cargo,situacao){
   document.body.appendChild(div);
 }
 
-function aggClientes(){
-  const at=DASHBOARD_DATA.ativos||[];
-  const m={};
-  for(const r of at){
-    const c=r.TPCLIENTE||"—";
-    if(!m[c])m[c]={CLIENTE:c,TOTAL:0,DIURNO:0,NOTURNO:0,EFETIVO:0,OUTROS:0};
-    m[c].TOTAL++;
-    if(r.TURNO==="DIURNO")m[c].DIURNO++;else if(r.TURNO==="NOTURNO")m[c].NOTURNO++;
-    if(r.TIPO==="EFETIVO")m[c].EFETIVO++;else m[c].OUTROS++;
-  }
-  return Object.values(m).sort((a,b)=>b.TOTAL-a.TOTAL);
-}
-
-function renderEfCli(){
-  const at=DASHBOARD_DATA.ativos||[];
-  const agg=aggClientes();
-  const efe=at.filter(r=>r.TIPO==="EFETIVO").length;
-  const nclientes=new Set(at.map(r=>r.TPCLIENTE)).size;
-
-  document.getElementById("ec-tot").textContent=at.length;
-  document.getElementById("ec-tots").innerHTML=`<b>${nclientes}</b> clientes atendidos`;
-  const plan=at.filter(r=>r.TIPO&&r.TIPO!=="EFETIVO").length;
-  document.getElementById("ec-efe").textContent=efe;
-  document.getElementById("ec-efes").innerHTML=at.length?`<b>${(efe/at.length*100).toFixed(0)}%</b> do total`:"—";
-  document.getElementById("ec-plan").textContent=plan;
-  document.getElementById("ec-plans").innerHTML=at.length?`<b>${(plan/at.length*100).toFixed(0)}%</b> do total`:"—";
-
-  const top10=agg.slice(0,10);
-  mkBar("cEC1",top10.map(c=>c.CLIENTE.length>18?c.CLIENTE.substring(0,18)+"…":c.CLIENTE),top10.map(c=>c.TOTAL),blues.slice(0,top10.length).reverse(),true);
-  const diu=at.filter(r=>r.TURNO==="DIURNO").length,not=at.filter(r=>r.TURNO==="NOTURNO").length;
-  mkDonut("cEC3",["Diurno","Noturno"],[diu,not],["#1e4d8c","#1e2d3e"]);
-
-  rTbl("efcli");
-}
 
 const CL_EXCL=new Set(["RESERVA TECNICA","DEPARTAMENTO","SERV CAMP TERCEIRIZACAO","SERV CAMP FACILITES","SERV CAMP PJ"]);
 
@@ -2451,14 +2403,13 @@ function refreshAll(){
   ST.sd=min;ST.ed=max;
   if(min&&document.getElementById("dtF"))document.getElementById("dtF").value=ymd(min);
   if(max&&document.getElementById("dtT"))document.getElementById("dtT").value=ymd(max);
-  ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,efcli:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
+  ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
   refresh();
   updVGCharts();
   const cur=document.querySelector(".page.active");
   if(cur){
     const key=cur.id.replace("pg-","");
     if(key==="ativos")renderAtivos();
-    else if(key==="efcli")renderEfCli();
     else if(key!=="visao")rTbl(key);
   }
 }
