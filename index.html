@@ -1279,7 +1279,9 @@ function updPostosC(){
 
 function updOSC(){
   const{os}=F;
-  const exc=os.filter(r=>r.TIPO==="EXCEDENTE"),tre=os.filter(r=>r.TIPO==="TREINAMENTO"),diu=os.filter(r=>r.TURNO==="DIURNO").length,not=os.filter(r=>r.TURNO==="NOTURNO").length;
+  const _t=r=>(r.TIPO||"").toUpperCase().trim();
+  const _tu=r=>(r.TURNO||"").toUpperCase().trim();
+  const exc=os.filter(r=>_t(r).includes("EXCEDENTE")),tre=os.filter(r=>_t(r).includes("TREINAMENTO")),diu=os.filter(r=>_tu(r)==="DIURNO").length,not=os.filter(r=>_tu(r)==="NOTURNO").length;
   document.getElementById("os-tot").textContent=os.length;document.getElementById("os-tots").innerHTML=`<b>${new Set(os.map(r=>r.LOCAL)).size}</b> locais`;
   document.getElementById("os-exc").textContent=exc.length;document.getElementById("os-excs").innerHTML=`<b>${Math.round(exc.length/Math.max(os.length,1)*100)}%</b>`;
   document.getElementById("os-tre").textContent=tre.length;document.getElementById("os-tres").innerHTML=`<b>${Math.round(tre.length/Math.max(os.length,1)*100)}%</b>`;
@@ -1607,10 +1609,10 @@ function skDet(sec,type,card){
     },
     os:{
       total:{rows:()=>cnt(F.os,"TIPO").map(([k,v])=>({NOME:k,v})),t:"📋 OS por Tipo",arr:()=>F.os,key:"TIPO"},
-      exc:{rows:()=>cnt(F.os.filter(r=>r.TIPO==="EXCEDENTE"),"LOCAL").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"➕ Excedentes por Local",fill:"#f97316",arr:()=>F.os.filter(r=>r.TIPO==="EXCEDENTE"),key:"LOCAL"},
-      tre:{rows:()=>cnt(F.os.filter(r=>r.TIPO==="TREINAMENTO"),"LOCAL").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🎓 Treinamentos por Local",fill:"#0891b2",arr:()=>F.os.filter(r=>r.TIPO==="TREINAMENTO"),key:"LOCAL"},
-      diu:{rows:()=>cnt(F.os.filter(r=>r.TURNO==="DIURNO"),"CARGO").slice(0,12).map(([k,v])=>({NOME:k,v})),t:"☀️ OS Diurnas por Cargo",arr:()=>F.os.filter(r=>r.TURNO==="DIURNO"),key:"CARGO"},
-      not:{rows:()=>cnt(F.os.filter(r=>r.TURNO==="NOTURNO"),"CARGO").slice(0,12).map(([k,v])=>({NOME:k,v})),t:"🌙 OS Noturnas por Cargo",fill:"#1e2d3e",arr:()=>F.os.filter(r=>r.TURNO==="NOTURNO"),key:"CARGO"}
+      exc:{rows:()=>cnt(F.os.filter(r=>(r.TIPO||"").toUpperCase().includes("EXCEDENTE")),"LOCAL").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"➕ Excedentes por Local",fill:"#f97316",arr:()=>F.os.filter(r=>(r.TIPO||"").toUpperCase().includes("EXCEDENTE")),key:"LOCAL"},
+      tre:{rows:()=>cnt(F.os.filter(r=>(r.TIPO||"").toUpperCase().includes("TREINAMENTO")),"LOCAL").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🎓 Treinamentos por Local",fill:"#0891b2",arr:()=>F.os.filter(r=>(r.TIPO||"").toUpperCase().includes("TREINAMENTO")),key:"LOCAL"},
+      diu:{rows:()=>cnt(F.os.filter(r=>(r.TURNO||"").toUpperCase()==="DIURNO"),"CARGO").slice(0,12).map(([k,v])=>({NOME:k,v})),t:"☀️ OS Diurnas por Cargo",arr:()=>F.os.filter(r=>(r.TURNO||"").toUpperCase()==="DIURNO"),key:"CARGO"},
+      not:{rows:()=>cnt(F.os.filter(r=>(r.TURNO||"").toUpperCase()==="NOTURNO"),"CARGO").slice(0,12).map(([k,v])=>({NOME:k,v})),t:"🌙 OS Noturnas por Cargo",fill:"#1e2d3e",arr:()=>F.os.filter(r=>(r.TURNO||"").toUpperCase()==="NOTURNO"),key:"CARGO"}
     },
     fts:{
       total:{rows:()=>cnt(F.fts,"TIPO").map(([k,v])=>({NOME:k,v})),t:"🔄 FTS por Tipo",arr:()=>F.fts,key:"TIPO"},
