@@ -754,7 +754,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="det-panel" id="det-rtmot"><div class="det-hdr" id="det-rtmot-hdr"><span class="det-title" id="det-rtmot-title"></span><button class="det-close" onclick="closeDet('rtmot')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-rtmot-body"></div><div class="det-sub" id="det-rtmot-sub"></div></div></div>
     <div class="grid-2" style="margin-top:11px">
-      <div class="cc"><div class="ch"><div class="chb" style="background:#dc2626"></div><span class="ct">Indisponíveis — por Motivo</span></div><div class="cw" style="height:250px"><canvas id="cRT4"></canvas></div></div>
+      <div class="cc"><div class="ch"><div class="chb" style="background:#dc2626"></div><span class="ct">Indisponíveis — por Cargo</span></div><div class="cw" style="height:250px"><canvas id="cRT4"></canvas></div></div>
       <div class="cc"><div class="ch"><div class="chb" style="background:#16a34a"></div><span class="ct">Trabalhando — por Cargo</span></div><div class="cw" style="height:250px"><canvas id="cRT3"></canvas></div></div>
     </div>
     <div class="cc" style="margin-top:11px"><div class="ch"><div class="chb" style="background:#1e4d8c"></div><span class="ct">Todos os Motivos</span></div><div class="cw" style="height:300px"><canvas id="cRT5"></canvas></div></div>
@@ -1429,7 +1429,7 @@ function updRestecC(){
   document.getElementById("rt-disp").textContent=disp.length;
   document.getElementById("rt-disps").innerHTML=d.length?`<b>${(disp.length/d.length*100).toFixed(0)}%</b> do total`:"—";
   document.getElementById("rt-indisp").textContent=indisp.length;
-  document.getElementById("rt-indisps").innerHTML=indisp.length?topN(indisp,"MOTIVO",3).map(([k,v])=>k+": "+v).join(" · "):"—";
+  document.getElementById("rt-indisps").innerHTML=indisp.length?topN(indisp,"CARGO",3).map(([k,v])=>k+": "+v).join(" · "):"—";
   mkBar("cRT1",cargos.map(([k])=>k.length>18?k.substring(0,18)+"…":k),cargos.map(([,v])=>v),blues.slice(0,cargos.length),true);
   const cargosDi=topN(d.filter(r=>r.TURNO==="DIURNO"),"CARGO",10);
   const cargosNo=topN(d.filter(r=>r.TURNO==="NOTURNO"),"CARGO",10);
@@ -1444,12 +1444,12 @@ function updRestecC(){
   }
   const dispCargos=topN(disp,"CARGO",10);
   mkBar("cRT3",dispCargos.map(([k])=>k.length>18?k.substring(0,18)+"…":k),dispCargos.map(([,v])=>v),"#16a34a",true);
-  const indispMot=topN(indisp,"MOTIVO",8);
-  mkBar("cRT4",indispMot.map(([k])=>k.length>18?k.substring(0,18)+"…":k),indispMot.map(([,v])=>v),"#dc2626",true);
-  // Painel de motivos separado
+  const indispCargos=topN(indisp,"CARGO",8);
+  mkBar("cRT4",indispCargos.map(([k])=>k.length>18?k.substring(0,18)+"…":k),indispCargos.map(([,v])=>v),"#dc2626",true);
+  // Painel separado: indisponíveis por cargo, trabalho por motivo
   const allMot=topN(d,"MOTIVO",30);
-  const motIndisp=allMot.filter(([k])=>RT_INDISP.has(normTxt(k)));
   const motDisp=allMot.filter(([k])=>!RT_INDISP.has(normTxt(k)));
+  const cargoIndisp=topN(indisp,"CARGO",20);
   function renderMotCards(el,mots,isInd){
     if(!el)return;
     const tc=isInd?"#dc2626":"#16a34a";
@@ -1464,7 +1464,7 @@ function updRestecC(){
         <span style="font-size:1.1rem;font-weight:900;color:${tc}">${v}</span>
       </div>`).join("");
   }
-  renderMotCards(document.getElementById("rt-mot-indisp"),motIndisp,true);
+  renderMotCards(document.getElementById("rt-mot-indisp"),cargoIndisp,true);
   renderMotCards(document.getElementById("rt-mot-disp"),motDisp,false);
   // Gráfico todos os motivos
   mkBar("cRT5",allMot.map(([k])=>k.length>25?k.substring(0,25)+"…":k),allMot.map(([,v])=>v),allMot.map(([k])=>RT_INDISP.has(normTxt(k))?"#dc2626":"#1e4d8c"),true);
@@ -1745,7 +1745,7 @@ function skDet(sec,type,card){
     restec:{
       total:{rows:()=>cnt(F.restec,"CARGO").map(([k,v])=>({NOME:k,v})),t:"🔧 Reservas por Cargo",arr:()=>F.restec,key:"CARGO"},
       disp:{rows:()=>{const d=F.restec.filter(r=>!_rtIndisp(r));return cnt(d,"CARGO").map(([k,v])=>({NOME:k,v}));},t:"✅ Trabalhando — por Cargo",fill:"#16a34a",arr:()=>F.restec.filter(r=>!_rtIndisp(r)),key:"CARGO"},
-      indisp:{rows:()=>{const d=F.restec.filter(_rtIndisp);return cnt(d,"MOTIVO").map(([k,v])=>({NOME:k,v}));},t:"🚫 Indisponíveis — por Motivo",fill:"#dc2626",arr:()=>F.restec.filter(_rtIndisp),key:"MOTIVO"}
+      indisp:{rows:()=>{const d=F.restec.filter(_rtIndisp);return cnt(d,"CARGO").map(([k,v])=>({NOME:k,v}));},t:"🚫 Indisponíveis — por Cargo",fill:"#dc2626",arr:()=>F.restec.filter(_rtIndisp),key:"CARGO"}
     },
     checklist:{
       visitados:{rows:()=>{const v=_ckVisitas(F.checklist);return Object.entries(v).map(([k,s])=>({NOME:k,v:s.size})).sort((a,b)=>b.v-a.v);},t:"✅ Clientes Visitados — Dias de Visita",arr:()=>F.checklist,key:"CLIENTE"},
