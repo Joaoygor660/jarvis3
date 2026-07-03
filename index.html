@@ -583,13 +583,14 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <!-- FALTAS -->
   <div class="page" id="pg-faltas">
     <div class="sec-hdr"><span class="sec-hdr-ic">🚫</span><div><div class="sec-hdr-t">Faltas &amp; Top 10</div><div class="sec-hdr-sub">Análise completa de ausências no período</div></div></div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(7,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(8,1fr)">
       <div class="sk sk-re clickable" onclick="skDet('faltas','total',this)"><div class="sk-top"><span class="sk-ic">📊</span><span class="sk-tag t-re">Total</span></div><div class="sk-lbl">Total Faltas</div><div class="sk-v" id="f-tot">—</div><div class="sk-sub" id="f-tots">—</div></div>
       <div class="sk sk-re clickable" onclick="skDet('faltas','inj',this)"><div class="sk-top"><span class="sk-ic">❌</span></div><div class="sk-lbl">Injustificadas</div><div class="sk-v" id="f-inj">—</div><div class="sk-sub">tipo I</div></div>
       <div class="sk sk-or clickable" onclick="skDet('faltas','aba',this)"><div class="sk-top"><span class="sk-ic">🚪</span></div><div class="sk-lbl">Abonado</div><div class="sk-v" id="f-aba">—</div><div class="sk-sub">tipo A</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('faltas','jus',this)"><div class="sk-top"><span class="sk-ic">📄</span></div><div class="sk-lbl">Justificadas</div><div class="sk-v" id="f-jus">—</div><div class="sk-sub">tipo J</div></div>
       <div class="sk sk-bl clickable" onclick="skDet('faltas','con',this)"><div class="sk-top"><span class="sk-ic">📌</span></div><div class="sk-lbl">Contratos</div><div class="sk-v" id="f-con">—</div><div class="sk-sub" id="f-cons">—</div></div>
       <div class="sk sk-pu clickable" onclick="skDet('faltas','res',this)"><div class="sk-top"><span class="sk-ic">🔖</span></div><div class="sk-lbl">Reservas</div><div class="sk-v" id="f-res">—</div><div class="sk-sub" id="f-ress">—</div></div>
+      <div class="sk sk-te clickable" onclick="skDet('faltas','dep',this)"><div class="sk-top"><span class="sk-ic">🏢</span></div><div class="sk-lbl">Departamento</div><div class="sk-v" id="f-dep">—</div><div class="sk-sub" id="f-deps">—</div></div>
       <div class="sk sk-dkbl clickable" onclick="skDet('faltas','abandono',this)"><div class="sk-top"><span class="sk-ic">🚷</span></div><div class="sk-lbl">Abandono</div><div class="sk-v" id="f-aband">—</div><div class="sk-sub" id="f-abands">—</div></div>
     </div>
     <div class="det-panel" id="det-faltas"><div class="det-hdr red" id="det-faltas-hdr"><span class="det-title" id="det-faltas-title"></span><button class="det-close" onclick="closeDet('faltas')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-faltas-body"></div><div class="det-sub" id="det-faltas-sub"></div></div></div>
@@ -1298,12 +1299,13 @@ function updSecCharts(p){
 function updFaltasC(){
   const{faltas}=F;
   const inj=faltas.filter(r=>r.ABONO==="I").length,aba=faltas.filter(r=>r.ABONO==="A").length,jus=faltas.filter(r=>r.ABONO==="J").length;
-  const con=faltas.filter(r=>r.TIPO==="CONTRATO"),res=faltas.filter(r=>r.TIPO==="RESERVA");
+  const con=faltas.filter(r=>r.TIPO==="CONTRATO"),res=faltas.filter(r=>r.TIPO==="RESERVA"),dep=faltas.filter(r=>r.TIPO==="DEPARTAMENTO");
   document.getElementById("f-tot").textContent=faltas.length;
   document.getElementById("f-tots").innerHTML=`<b>${new Set(faltas.map(r=>r.NOME)).size}</b> funcionários`;
   document.getElementById("f-inj").textContent=inj;document.getElementById("f-aba").textContent=aba;document.getElementById("f-jus").textContent=jus;
   document.getElementById("f-con").textContent=con.length;document.getElementById("f-cons").innerHTML=`<b>${new Set(con.map(r=>r.NOME)).size}</b> func.`;
   document.getElementById("f-res").textContent=res.length;document.getElementById("f-ress").innerHTML=`<b>${new Set(res.map(r=>r.NOME)).size}</b> func.`;
+  document.getElementById("f-dep").textContent=dep.length;document.getElementById("f-deps").innerHTML=`<b>${new Set(dep.map(r=>r.NOME)).size}</b> func.`;
   const aband=F.abandono||[];
   const abandPessoas=new Set(aband.map(r=>r.NOME)).size;
   document.getElementById("f-aband").textContent=abandPessoas;
@@ -1671,6 +1673,7 @@ function skDet(sec,type,card){
       jus:{rows:()=>byName(F.faltas.filter(r=>r.ABONO==="J"),"AREA"),t:"📄 Funcionários — Justificadas",fill:"#16a34a",arr:()=>F.faltas.filter(r=>r.ABONO==="J"),key:"NOME"},
       con:{rows:()=>cnt(F.faltas.filter(r=>r.TIPO==="CONTRATO"),"LOCAL").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"📌 Contratos — Locais com Mais Faltas",fill:"#1e4d8c",arr:()=>F.faltas.filter(r=>r.TIPO==="CONTRATO"),key:"LOCAL"},
       res:{rows:()=>byName(F.faltas.filter(r=>r.TIPO==="RESERVA"),"AREA"),t:"🔖 Reservas — Funcionários com Mais Faltas",fill:"#7c3aed",arr:()=>F.faltas.filter(r=>r.TIPO==="RESERVA"),key:"NOME"},
+      dep:{rows:()=>cnt(F.faltas.filter(r=>r.TIPO==="DEPARTAMENTO"),"LOCAL").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🏢 Departamento — Locais com Mais Faltas",fill:"#0d9488",arr:()=>F.faltas.filter(r=>r.TIPO==="DEPARTAMENTO"),key:"LOCAL"},
       abandono:{rows:()=>{
         const ab=F.abandono||[];
         const m={};ab.forEach(r=>{const n=r.NOME||"—";if(!m[n])m[n]={cargo:"—",area:"—"};m[n].cargo=r.CARGO||"—";m[n].area=r.AREA||"—";});
