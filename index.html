@@ -2132,8 +2132,22 @@ function isoDate(v){
   const p2=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   return s;
 }
-function turnoFromEscala(esc){
-  return esc&&String(esc).includes("12X36")?"NOTURNO":"DIURNO";
+function turnoFromEscala(esc,hrEntrada){
+  const e=String(esc||"").toUpperCase();
+  if(!e.includes("12X36"))return"DIURNO";
+  // 12X36: noturno somente se entrada >= 18:00
+  if(hrEntrada!=null){
+    let h=null;
+    if(typeof hrEntrada==="number"){
+      // Excel serial fraction: 0.75 = 18:00
+      h=hrEntrada*24;
+    }else{
+      const m=String(hrEntrada).match(/(\d{1,2})[:\h](\d{2})/);
+      if(m)h=parseInt(m[1],10)+parseInt(m[2],10)/60;
+    }
+    if(h!=null)return h>=18?"NOTURNO":"DIURNO";
+  }
+  return"NOTURNO"; // sem hora, mantém noturno como fallback conservador
 }
 function normTxt(v){
   return String(v||"").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
@@ -2172,7 +2186,7 @@ function buildDataFromWorkbook(wb){
       const base={
         NOME:nome,DATA:isoDate(r["DATA"]),LOCAL:r["NOMELOCAL"],
         CARGO:r["DESC_CARGO"],AREA:r["AREASUPERVISAO"],
-        TIPO:r["TPCLIENTE"],TURNO:turnoFromEscala(r["DESCESCALA"])
+        TIPO:r["TPCLIENTE"],TURNO:turnoFromEscala(r["DESCESCALA"],r["HRENTRADA"])
       };
       if(sit.includes("FALT")||sit.includes("AUSENCIA")||sit.includes("AUSÊNCIA"))
         faltas.push({...base,ABONO:r["DESCTPABONO"]||"—"});
@@ -2187,7 +2201,7 @@ function buildDataFromWorkbook(wb){
       NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
       LOCAL:r[I["NOMELOCAL"]],CARGO:r[I["DESC_CARGO"]],
       AREA:r[I["AREASUPERVISAO"]],ABONO:r[I["DESCTPABONO"]],
-      TIPO:r[I["TPCLIENTE"]],TURNO:turnoFromEscala(r[I["DESCESCALA"]])
+      TIPO:r[I["TPCLIENTE"]],TURNO:turnoFromEscala(r[I["DESCESCALA"]],r[I["HRENTRADA"]])
     }),"faltas");
     ext("FTS",(r,I)=>{
       const nomeF=r[I["NOMEFUNCIONARIO"]];
@@ -2196,13 +2210,13 @@ function buildDataFromWorkbook(wb){
         NOME:nomeF,DATA:isoDate(r[I["DATA"]]),
         LOCAL:r[I["NOMELOCAL"]],CARGO:r[I["DESC_CARGO"]],
         AREA:r[I["AREASUPERVISAO"]],TIPO:r[I["TPCLIENTE"]],
-        TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
+        TURNO:turnoFromEscala(r[I["DESCESCALA"]],r[I["HRENTRADA"]]),MOTIVO:r[I["DESCIMPLA"]]
       };
     },"fts");
     ext("COBERTURA",(r,I)=>({
       NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
       LOCAL:r[I["NOMELOCAL"]],AREA:r[I["AREASUPERVISAO"]],
-      TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
+      TURNO:turnoFromEscala(r[I["DESCESCALA"]],r[I["HRENTRADA"]]),MOTIVO:r[I["DESCIMPLA"]]
     }),"cobertura");
   }
   const wsHE=findSheet(wb,"HR EXTRA")||findSheet(wb,"HORAS EXTRAS")||findSheet(wb,"HREXTRA");
@@ -2366,7 +2380,7 @@ function buildDataFromWorkbook(wb){
     return{
       NOME:r[I["FUNCIONARIO"]]||r[I["NOMEFUNCIONARIO"]]||r[I["NOME"]]||"—",
       CARGO:r[I["CARGO"]]||r[I["DESC_CARGO"]]||r[I["CARGOVAGA"]]||"—",
-      TURNO:r[I["TURNO"]]||turnoFromEscala(r[I["DESCESCALA"]])||"DIURNO",
+      TURNO:r[I["TURNO"]]||turnoFromEscala(r[I["DESCESCALA"]],r[I["HRENTRADA"]])||"DIURNO",
       MOTIVO:mot||"—",
       STATUS:status
     };
