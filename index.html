@@ -468,8 +468,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="fb">
     <div class="fg"><span class="fl">Período</span>
       <div class="pg">
-        <button class="pi active" onclick="setPeriod('all',this)">Todos</button>
-        <button class="pi" onclick="setPeriod('today',this)">Hoje</button>
+        <button class="pi" onclick="setPeriod('all',this)">Todos</button>
+        <button class="pi active" onclick="setPeriod('today',this)">Hoje</button>
         <button class="pi" onclick="setPeriod('week',this)">Semana</button>
         <button class="pi" onclick="setPeriod('month',this)">Mês</button>
         <button class="pi" onclick="setPeriod('custom',this)">Personalizado</button>
@@ -2430,15 +2430,33 @@ function updateStatusLabel(){
     el.textContent=`Atualizado em ${dt}`+(meta.fname?` • ${meta.fname}`:"");
   }catch(e){el.textContent="Dados carregados";}
 }
+function _checkDataFreshness(max){
+  if(!max)return;
+  const hoje=ymd(new Date());
+  const maxD=ymd(max);
+  if(maxD<hoje){
+    const el=document.createElement("div");
+    el.style.cssText="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:14px 28px;border-radius:12px;font-size:.92rem;font-weight:700;box-shadow:0 6px 24px rgba(220,38,38,.4);display:flex;align-items:center;gap:10px;pointer-events:none";
+    el.innerHTML=`<span style="font-size:1.2rem">⚠️</span> Sistema desatualizado! Último dado: <b>${maxD.split("-").reverse().join("/")}</b> — carregue a planilha de hoje.`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4000);
+  }
+}
 function refreshAll(){
   populateAreas();
   const{min,max}=getRange();
-  ST.sd=min;ST.ed=max;
-  if(min&&document.getElementById("dtF"))document.getElementById("dtF").value=ymd(min);
-  if(max&&document.getElementById("dtT"))document.getElementById("dtT").value=ymd(max);
+  // Padrão: sempre abre no período Hoje
+  const hoje=max||new Date();
+  ST.sd=hoje;ST.ed=hoje;
+  if(document.getElementById("dtF"))document.getElementById("dtF").value=ymd(ST.sd);
+  if(document.getElementById("dtT"))document.getElementById("dtT").value=ymd(ST.ed);
+  document.querySelectorAll(".fb .pg:first-of-type .pi").forEach(b=>b.classList.remove("active"));
+  const btnHoje=document.querySelector(".fb .pg:first-of-type .pi:nth-child(2)");
+  if(btnHoje)btnHoje.classList.add("active");
   ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
   refresh();
   updVGCharts();
+  _checkDataFreshness(max);
   const cur=document.querySelector(".page.active");
   if(cur){
     const key=cur.id.replace("pg-","");
