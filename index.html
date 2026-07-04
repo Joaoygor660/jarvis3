@@ -468,8 +468,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="fb">
     <div class="fg"><span class="fl">Período</span>
       <div class="pg">
-        <button class="pi" onclick="setPeriod('all',this)">Todos</button>
-        <button class="pi active" onclick="setPeriod('today',this)">Hoje</button>
+        <button class="pi active" onclick="setPeriod('all',this)">Todos</button>
+        <button class="pi" onclick="setPeriod('today',this)">Hoje</button>
         <button class="pi" onclick="setPeriod('week',this)">Semana</button>
         <button class="pi" onclick="setPeriod('month',this)">Mês</button>
         <button class="pi" onclick="setPeriod('custom',this)">Personalizado</button>
@@ -2445,14 +2445,9 @@ function _checkDataFreshness(max){
 function refreshAll(){
   populateAreas();
   const{min,max}=getRange();
-  // Padrão: sempre abre no período Hoje
-  const hoje=max||new Date();
-  ST.sd=hoje;ST.ed=hoje;
-  if(document.getElementById("dtF"))document.getElementById("dtF").value=ymd(ST.sd);
-  if(document.getElementById("dtT"))document.getElementById("dtT").value=ymd(ST.ed);
-  document.querySelectorAll(".fb .pg:first-of-type .pi").forEach(b=>b.classList.remove("active"));
-  const btnHoje=document.querySelector(".fb .pg:first-of-type .pi:nth-child(2)");
-  if(btnHoje)btnHoje.classList.add("active");
+  ST.sd=min;ST.ed=max;
+  if(min&&document.getElementById("dtF"))document.getElementById("dtF").value=ymd(min);
+  if(max&&document.getElementById("dtT"))document.getElementById("dtT").value=ymd(max);
   ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
   refresh();
   updVGCharts();
