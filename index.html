@@ -2159,27 +2159,52 @@ function buildDataFromWorkbook(wb){
     const{idx,body}=sheetRows(ws);
     data[key]=(body||[]).filter(r=>r&&r.length).map(r=>mapFn(r,idx)).filter(Boolean);
   }
-  ext("FALTAS",(r,I)=>({
-    NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
-    LOCAL:r[I["NOMELOCAL"]],CARGO:r[I["DESC_CARGO"]],
-    AREA:r[I["AREASUPERVISAO"]],ABONO:r[I["DESCTPABONO"]],
-    TIPO:r[I["TPCLIENTE"]],TURNO:turnoFromEscala(r[I["DESCESCALA"]])
-  }),"faltas");
-  ext("FTS",(r,I)=>{
-    const nomeF=r[I["NOMEFUNCIONARIO"]];
-    if(nomeF===null||nomeF===undefined||String(nomeF).trim()==="")return null;
-    return{
-      NOME:nomeF,DATA:isoDate(r[I["DATA"]]),
+  // Tenta ler da Ficha de Presença unificada (substitui FALTAS + FTS + COBERTURA)
+  const wsFicha=findSheet(wb,"FICHA PRESENCA")||findSheet(wb,"FICHA DE PRESENCA")||findSheet(wb,"FICHA");
+  if(wsFicha){
+    const fichaRows=XLSX.utils.sheet_to_json(wsFicha,{raw:true,defval:null});
+    const faltas=[],ftsArr=[],cobArr=[];
+    for(const r of fichaRows){
+      const nome=r["NOMEFUNCIONARIO"];
+      if(!nome||String(nome).trim()==="")continue;
+      const tipo=(r["DESCTPCOBERTURA"]||"").toUpperCase().trim();
+      const sit=(r["DESCSITUACAOHOJE"]||"").toUpperCase().trim();
+      const base={
+        NOME:nome,DATA:isoDate(r["DATA"]),LOCAL:r["NOMELOCAL"],
+        CARGO:r["DESC_CARGO"],AREA:r["AREASUPERVISAO"],
+        TIPO:r["TPCLIENTE"],TURNO:turnoFromEscala(r["DESCESCALA"])
+      };
+      if(sit.includes("FALT")||sit.includes("AUSENCIA")||sit.includes("AUSÊNCIA"))
+        faltas.push({...base,ABONO:r["DESCTPABONO"]||"—"});
+      if(tipo==="FT")
+        ftsArr.push({...base,MOTIVO:r["DESCIMPLA"]||"—"});
+      if(tipo==="COBERTURA"||tipo==="DOBRA"||tipo==="CONVOCACAO"||tipo==="CONVOCAÇÃO")
+        cobArr.push({NOME:base.NOME,DATA:base.DATA,LOCAL:base.LOCAL,AREA:base.AREA,TURNO:base.TURNO,MOTIVO:r["DESCIMPLA"]||"—"});
+    }
+    data.faltas=faltas;data.fts=ftsArr;data.cobertura=cobArr;
+  }else{
+    ext("FALTAS",(r,I)=>({
+      NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
       LOCAL:r[I["NOMELOCAL"]],CARGO:r[I["DESC_CARGO"]],
-      AREA:r[I["AREASUPERVISAO"]],TIPO:r[I["TPCLIENTE"]],
+      AREA:r[I["AREASUPERVISAO"]],ABONO:r[I["DESCTPABONO"]],
+      TIPO:r[I["TPCLIENTE"]],TURNO:turnoFromEscala(r[I["DESCESCALA"]])
+    }),"faltas");
+    ext("FTS",(r,I)=>{
+      const nomeF=r[I["NOMEFUNCIONARIO"]];
+      if(nomeF===null||nomeF===undefined||String(nomeF).trim()==="")return null;
+      return{
+        NOME:nomeF,DATA:isoDate(r[I["DATA"]]),
+        LOCAL:r[I["NOMELOCAL"]],CARGO:r[I["DESC_CARGO"]],
+        AREA:r[I["AREASUPERVISAO"]],TIPO:r[I["TPCLIENTE"]],
+        TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
+      };
+    },"fts");
+    ext("COBERTURA",(r,I)=>({
+      NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
+      LOCAL:r[I["NOMELOCAL"]],AREA:r[I["AREASUPERVISAO"]],
       TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
-    };
-  },"fts");
-  ext("COBERTURA",(r,I)=>({
-    NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
-    LOCAL:r[I["NOMELOCAL"]],AREA:r[I["AREASUPERVISAO"]],
-    TURNO:turnoFromEscala(r[I["DESCESCALA"]]),MOTIVO:r[I["DESCIMPLA"]]
-  }),"cobertura");
+    }),"cobertura");
+  }
   const wsHE=findSheet(wb,"HR EXTRA")||findSheet(wb,"HORAS EXTRAS")||findSheet(wb,"HREXTRA");
   if(wsHE){
     const heRows=XLSX.utils.sheet_to_json(wsHE,{raw:false,defval:""});
