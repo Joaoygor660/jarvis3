@@ -2139,8 +2139,8 @@ function normTxt(v){
   return String(v||"").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 }
 function findSheet(wb,name){
-  const target=name.trim().toUpperCase();
-  for(const n of wb.SheetNames){if(n.trim().toUpperCase()===target)return wb.Sheets[n];}
+  const target=normTxt(name);
+  for(const n of wb.SheetNames){if(normTxt(n)===target)return wb.Sheets[n];}
   return null;
 }
 function sheetRows(ws){
