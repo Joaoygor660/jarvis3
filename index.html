@@ -1737,8 +1737,8 @@ function skDet(sec,type,card){
       suspensao:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao")),t:"⛔ Funcionários Suspensos",fill:"#dc2626",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao"),key:"NOME"},
       liberado:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado")),t:"🔓 Funcionários Liberados",fill:"#d97706",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado"),key:"NOME"},
       abandono:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono")),t:"🚷 Funcionários em Abandono",fill:"#1e2d3e",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono"),key:"NOME"},
-      feriasAtivos:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>/FERIAS/.test(normTxt(r.SITUACAO||""))),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🏖️ Férias Trabalhadas por Cargo",fill:"#ca8a04",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>/FERIAS/.test(normTxt(r.SITUACAO||""))),key:"CARGO"},
-      ftsAtivos:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>/FT/.test(normTxt(r.SITUACAO||""))),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🔀 FTs por Cargo",fill:"#0d9488",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>/FT/.test(normTxt(r.SITUACAO||""))),key:"CARGO"}
+      feriasAtivos:{rows:()=>{const nm=new Set((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO).includes("FERIAS TRAB")).map(r=>String(r.NOME||"").trim().toUpperCase()));return cnt((DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase())),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v}));},t:"🏖️ Férias Trabalhadas por Cargo",fill:"#ca8a04",arr:()=>{const nm=new Set((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO).includes("FERIAS TRAB")).map(r=>String(r.NOME||"").trim().toUpperCase()));return(DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase()));},key:"CARGO"},
+      ftsAtivos:{rows:()=>{const nm=new Set((DASHBOARD_DATA.fts||[]).map(r=>String(r.NOME||"").trim().toUpperCase()));return cnt((DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase())),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v}));},t:"🔀 FTs por Cargo",fill:"#0d9488",arr:()=>{const nm=new Set((DASHBOARD_DATA.fts||[]).map(r=>String(r.NOME||"").trim().toUpperCase()));return(DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase()));},key:"CARGO"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
@@ -1922,10 +1922,13 @@ function renderAtivos(){
     if(key&&!seen.has(key)){seen.add(key);at.push(r);}
   }
   function cnt(arr,key){const m={};for(const r of arr){const v=r[key]||"—";m[v]=(m[v]||0)+1;}return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
-  // Separar FTs e Férias Trabalhadas para não contaminar os outros cards
-  const atFt=at.filter(r=>/FT/.test(normTxt(r.SITUACAO||"")));
-  const atFerTrab=at.filter(r=>/FERIAS/.test(normTxt(r.SITUACAO||""))&&!/FT/.test(normTxt(r.SITUACAO||"")));
-  const atBase=at.filter(r=>!atFt.includes(r)&&!atFerTrab.includes(r));
+  // Férias Trabalhadas vem da Ficha de Presença (DESCSITUACAO="FERIAS TRAB."); FTs vem de data.fts (DESCTPCOBERTURA="FT")
+  const presAll=DASHBOARD_DATA.presenca||[];
+  const nomesFerTrab=new Set(presAll.filter(r=>normTxt(r.DESCSITUACAO).includes("FERIAS TRAB")).map(r=>String(r.NOME||"").trim().toUpperCase()));
+  const nomesFt=new Set((DASHBOARD_DATA.fts||[]).map(r=>String(r.NOME||"").trim().toUpperCase()));
+  const atFerTrab=at.filter(r=>nomesFerTrab.has(String(r.NOME||"").trim().toUpperCase()));
+  const atFt=at.filter(r=>nomesFt.has(String(r.NOME||"").trim().toUpperCase()));
+  const atBase=at.filter(r=>{const k=String(r.NOME||"").trim().toUpperCase();return!nomesFerTrab.has(k)&&!nomesFt.has(k);});
   const di=atBase.filter(r=>r.TURNO==="DIURNO").length,no=atBase.filter(r=>r.TURNO==="NOTURNO").length;
   const cargo=cnt(atBase,"CARGO");
   document.getElementById("at-tot").textContent=atBase.length;
