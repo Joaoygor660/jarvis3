@@ -14,6 +14,11 @@ const TABLES = {
     table: "rh_entrevistas",
     required: ["candidato"],
     fields: ["data_entrevista","candidato","sexo","telefone","cargo","vaga_numero","etapa","situacao","motivo_reprovacao","observacao","criado_por"]
+  },
+  desligamentos: {
+    table: "rh_desligamentos",
+    required: ["funcionario"],
+    fields: ["data_desligamento","funcionario","re","cargo","area","posto","tipo","motivo","data_admissao","observacao","criado_por"]
   }
 };
 

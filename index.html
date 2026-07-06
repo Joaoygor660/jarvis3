@@ -458,6 +458,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-lbl">RH</div>
     <div class="ni" onclick="navTo('rhvagas',this)" style="position:relative"><span class="ni-ic">📋</span><span>Controle de Vagas</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
     <div class="ni" onclick="navTo('rhentrev',this)" style="position:relative"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
+    <div class="ni" onclick="navTo('rhdesl',this)" style="position:relative"><span class="ni-ic">🚪</span><span>Desligamentos</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
   </div>
   <div class="sb-foot upload-btn" id="btnNovoExcel">
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
@@ -907,6 +908,47 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Entrevistas Registradas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, vaga, cargo..." id="s-rhentrev" oninput="rhEntRenderTbl()"></div></div><div id="re-tbl" style="overflow-x:auto"></div></div>
   </div>
+  <div class="page" id="pg-rhdesl">
+    <div class="sec-hdr"><span class="sec-hdr-ic">🚪</span><div><div class="sec-hdr-t">RH — Desligamentos</div><div class="sec-hdr-sub">Pedidos de demissão, demissões e motivos de saída</div></div></div>
+    <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
+      <div class="sk sk-re"><div class="sk-top"><span class="sk-ic">🚪</span></div><div class="sk-lbl">Desligamentos no Mês</div><div class="sk-v" id="rd-mes">—</div><div class="sk-sub" id="rd-mess">—</div></div>
+      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">✋</span></div><div class="sk-lbl">Pedidos de Demissão</div><div class="sk-v" id="rd-pedidos">—</div><div class="sk-sub" id="rd-pedidoss">—</div></div>
+      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">📤</span></div><div class="sk-lbl">Demitidos</div><div class="sk-v" id="rd-demit">—</div><div class="sk-sub">decisão da empresa</div></div>
+      <div class="sk sk-te"><div class="sk-top"><span class="sk-ic">📊</span></div><div class="sk-lbl">Turnover do Mês</div><div class="sk-v" id="rd-turn">—</div><div class="sk-sub">desligados ÷ quadro ativo</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Motivos de Saída</div><div id="rd-motivos" style="font-size:.78rem;color:#334155">—</div></div>
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Desligamentos por Cargo</div><div id="rd-cargos" style="font-size:.78rem;color:#334155">—</div></div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 22px;margin-bottom:18px">
+      <div style="font-size:.82rem;font-weight:800;color:#0d1f35;margin-bottom:14px" id="rd-form-title">➕ Novo Desligamento</div>
+      <form onsubmit="return rhDesSalvar(event)" id="rdForm">
+        <input type="hidden" id="rdf-id">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Data do Desligamento</label><input class="rhf-i" id="rdf-data" type="date"></div>
+          <div><label class="rhf-l">Funcionário *</label><input class="rhf-i" id="rdf-func" type="text" list="dl-rh-func" placeholder="Nome completo" required onchange="rhDesAutoFill()"><datalist id="dl-rh-func"></datalist></div>
+          <div><label class="rhf-l">RE</label><input class="rhf-i" id="rdf-re" type="text" placeholder="Ex: 4603"></div>
+          <div><label class="rhf-l">Cargo</label><input class="rhf-i" id="rdf-cargo" type="text" list="dl-rh-cargo" placeholder="Ex: ASG"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Área / Supervisor</label><input class="rhf-i" id="rdf-area" type="text" list="dl-rh-area" placeholder="Ex: FRANK"></div>
+          <div><label class="rhf-l">Posto / Cliente</label><input class="rhf-i" id="rdf-posto" type="text" placeholder="Ex: COND MILANO"></div>
+          <div><label class="rhf-l">Tipo *</label><select class="rhf-i" id="rdf-tipo"><option>PEDIDO DE DEMISSÃO</option><option>DEMITIDO</option><option>ABANDONO</option><option>TÉRMINO DE CONTRATO</option></select></div>
+          <div><label class="rhf-l">Data de Admissão (opcional)</label><input class="rhf-i" id="rdf-adm" type="date"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Motivo — escolha ou escreva</label><input class="rhf-i" id="rdf-motivo" type="text" list="dl-rh-motsaida" placeholder="Escolha da lista ou digite"><datalist id="dl-rh-motsaida"><option>SALÁRIO</option><option>OUTRO EMPREGO</option><option>DISTÂNCIA / LOCAL</option><option>ESCALA / HORÁRIO</option><option>PROBLEMAS PESSOAIS</option><option>PROBLEMAS DE SAÚDE</option><option>INSATISFAÇÃO COM A GESTÃO</option><option>DESEMPENHO</option><option>FALTAS EXCESSIVAS</option></datalist></div>
+          <div><label class="rhf-l">Observação</label><input class="rhf-i" id="rdf-obs" type="text" placeholder="Anotações (opcional)"></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="rh-btn" id="rdBtnSalvar">💾 Salvar Desligamento</button>
+          <button type="button" class="rh-btn rh-btn-sec" onclick="rhDesLimpar()">✖ Limpar</button>
+          <span id="rd-form-msg" style="align-self:center;font-size:.75rem;font-weight:700"></span>
+        </div>
+      </form>
+    </div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Desligamentos Registrados</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, cargo, motivo..." id="s-rhdesl" oninput="rhDesRenderTbl()"></div></div><div id="rd-tbl" style="overflow-x:auto"></div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1174,7 +1216,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1192,6 +1234,7 @@ function navTo(p,btn){
   else if(p==="painelacomp"){}
   else if(p==="rhvagas"){rhLoad();}
   else if(p==="rhentrev"){rhEntLoad();}
+  else if(p==="rhdesl"){rhDesLoad();}
   else{updVGCharts();}
 }
 
@@ -2969,6 +3012,169 @@ function rhEntExcluir(id){
   fetch("/api/rh?t=entrevistas&id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
     if(!r.ok)throw new Error("HTTP "+r.status);
     rhEntLoad();
+  }).catch(err=>alert("Erro ao excluir: "+err.message));
+}
+/* ===== MÓDULO RH — DESLIGAMENTOS ===== */
+let RH_DES=[];
+const RD_TIPO_COLORS={"PEDIDO DE DEMISSÃO":"#f97316","DEMITIDO":"#dc2626","ABANDONO":"#6b7280","TÉRMINO DE CONTRATO":"#0369a1"};
+function rhDesLoad(){
+  const dt=document.getElementById("rdf-data");
+  if(dt&&!dt.value)dt.value=ymd(new Date());
+  const dlF=document.getElementById("dl-rh-func");
+  if(dlF&&typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos){
+    dlF.innerHTML=DASHBOARD_DATA.ativos.map(r=>`<option value="${String(r.NOME||"").replace(/"/g,"&quot;")}">${r.CARGO||""} · ${r.AREA||""}</option>`).join("");
+  }
+  const dlA=document.getElementById("dl-rh-area");
+  if(dlA&&!dlA.children.length&&typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos){
+    const set=new Set();DASHBOARD_DATA.ativos.forEach(r=>{if(r.AREA&&r.AREA!=="—")set.add(r.AREA);});
+    dlA.innerHTML=[...set].sort().map(a=>`<option>${a}</option>`).join("");
+  }
+  const tbl=document.getElementById("rd-tbl");
+  if(tbl&&!RH_DES.length)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Carregando desligamentos…</div>';
+  fetch("/api/rh?t=desligamentos").then(r=>r.json()).then(j=>{
+    RH_DES=(j&&j.rows)||[];
+    rhDesRender();
+  }).catch(err=>{
+    console.error("Erro ao carregar desligamentos:",err);
+    if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar desligamentos. Verifique a conexão.</div>';
+  });
+}
+function rhDesAutoFill(){
+  if(typeof DASHBOARD_DATA==="undefined"||!DASHBOARD_DATA||!DASHBOARD_DATA.ativos)return;
+  const nome=document.getElementById("rdf-func").value.trim().toUpperCase();
+  const emp=DASHBOARD_DATA.ativos.find(r=>String(r.NOME||"").trim().toUpperCase()===nome);
+  if(!emp)return;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&!el.value&&v&&v!=="—")el.value=v;};
+  set("rdf-re",emp.RE);set("rdf-cargo",emp.CARGO);set("rdf-area",emp.AREA);set("rdf-posto",emp.LOCAL);
+}
+function rhDesRender(){
+  const v=RH_DES;
+  const mesAtual=ymd(new Date()).slice(0,7);
+  const noMes=v.filter(x=>String(x.data_desligamento||"").slice(0,7)===mesAtual);
+  const pedidos=v.filter(x=>x.tipo==="PEDIDO DE DEMISSÃO").length;
+  const demit=v.filter(x=>x.tipo==="DEMITIDO").length;
+  document.getElementById("rd-mes").textContent=noMes.length;
+  document.getElementById("rd-mess").innerHTML=`<b>${v.length}</b> no total registrado`;
+  document.getElementById("rd-pedidos").textContent=pedidos;
+  document.getElementById("rd-pedidoss").innerHTML=v.length?`<b>${(pedidos/v.length*100).toFixed(0)}%</b> dos desligamentos`:"—";
+  document.getElementById("rd-demit").textContent=demit;
+  const ativosN=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos)?new Set(DASHBOARD_DATA.ativos.map(r=>String(r.NOME||"").trim().toUpperCase())).size:0;
+  document.getElementById("rd-turn").textContent=ativosN?((noMes.length/ativosN*100).toFixed(1)+"%"):"—";
+  const mot={};
+  v.forEach(x=>{if(x.motivo)mot[x.motivo]=(mot[x.motivo]||0)+1;});
+  const motArr=Object.entries(mot).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const motMax=motArr.length?motArr[0][1]:1;
+  document.getElementById("rd-motivos").innerHTML=motArr.length?motArr.map(([k,n])=>`<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>${k}</span><b>${n}</b></div><div style="background:#fecaca;height:6px;border-radius:3px;width:${(n/motMax*100).toFixed(0)}%;margin-bottom:9px"></div>`).join(""):'<span style="color:#94a3b8">Nenhum motivo registrado ainda.</span>';
+  const cg={};
+  v.forEach(x=>{const c=x.cargo||"—";cg[c]=(cg[c]||0)+1;});
+  const cgArr=Object.entries(cg).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const cgMax=cgArr.length?cgArr[0][1]:1;
+  document.getElementById("rd-cargos").innerHTML=cgArr.length?cgArr.map(([k,n])=>`<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>${k}</span><b>${n}</b></div><div style="background:#fed7aa;height:6px;border-radius:3px;width:${(n/cgMax*100).toFixed(0)}%;margin-bottom:9px"></div>`).join(""):'<span style="color:#94a3b8">Nenhum desligamento registrado ainda.</span>';
+  rhDesRenderTbl();
+}
+function rhDesTempoCasa(x){
+  if(!x.data_admissao||!x.data_desligamento)return"—";
+  const a=new Date(x.data_admissao+"T00:00:00"),d=new Date(x.data_desligamento+"T00:00:00");
+  let meses=(d.getFullYear()-a.getFullYear())*12+(d.getMonth()-a.getMonth());
+  if(d.getDate()<a.getDate())meses--;
+  if(meses<0)return"—";
+  const anos=Math.floor(meses/12),m=meses%12;
+  if(anos&&m)return anos+"a "+m+"m";
+  if(anos)return anos+"a";
+  return m+"m";
+}
+function rhDesRenderTbl(){
+  const el=document.getElementById("rd-tbl");if(!el)return;
+  const q=(document.getElementById("s-rhdesl")?.value||"").toUpperCase();
+  let rows=RH_DES;
+  if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
+  if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhum desligamento registrado ainda. Use o formulário acima para registrar o primeiro. 🚀</div>';return;}
+  let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
+  ["Data","Funcionário","RE","Cargo","Área","Posto","Tipo","Motivo","Tempo de Casa","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  h+='</tr></thead><tbody>';
+  rows.forEach(x=>{
+    const ct=RD_TIPO_COLORS[x.tipo]||"#64748b";
+    h+=`<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_desligamento)}</td>
+      <td style="padding:8px 10px;font-weight:700;color:#0d1f35">${x.funcionario||"—"}</td>
+      <td style="padding:8px 10px">${x.re||"—"}</td>
+      <td style="padding:8px 10px">${x.cargo||"—"}</td>
+      <td style="padding:8px 10px">${x.area||"—"}</td>
+      <td style="padding:8px 10px">${x.posto||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${ct}18;color:${ct};border:1px solid ${ct}40">${x.tipo||"—"}</span></td>
+      <td style="padding:8px 10px">${x.motivo||"—"}</td>
+      <td style="padding:8px 10px;font-weight:700;white-space:nowrap">${rhDesTempoCasa(x)}</td>
+      <td style="padding:8px 10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(x.observacao||"").replace(/"/g,"&quot;")}">${x.observacao||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-act" onclick="rhDesEditar(${x.id})" title="Editar">✏️</span><span class="rh-act" onclick="rhDesExcluir(${x.id})" title="Excluir">🗑️</span></td>
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+function rhDesSalvar(e){
+  e.preventDefault();
+  const id=document.getElementById("rdf-id").value;
+  const body={
+    data_desligamento:document.getElementById("rdf-data").value||null,
+    funcionario:document.getElementById("rdf-func").value.trim().toUpperCase(),
+    re:document.getElementById("rdf-re").value.trim(),
+    cargo:document.getElementById("rdf-cargo").value.trim().toUpperCase(),
+    area:document.getElementById("rdf-area").value.trim().toUpperCase(),
+    posto:document.getElementById("rdf-posto").value.trim().toUpperCase(),
+    tipo:document.getElementById("rdf-tipo").value,
+    motivo:document.getElementById("rdf-motivo").value.trim().toUpperCase(),
+    data_admissao:document.getElementById("rdf-adm").value||null,
+    observacao:document.getElementById("rdf-obs").value.trim(),
+    criado_por:sessionStorage.getItem("userNome")||null
+  };
+  if(body.tipo==="ABANDONO"&&!body.motivo)body.motivo="ABANDONO";
+  const msg=document.getElementById("rd-form-msg");
+  const btn=document.getElementById("rdBtnSalvar");
+  btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
+  const method=id?"PATCH":"POST";
+  if(id)body.id=id;
+  fetch("/api/rh?t=desligamentos",{method:method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(!ok)throw new Error((j&&j.error)||"erro desconhecido");
+      msg.style.color="#16a34a";msg.textContent=id?"✔ Desligamento atualizado!":"✔ Desligamento registrado!";
+      rhDesLimpar(true);
+      rhDesLoad();
+      setTimeout(()=>{msg.textContent="";},2500);
+    })
+    .catch(err=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar: "+err.message;})
+    .finally(()=>{btn.disabled=false;});
+  return false;
+}
+function rhDesLimpar(keepMsg){
+  document.getElementById("rdForm").reset();
+  document.getElementById("rdf-id").value="";
+  document.getElementById("rdf-data").value=ymd(new Date());
+  document.getElementById("rd-form-title").textContent="➕ Novo Desligamento";
+  if(keepMsg!==true)document.getElementById("rd-form-msg").textContent="";
+}
+function rhDesEditar(id){
+  const x=RH_DES.find(v=>String(v.id)===String(id));if(!x)return;
+  document.getElementById("rdf-id").value=x.id;
+  document.getElementById("rdf-data").value=x.data_desligamento?String(x.data_desligamento).slice(0,10):"";
+  document.getElementById("rdf-func").value=x.funcionario||"";
+  document.getElementById("rdf-re").value=x.re||"";
+  document.getElementById("rdf-cargo").value=x.cargo||"";
+  document.getElementById("rdf-area").value=x.area||"";
+  document.getElementById("rdf-posto").value=x.posto||"";
+  document.getElementById("rdf-tipo").value=x.tipo||"PEDIDO DE DEMISSÃO";
+  document.getElementById("rdf-motivo").value=x.motivo||"";
+  document.getElementById("rdf-adm").value=x.data_admissao?String(x.data_admissao).slice(0,10):"";
+  document.getElementById("rdf-obs").value=x.observacao||"";
+  document.getElementById("rd-form-title").textContent="✏️ Editando — "+(x.funcionario||"");
+  document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
+}
+function rhDesExcluir(id){
+  const x=RH_DES.find(v=>String(v.id)===String(id));
+  if(!confirm("Excluir o desligamento de "+(x?x.funcionario:"")+"? Essa ação não pode ser desfeita."))return;
+  fetch("/api/rh?t=desligamentos&id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    rhDesLoad();
   }).catch(err=>alert("Erro ao excluir: "+err.message));
 }
 function init(){
