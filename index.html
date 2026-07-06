@@ -454,6 +454,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ni" onclick="navTo('checklist',this)"><span class="ni-ic">📝</span><span>Check List</span></div>
     <div class="ni" onclick="navTo('painelacomp',this)" style="position:relative"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
   </div>
+  <div class="nav-sec" id="navSecRH" style="display:none">
+    <div class="nav-lbl">RH</div>
+    <div class="ni" onclick="navTo('rhvagas',this)" style="position:relative"><span class="ni-ic">📋</span><span>Controle de Vagas</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
+  </div>
   <div class="sb-foot upload-btn" id="btnNovoExcel">
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
     <input type="file" id="fu" accept=".xlsx,.xls" onchange="handleUp(event)">
@@ -814,10 +818,57 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       </div>
     </div>
   </div>
+  <div class="page" id="pg-rhvagas">
+    <div class="sec-hdr"><span class="sec-hdr-ic">📋</span><div><div class="sec-hdr-t">RH — Controle de Vagas</div><div class="sec-hdr-sub">Abertura, acompanhamento e fechamento de vagas — preenchimento manual do RH</div></div></div>
+    <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
+      <div class="sk sk-re"><div class="sk-top"><span class="sk-ic">🔴</span></div><div class="sk-lbl">Vagas Abertas</div><div class="sk-v" id="rh-abertas">—</div><div class="sk-sub" id="rh-abertass">—</div></div>
+      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🔁</span></div><div class="sk-lbl">Em Processo</div><div class="sk-v" id="rh-proc">—</div><div class="sk-sub">entrevista · exame · integração</div></div>
+      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Preenchidas</div><div class="sk-v" id="rh-preench">—</div><div class="sk-sub" id="rh-preenchs">—</div></div>
+      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">⏱️</span></div><div class="sk-lbl">Tempo Médio</div><div class="sk-v" id="rh-tempo">—</div><div class="sk-sub">dias p/ fechar vaga</div></div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 22px;margin-bottom:18px">
+      <div style="font-size:.82rem;font-weight:800;color:#0d1f35;margin-bottom:14px" id="rh-form-title">➕ Nova Vaga</div>
+      <form onsubmit="return rhSalvar(event)" id="rhForm">
+        <input type="hidden" id="rhf-id">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Nº da Vaga *</label><input class="rhf-i" id="rhf-numero" type="text" placeholder="Ex: 1682" required></div>
+          <div><label class="rhf-l">Cargo *</label><input class="rhf-i" id="rhf-cargo" type="text" list="dl-rh-cargo" placeholder="Ex: ASG" required><datalist id="dl-rh-cargo"><option>ASG</option><option>PORTEIRO</option><option>ZELADOR</option><option>JARDINEIRO</option><option>MENSAGEIRO</option><option>PINTOR</option></datalist></div>
+          <div><label class="rhf-l">Escala</label><select class="rhf-i" id="rhf-escala"><option value="">—</option><option>12X36</option><option>6X1</option><option>5X2</option><option>4X2</option><option>OUTRA</option></select></div>
+          <div><label class="rhf-l">Área / Supervisor</label><input class="rhf-i" id="rhf-area" type="text" list="dl-rh-area" placeholder="Ex: FRANK"><datalist id="dl-rh-area"></datalist></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Posto / Cliente</label><input class="rhf-i" id="rhf-posto" type="text" placeholder="Ex: COND MILANO"></div>
+          <div><label class="rhf-l">Motivo de Abertura</label><select class="rhf-i" id="rhf-motivo"><option value="">—</option><option>SUBSTITUIÇÃO</option><option>PEDIDO DE DEMISSÃO</option><option>DEMISSÃO</option><option>COBERTURA DE FÉRIAS</option><option>IMPLANTAÇÃO</option><option>AUMENTO DE QUADRO</option><option>RECOLHIMENTO</option><option>OUTRO</option></select></div>
+          <div><label class="rhf-l">Substituição de</label><input class="rhf-i" id="rhf-subst" type="text" placeholder="Quem saiu (se houver)"></div>
+          <div><label class="rhf-l">Status</label><select class="rhf-i" id="rhf-status"><option>ABERTA</option><option>EM ENTREVISTA</option><option>EXAME</option><option>INTEGRAÇÃO</option><option>PREENCHIDA</option><option>CANCELADA</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Critérios da Vaga</label><input class="rhf-i" id="rhf-criterios" type="text" placeholder="Ex: experiência com limpeza, disponibilidade fim de semana"></div>
+          <div><label class="rhf-l">Preenchida por</label><input class="rhf-i" id="rhf-preenchida" type="text" placeholder="Quem assumiu a vaga"></div>
+          <div><label class="rhf-l">Data Fechamento</label><input class="rhf-i" id="rhf-dtfech" type="date"></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="rh-btn" id="rhBtnSalvar">💾 Salvar Vaga</button>
+          <button type="button" class="rh-btn rh-btn-sec" onclick="rhLimpar()">✖ Limpar</button>
+          <span id="rh-form-msg" style="align-self:center;font-size:.75rem;font-weight:700"></span>
+        </div>
+      </form>
+    </div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Vagas Registradas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-rhvagas" oninput="rhRenderTbl()"></div></div><div id="rh-tbl" style="overflow-x:auto"></div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
     @keyframes dotBlink{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+    .rhf-l{display:block;font-size:.62rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+    .rhf-i{width:100%;padding:9px 11px;border:1px solid #dbe2ec;border-radius:8px;font-size:.8rem;color:#0d1f35;background:#f8fafc;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit}
+    .rhf-i:focus{border-color:#2e8fef;box-shadow:0 0 0 3px rgba(46,143,239,.12);background:#fff}
+    .rh-btn{padding:10px 22px;background:linear-gradient(135deg,#1e4d8c,#2e8fef);border:none;border-radius:8px;color:#fff;font-size:.78rem;font-weight:800;cursor:pointer;transition:transform .12s,box-shadow .12s}
+    .rh-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(46,143,239,.3)}
+    .rh-btn-sec{background:#eef2f7;color:#475569}
+    .rh-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.62rem;font-weight:800;letter-spacing:.3px}
+    .rh-act{cursor:pointer;font-size:.8rem;padding:4px 7px;border-radius:6px;transition:background .12s}
+    .rh-act:hover{background:#eef2f7}
   </style>
 
   </div></div>
@@ -904,6 +955,8 @@ async function _savePassword(userKey){
 function applyUserUI(){
   const isAdmin=sessionStorage.getItem("userAdmin")==="1";
   document.querySelectorAll(".upload-btn,#btnNovoExcel").forEach(function(el){el.style.display=isAdmin?"":"none";});
+  const rhSec=document.getElementById("navSecRH");
+  if(rhSec)rhSec.style.display=isAdmin?"":"none";
 }
 function showWelcome(){
   const nome=sessionStorage.getItem("userNome")||"";
@@ -1070,7 +1123,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1086,6 +1139,7 @@ function navTo(p,btn){
   else if(p==="ativos"){renderAtivos();}
   else if(p==="clientes"){renderClientes();}
   else if(p==="painelacomp"){}
+  else if(p==="rhvagas"){rhLoad();}
   else{updVGCharts();}
 }
 
@@ -2574,6 +2628,150 @@ function syncToSupabase(data,fname){
     console.error("Falha ao sincronizar com Supabase:",err);
     if(statusEl)statusEl.textContent=statusEl.textContent+" · Falha ao sincronizar com Supabase";
   });
+}
+/* ===== MÓDULO RH — CONTROLE DE VAGAS (acesso restrito admin) ===== */
+let RH_VAGAS=[];
+const RH_ST_COLORS={"ABERTA":"#dc2626","EM ENTREVISTA":"#f97316","EXAME":"#eab308","INTEGRAÇÃO":"#2e8fef","PREENCHIDA":"#16a34a","CANCELADA":"#6b7280"};
+function rhLoad(){
+  const dl=document.getElementById("dl-rh-area");
+  if(dl&&typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos){
+    const set=new Set();DASHBOARD_DATA.ativos.forEach(r=>{if(r.AREA&&r.AREA!=="—")set.add(r.AREA);});
+    dl.innerHTML=[...set].sort().map(a=>`<option>${a}</option>`).join("");
+  }
+  const tbl=document.getElementById("rh-tbl");
+  if(tbl&&!RH_VAGAS.length)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Carregando vagas…</div>';
+  fetch("/api/rh").then(r=>r.json()).then(j=>{
+    RH_VAGAS=(j&&j.rows)||[];
+    rhRender();
+  }).catch(err=>{
+    console.error("Erro ao carregar vagas:",err);
+    if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar vagas. Verifique a conexão.</div>';
+  });
+}
+function rhRender(){
+  const v=RH_VAGAS;
+  const abertas=v.filter(x=>x.status==="ABERTA").length;
+  const proc=v.filter(x=>["EM ENTREVISTA","EXAME","INTEGRAÇÃO"].includes(x.status)).length;
+  const pre=v.filter(x=>x.status==="PREENCHIDA").length;
+  const canc=v.filter(x=>x.status==="CANCELADA").length;
+  document.getElementById("rh-abertas").textContent=abertas;
+  document.getElementById("rh-abertass").innerHTML=`<b>${canc}</b> canceladas no total`;
+  document.getElementById("rh-proc").textContent=proc;
+  document.getElementById("rh-preench").textContent=pre;
+  document.getElementById("rh-preenchs").innerHTML=v.length?`<b>${(pre/v.length*100).toFixed(0)}%</b> das vagas`:"—";
+  const fech=v.filter(x=>x.status==="PREENCHIDA"&&x.data_abertura&&x.data_fechamento);
+  let tempo="—";
+  if(fech.length){
+    const soma=fech.reduce((s,x)=>s+Math.max(0,(new Date(x.data_fechamento)-new Date(x.data_abertura))/86400000),0);
+    tempo=(soma/fech.length).toFixed(1);
+  }
+  document.getElementById("rh-tempo").textContent=tempo;
+  rhRenderTbl();
+}
+function rhDias(x){
+  if(!x.data_abertura)return"—";
+  const ini=new Date(x.data_abertura+"T00:00:00");
+  const fim=x.data_fechamento?new Date(x.data_fechamento+"T00:00:00"):new Date();
+  return Math.max(0,Math.round((fim-ini)/86400000));
+}
+function rhFmt(d){return d?String(d).slice(0,10).split("-").reverse().join("/"):"—";}
+function rhRenderTbl(){
+  const el=document.getElementById("rh-tbl");if(!el)return;
+  const q=(document.getElementById("s-rhvagas")?.value||"").toUpperCase();
+  let rows=RH_VAGAS;
+  if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
+  if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma vaga registrada ainda. Use o formulário acima para abrir a primeira. 🚀</div>';return;}
+  let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
+  ["Nº","Cargo","Escala","Posto","Área","Motivo","Substituição","Status","Abertura","Dias","Preenchida por",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  h+='</tr></thead><tbody>';
+  rows.forEach(x=>{
+    const cor=RH_ST_COLORS[x.status]||"#64748b";
+    const dias=rhDias(x);
+    const alerta=(x.status!=="PREENCHIDA"&&x.status!=="CANCELADA"&&dias!=="—"&&dias>=15)?' ⚠️':'';
+    h+=`<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px;font-weight:800;color:#0d1f35">${x.numero_vaga||"—"}</td>
+      <td style="padding:8px 10px">${x.cargo||"—"}</td>
+      <td style="padding:8px 10px">${x.escala||"—"}</td>
+      <td style="padding:8px 10px">${x.posto||"—"}</td>
+      <td style="padding:8px 10px">${x.area||"—"}</td>
+      <td style="padding:8px 10px">${x.motivo_abertura||"—"}</td>
+      <td style="padding:8px 10px">${x.substituicao_de||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cor}18;color:${cor};border:1px solid ${cor}40">${x.status||"—"}</span></td>
+      <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_abertura)}</td>
+      <td style="padding:8px 10px;font-weight:700">${dias}${alerta}</td>
+      <td style="padding:8px 10px">${x.preenchida_por||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-act" onclick="rhEditar(${x.id})" title="Editar">✏️</span><span class="rh-act" onclick="rhExcluir(${x.id})" title="Excluir">🗑️</span></td>
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+function rhSalvar(e){
+  e.preventDefault();
+  const id=document.getElementById("rhf-id").value;
+  const body={
+    numero_vaga:document.getElementById("rhf-numero").value.trim(),
+    cargo:document.getElementById("rhf-cargo").value.trim().toUpperCase(),
+    escala:document.getElementById("rhf-escala").value,
+    area:document.getElementById("rhf-area").value.trim().toUpperCase(),
+    posto:document.getElementById("rhf-posto").value.trim().toUpperCase(),
+    motivo_abertura:document.getElementById("rhf-motivo").value,
+    substituicao_de:document.getElementById("rhf-subst").value.trim().toUpperCase(),
+    criterios:document.getElementById("rhf-criterios").value.trim(),
+    status:document.getElementById("rhf-status").value,
+    preenchida_por:document.getElementById("rhf-preenchida").value.trim().toUpperCase(),
+    data_fechamento:document.getElementById("rhf-dtfech").value||null,
+    criado_por:sessionStorage.getItem("userNome")||null
+  };
+  if((body.status==="PREENCHIDA"||body.status==="CANCELADA")&&!body.data_fechamento)body.data_fechamento=ymd(new Date());
+  const msg=document.getElementById("rh-form-msg");
+  const btn=document.getElementById("rhBtnSalvar");
+  btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
+  const method=id?"PATCH":"POST";
+  if(id)body.id=id;
+  fetch("/api/rh",{method:method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(!ok)throw new Error((j&&j.error)||"erro desconhecido");
+      msg.style.color="#16a34a";msg.textContent=id?"✔ Vaga atualizada!":"✔ Vaga registrada!";
+      rhLimpar(true);
+      rhLoad();
+      setTimeout(()=>{msg.textContent="";},2500);
+    })
+    .catch(err=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar: "+err.message;})
+    .finally(()=>{btn.disabled=false;});
+  return false;
+}
+function rhLimpar(keepMsg){
+  document.getElementById("rhForm").reset();
+  document.getElementById("rhf-id").value="";
+  document.getElementById("rh-form-title").textContent="➕ Nova Vaga";
+  if(keepMsg!==true)document.getElementById("rh-form-msg").textContent="";
+}
+function rhEditar(id){
+  const x=RH_VAGAS.find(v=>String(v.id)===String(id));if(!x)return;
+  document.getElementById("rhf-id").value=x.id;
+  document.getElementById("rhf-numero").value=x.numero_vaga||"";
+  document.getElementById("rhf-cargo").value=x.cargo||"";
+  document.getElementById("rhf-escala").value=x.escala||"";
+  document.getElementById("rhf-area").value=x.area||"";
+  document.getElementById("rhf-posto").value=x.posto||"";
+  document.getElementById("rhf-motivo").value=x.motivo_abertura||"";
+  document.getElementById("rhf-subst").value=x.substituicao_de||"";
+  document.getElementById("rhf-criterios").value=x.criterios||"";
+  document.getElementById("rhf-status").value=x.status||"ABERTA";
+  document.getElementById("rhf-preenchida").value=x.preenchida_por||"";
+  document.getElementById("rhf-dtfech").value=x.data_fechamento?String(x.data_fechamento).slice(0,10):"";
+  document.getElementById("rh-form-title").textContent="✏️ Editando Vaga "+(x.numero_vaga||"");
+  document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
+}
+function rhExcluir(id){
+  const x=RH_VAGAS.find(v=>String(v.id)===String(id));
+  if(!confirm("Excluir a vaga "+(x?x.numero_vaga:"")+"? Essa ação não pode ser desfeita."))return;
+  fetch("/api/rh?id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    rhLoad();
+  }).catch(err=>alert("Erro ao excluir: "+err.message));
 }
 function init(){
   loadFromSupabase().then(function(got){
