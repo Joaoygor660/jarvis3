@@ -542,12 +542,14 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <!-- FUNCIONÁRIOS ATIVOS -->
   <div class="page" id="pg-ativos">
     <div class="sec-hdr"><span class="sec-hdr-ic">👤</span><div><div class="sec-hdr-t">Funcionários Ativos</div><div class="sec-hdr-sub">Quadro completo de pessoal ativo no Grupo ServCamp</div></div></div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(5,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(7,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('ativos','total',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-bl">Fixo</span></div><div class="sk-lbl">Total Ativos</div><div class="sk-v" id="at-tot">—</div><div class="sk-sub" id="at-tots">—</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('ativos','diurno',this)"><div class="sk-top"><span class="sk-ic">☀️</span></div><div class="sk-lbl">Turno Diurno</div><div class="sk-v" id="at-di">—</div><div class="sk-sub" id="at-dis">—</div></div>
       <div class="sk sk-or clickable" onclick="skDet('ativos','noturno',this)"><div class="sk-top"><span class="sk-ic">🌙</span></div><div class="sk-lbl">Turno Noturno</div><div class="sk-v" id="at-no">—</div><div class="sk-sub" id="at-nos">—</div></div>
       <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Efetivos</div><div class="sk-v" id="at-efe">—</div><div class="sk-sub" id="at-efes">—</div></div>
       <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🔄</span></div><div class="sk-lbl">Plantonistas</div><div class="sk-v" id="at-plan">—</div><div class="sk-sub" id="at-plans">—</div></div>
+      <div class="sk sk-ye clickable" onclick="skDet('ativos','feriasAtivos',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias Trabalhadas</div><div class="sk-v" id="at-fertrab">—</div><div class="sk-sub" id="at-fertrabs">—</div></div>
+      <div class="sk sk-te clickable" onclick="skDet('ativos','ftsAtivos',this)"><div class="sk-top"><span class="sk-ic">🔀</span></div><div class="sk-lbl">FTs</div><div class="sk-v" id="at-fts">—</div><div class="sk-sub" id="at-ftss">—</div></div>
     </div>
     <div class="sec-kpis" style="grid-template-columns:repeat(7,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('ativos','ferias',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias</div><div class="sk-v" id="at-ferias">—</div><div class="sk-sub" id="at-feriass">—</div></div>
@@ -1734,7 +1736,9 @@ function skDet(sec,type,card){
       trabalho:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO")),t:"💼 Funcionários Trabalhando",fill:"#7c3aed",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAOHOJE)==="TRABALHO"),key:"NOME"},
       suspensao:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao")),t:"⛔ Funcionários Suspensos",fill:"#dc2626",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="suspensao"),key:"NOME"},
       liberado:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado")),t:"🔓 Funcionários Liberados",fill:"#d97706",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado"),key:"NOME"},
-      abandono:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono")),t:"🚷 Funcionários em Abandono",fill:"#1e2d3e",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono"),key:"NOME"}
+      abandono:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono")),t:"🚷 Funcionários em Abandono",fill:"#1e2d3e",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono"),key:"NOME"},
+      feriasAtivos:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>/FERIAS/.test(normTxt(r.SITUACAO||""))),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🏖️ Férias Trabalhadas por Cargo",fill:"#ca8a04",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>/FERIAS/.test(normTxt(r.SITUACAO||""))),key:"CARGO"},
+      ftsAtivos:{rows:()=>cnt((DASHBOARD_DATA.ativos||[]).filter(r=>/FT/.test(normTxt(r.SITUACAO||""))),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v})),t:"🔀 FTs por Cargo",fill:"#0d9488",arr:()=>(DASHBOARD_DATA.ativos||[]).filter(r=>/FT/.test(normTxt(r.SITUACAO||""))),key:"CARGO"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
@@ -1918,19 +1922,28 @@ function renderAtivos(){
     if(key&&!seen.has(key)){seen.add(key);at.push(r);}
   }
   function cnt(arr,key){const m={};for(const r of arr){const v=r[key]||"—";m[v]=(m[v]||0)+1;}return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
-  const di=at.filter(r=>r.TURNO==="DIURNO").length,no=at.filter(r=>r.TURNO==="NOTURNO").length;
-  const cargo=cnt(at,"CARGO");
-  document.getElementById("at-tot").textContent=at.length;
+  // Separar FTs e Férias Trabalhadas para não contaminar os outros cards
+  const atFt=at.filter(r=>/FT/.test(normTxt(r.SITUACAO||"")));
+  const atFerTrab=at.filter(r=>/FERIAS/.test(normTxt(r.SITUACAO||""))&&!/FT/.test(normTxt(r.SITUACAO||"")));
+  const atBase=at.filter(r=>!atFt.includes(r)&&!atFerTrab.includes(r));
+  const di=atBase.filter(r=>r.TURNO==="DIURNO").length,no=atBase.filter(r=>r.TURNO==="NOTURNO").length;
+  const cargo=cnt(atBase,"CARGO");
+  document.getElementById("at-tot").textContent=atBase.length;
   document.getElementById("at-tots").innerHTML=`<b>${cargo.length}</b> cargos distintos`;
   document.getElementById("at-di").textContent=di;
-  document.getElementById("at-dis").innerHTML=at.length?`<b>${(di/at.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("at-dis").innerHTML=atBase.length?`<b>${(di/atBase.length*100).toFixed(0)}%</b> do total`:"—";
   document.getElementById("at-no").textContent=no;
-  document.getElementById("at-nos").innerHTML=at.length?`<b>${(no/at.length*100).toFixed(0)}%</b> do total`:"—";
-  const efe=at.filter(r=>r.TIPO==="EFETIVO").length,plan=at.filter(r=>r.TIPO&&r.TIPO!=="EFETIVO").length;
+  document.getElementById("at-nos").innerHTML=atBase.length?`<b>${(no/atBase.length*100).toFixed(0)}%</b> do total`:"—";
+  const efe=atBase.filter(r=>r.TIPO==="EFETIVO").length,plan=atBase.filter(r=>r.TIPO&&r.TIPO!=="EFETIVO").length;
   document.getElementById("at-efe").textContent=efe;
-  document.getElementById("at-efes").innerHTML=at.length?`<b>${(efe/at.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("at-efes").innerHTML=atBase.length?`<b>${(efe/atBase.length*100).toFixed(0)}%</b> do total`:"—";
   document.getElementById("at-plan").textContent=plan;
-  document.getElementById("at-plans").innerHTML=at.length?`<b>${(plan/at.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("at-plans").innerHTML=atBase.length?`<b>${(plan/atBase.length*100).toFixed(0)}%</b> do total`:"—";
+  // Cards Férias Trabalhadas e FTs
+  document.getElementById("at-fertrab").textContent=atFerTrab.length;
+  document.getElementById("at-fertrabs").innerHTML=at.length?`<b>${(atFerTrab.length/at.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("at-fts").textContent=atFt.length;
+  document.getElementById("at-ftss").innerHTML=at.length?`<b>${(atFt.length/at.length*100).toFixed(0)}%</b> do total`:"—";
 
   const pres=DASHBOARD_DATA.presenca||[];
   const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0,abandono:0};
