@@ -1929,8 +1929,6 @@ function renderAtivos(){
   const _maxFtDate=ftsAll.reduce((m,r)=>{const d=String(r.DATA||"");return d>m?d:m;},"");
   const nomesFerTrab=new Set(presAll.filter(r=>normTxt(r.DESCSITUACAO).includes("FERIAS TRAB")).map(r=>String(r.NOME||"").trim().toUpperCase()));
   const nomesFt=new Set(ftsAll.filter(r=>!_maxFtDate||String(r.DATA||"")===_maxFtDate).map(r=>String(r.NOME||"").trim().toUpperCase()));
-  const atFerTrab=at.filter(r=>nomesFerTrab.has(String(r.NOME||"").trim().toUpperCase()));
-  const atFt=at.filter(r=>nomesFt.has(String(r.NOME||"").trim().toUpperCase()));
   // Total Ativos = quadro completo da empresa (não desconta FT/Férias Trabalhada)
   const di=at.filter(r=>r.TURNO==="DIURNO").length,no=at.filter(r=>r.TURNO==="NOTURNO").length;
   const cargo=cnt(at,"CARGO");
@@ -1945,20 +1943,22 @@ function renderAtivos(){
   document.getElementById("at-efes").innerHTML=at.length?`<b>${(efe/at.length*100).toFixed(0)}%</b> do total`:"—";
   document.getElementById("at-plan").textContent=plan;
   document.getElementById("at-plans").innerHTML=at.length?`<b>${(plan/at.length*100).toFixed(0)}%</b> do total`:"—";
-  // Cards Férias Trabalhadas e FTs
-  document.getElementById("at-fertrab").textContent=atFerTrab.length;
-  document.getElementById("at-fertrabs").innerHTML=at.length?`<b>${(atFerTrab.length/at.length*100).toFixed(0)}%</b> do total`:"—";
-  document.getElementById("at-fts").textContent=atFt.length;
-  document.getElementById("at-ftss").innerHTML=at.length?`<b>${(atFt.length/at.length*100).toFixed(0)}%</b> do total`:"—";
 
   const pres=DASHBOARD_DATA.presenca||[];
-  const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0,abandono:0};
-  // FT e Férias Trabalhada não contabilizam como "trabalho" — aparecem só nos seus próprios cards
+  // Cada pessoa da ficha entra em UMA única categoria (mutuamente exclusivo).
+  // FT e Férias Trabalhada têm prioridade e saem das demais categorias — assim a soma bate com a ficha.
+  const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0,abandono:0,fts:0,feriastrab:0};
   pres.forEach(r=>{
     const k=String(r.NOME||"").trim().toUpperCase();
-    if(nomesFt.has(k)||nomesFerTrab.has(k))return;
+    if(nomesFerTrab.has(k)){_pc.feriastrab++;return;}
+    if(nomesFt.has(k)){_pc.fts++;return;}
     _pc[_categorizaPres(r)]++;
   });
+  // Cards Férias Trabalhadas e FTs
+  document.getElementById("at-fertrab").textContent=_pc.feriastrab;
+  document.getElementById("at-fertrabs").innerHTML=pres.length?`<b>${(_pc.feriastrab/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
+  document.getElementById("at-fts").textContent=_pc.fts;
+  document.getElementById("at-ftss").innerHTML=pres.length?`<b>${(_pc.fts/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
   const trab=_pc.trabalho,folga=_pc.folga,falta=_pc.falta,ferias=_pc.ferias,inss=_pc.inss;
   document.getElementById("at-ferias").textContent=ferias;
   document.getElementById("at-feriass").innerHTML=pres.length?`<b>${(ferias/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
