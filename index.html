@@ -1931,20 +1931,20 @@ function renderAtivos(){
   const nomesFt=new Set(ftsAll.filter(r=>!_maxFtDate||String(r.DATA||"")===_maxFtDate).map(r=>String(r.NOME||"").trim().toUpperCase()));
   const atFerTrab=at.filter(r=>nomesFerTrab.has(String(r.NOME||"").trim().toUpperCase()));
   const atFt=at.filter(r=>nomesFt.has(String(r.NOME||"").trim().toUpperCase()));
-  const atBase=at.filter(r=>{const k=String(r.NOME||"").trim().toUpperCase();return!nomesFerTrab.has(k)&&!nomesFt.has(k);});
-  const di=atBase.filter(r=>r.TURNO==="DIURNO").length,no=atBase.filter(r=>r.TURNO==="NOTURNO").length;
-  const cargo=cnt(atBase,"CARGO");
-  document.getElementById("at-tot").textContent=atBase.length;
+  // Total Ativos = quadro completo da empresa (não desconta FT/Férias Trabalhada)
+  const di=at.filter(r=>r.TURNO==="DIURNO").length,no=at.filter(r=>r.TURNO==="NOTURNO").length;
+  const cargo=cnt(at,"CARGO");
+  document.getElementById("at-tot").textContent=at.length;
   document.getElementById("at-tots").innerHTML=`<b>${cargo.length}</b> cargos distintos`;
   document.getElementById("at-di").textContent=di;
-  document.getElementById("at-dis").innerHTML=atBase.length?`<b>${(di/atBase.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("at-dis").innerHTML=at.length?`<b>${(di/at.length*100).toFixed(0)}%</b> do total`:"—";
   document.getElementById("at-no").textContent=no;
-  document.getElementById("at-nos").innerHTML=atBase.length?`<b>${(no/atBase.length*100).toFixed(0)}%</b> do total`:"—";
-  const efe=atBase.filter(r=>r.TIPO==="EFETIVO").length,plan=atBase.filter(r=>r.TIPO&&r.TIPO!=="EFETIVO").length;
+  document.getElementById("at-nos").innerHTML=at.length?`<b>${(no/at.length*100).toFixed(0)}%</b> do total`:"—";
+  const efe=at.filter(r=>r.TIPO==="EFETIVO").length,plan=at.filter(r=>r.TIPO&&r.TIPO!=="EFETIVO").length;
   document.getElementById("at-efe").textContent=efe;
-  document.getElementById("at-efes").innerHTML=atBase.length?`<b>${(efe/atBase.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("at-efes").innerHTML=at.length?`<b>${(efe/at.length*100).toFixed(0)}%</b> do total`:"—";
   document.getElementById("at-plan").textContent=plan;
-  document.getElementById("at-plans").innerHTML=atBase.length?`<b>${(plan/atBase.length*100).toFixed(0)}%</b> do total`:"—";
+  document.getElementById("at-plans").innerHTML=at.length?`<b>${(plan/at.length*100).toFixed(0)}%</b> do total`:"—";
   // Cards Férias Trabalhadas e FTs
   document.getElementById("at-fertrab").textContent=atFerTrab.length;
   document.getElementById("at-fertrabs").innerHTML=at.length?`<b>${(atFerTrab.length/at.length*100).toFixed(0)}%</b> do total`:"—";
@@ -1953,7 +1953,12 @@ function renderAtivos(){
 
   const pres=DASHBOARD_DATA.presenca||[];
   const _pc={trabalho:0,folga:0,falta:0,ferias:0,inss:0,suspensao:0,liberado:0,abandono:0};
-  pres.forEach(r=>{_pc[_categorizaPres(r)]++;});
+  // FT e Férias Trabalhada não contabilizam como "trabalho" — aparecem só nos seus próprios cards
+  pres.forEach(r=>{
+    const k=String(r.NOME||"").trim().toUpperCase();
+    if(nomesFt.has(k)||nomesFerTrab.has(k))return;
+    _pc[_categorizaPres(r)]++;
+  });
   const trab=_pc.trabalho,folga=_pc.folga,falta=_pc.falta,ferias=_pc.ferias,inss=_pc.inss;
   document.getElementById("at-ferias").textContent=ferias;
   document.getElementById("at-feriass").innerHTML=pres.length?`<b>${(ferias/pres.length*100).toFixed(0)}%</b> da ficha`:"—";
