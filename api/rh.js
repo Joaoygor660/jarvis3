@@ -1,7 +1,21 @@
-// api/rh.js — CRUD do módulo RH (rh_vagas) via PostgREST do Supabase.
+// api/rh.js — CRUD do módulo RH via PostgREST do Supabase.
+// Multi-tabela: /api/rh?t=vagas (padrão) | /api/rh?t=entrevistas
 // Mesmo padrão de api/import.js: usa a SERVICE_ROLE KEY das variáveis de
-// ambiente da Vercel (nunca exposta ao navegador). RLS na tabela bloqueia
+// ambiente da Vercel (nunca exposta ao navegador). RLS nas tabelas bloqueia
 // qualquer acesso que não venha por aqui.
+
+const TABLES = {
+  vagas: {
+    table: "rh_vagas",
+    required: ["numero_vaga", "cargo"],
+    fields: ["numero_vaga","cargo","escala","posto","area","motivo_abertura","substituicao_de","criterios","status","preenchida_por","data_abertura","data_fechamento","criado_por"]
+  },
+  entrevistas: {
+    table: "rh_entrevistas",
+    required: ["candidato"],
+    fields: ["data_entrevista","candidato","sexo","cargo","vaga_numero","etapa","situacao","motivo_reprovacao","observacao","criado_por"]
+  }
+};
 
 module.exports = async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -13,7 +27,11 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const base = `${SUPABASE_URL}/rest/v1/rh_vagas`;
+  const tKey = (req.query && req.query.t) || "vagas";
+  const cfg = TABLES[tKey];
+  if (!cfg) return res.status(400).json({ error: `Tabela desconhecida: ${tKey}` });
+
+  const base = `${SUPABASE_URL}/rest/v1/${cfg.table}`;
   const headers = {
     apikey: SUPABASE_SERVICE_ROLE_KEY,
     Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
@@ -26,21 +44,20 @@ module.exports = async function handler(req, res) {
     try { body = JSON.parse(body); } catch (e) { body = null; }
   }
 
-  const CAMPOS = ["numero_vaga","cargo","escala","posto","area","motivo_abertura","substituicao_de","criterios","status","preenchida_por","data_abertura","data_fechamento","criado_por"];
   function pick(src) {
     const out = {};
-    for (const k of CAMPOS) if (src && src[k] !== undefined) out[k] = src[k] === "" ? null : src[k];
+    for (const k of cfg.fields) if (src && src[k] !== undefined) out[k] = src[k] === "" ? null : src[k];
     return out;
   }
 
   let resp;
   try {
     if (req.method === "GET") {
-      resp = await fetch(`${base}?select=*&order=criado_em.desc&limit=500`, { headers });
+      resp = await fetch(`${base}?select=*&order=criado_em.desc&limit=1000`, { headers });
     } else if (req.method === "POST") {
       const row = pick(body);
-      if (!row.numero_vaga || !row.cargo) {
-        return res.status(400).json({ error: "Campos obrigatórios: numero_vaga e cargo." });
+      for (const k of cfg.required) {
+        if (!row[k]) return res.status(400).json({ error: `Campo obrigatório ausente: ${k}` });
       }
       resp = await fetch(base, { method: "POST", headers, body: JSON.stringify(row) });
     } else if (req.method === "PATCH") {

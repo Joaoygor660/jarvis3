@@ -457,6 +457,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="nav-sec" id="navSecRH" style="display:none">
     <div class="nav-lbl">RH</div>
     <div class="ni" onclick="navTo('rhvagas',this)" style="position:relative"><span class="ni-ic">📋</span><span>Controle de Vagas</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
+    <div class="ni" onclick="navTo('rhentrev',this)" style="position:relative"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
   </div>
   <div class="sb-foot upload-btn" id="btnNovoExcel">
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
@@ -856,6 +857,55 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Vagas Registradas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-rhvagas" oninput="rhRenderTbl()"></div></div><div id="rh-tbl" style="overflow-x:auto"></div></div>
   </div>
+  <div class="page" id="pg-rhentrev">
+    <div class="sec-hdr"><span class="sec-hdr-ic">🗣️</span><div><div class="sec-hdr-t">RH — Entrevistas &amp; Funil</div><div class="sec-hdr-sub">Candidatos, resultado das entrevistas e acompanhamento até a contratação</div></div></div>
+    <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
+      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🗣️</span></div><div class="sk-lbl">Entrevistas</div><div class="sk-v" id="re-tot">—</div><div class="sk-sub" id="re-tots">—</div></div>
+      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🔁</span></div><div class="sk-lbl">Em Processo</div><div class="sk-v" id="re-proc">—</div><div class="sk-sub">candidatos ativos no funil</div></div>
+      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Contratados</div><div class="sk-v" id="re-contr">—</div><div class="sk-sub" id="re-contrs">—</div></div>
+      <div class="sk sk-re"><div class="sk-top"><span class="sk-ic">📉</span></div><div class="sk-lbl">Taxa de Aprovação</div><div class="sk-v" id="re-taxa">—</div><div class="sk-sub">contratados ÷ finalizados</div></div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px;margin-bottom:18px">
+      <div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Funil do Processo</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px" id="re-funil">
+        <div style="background:#eef2ff;border-radius:10px;padding:14px;text-align:center"><div style="font-size:.68rem;font-weight:800;color:#4f46e5">🗣️ ENTREVISTA</div><div style="font-size:1.6rem;font-weight:900;color:#312e81" id="re-f1">—</div></div>
+        <div style="background:#fef9c3;border-radius:10px;padding:14px;text-align:center"><div style="font-size:.68rem;font-weight:800;color:#a16207">🩺 EXAME</div><div style="font-size:1.6rem;font-weight:900;color:#713f12" id="re-f2">—</div></div>
+        <div style="background:#e0f2fe;border-radius:10px;padding:14px;text-align:center"><div style="font-size:.68rem;font-weight:800;color:#0369a1">🎓 INTEGRAÇÃO</div><div style="font-size:1.6rem;font-weight:900;color:#0c4a6e" id="re-f3">—</div></div>
+        <div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center"><div style="font-size:.68rem;font-weight:800;color:#15803d">✅ CONTRATADO</div><div style="font-size:1.6rem;font-weight:900;color:#14532d" id="re-f4">—</div></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Motivos de Reprovação</div><div id="re-motivos" style="font-size:.78rem;color:#334155">—</div></div>
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Candidatos por Sexo e Cargo</div><div id="re-sexo" style="font-size:.78rem;color:#334155">—</div></div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 22px;margin-bottom:18px">
+      <div style="font-size:.82rem;font-weight:800;color:#0d1f35;margin-bottom:14px" id="re-form-title">➕ Nova Entrevista</div>
+      <form onsubmit="return rhEntSalvar(event)" id="reForm">
+        <input type="hidden" id="ref-id">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Data da Entrevista</label><input class="rhf-i" id="ref-data" type="date"></div>
+          <div><label class="rhf-l">Candidato *</label><input class="rhf-i" id="ref-candidato" type="text" placeholder="Nome completo" required></div>
+          <div><label class="rhf-l">Sexo</label><select class="rhf-i" id="ref-sexo"><option value="">—</option><option>FEMININO</option><option>MASCULINO</option></select></div>
+          <div><label class="rhf-l">Cargo</label><input class="rhf-i" id="ref-cargo" type="text" list="dl-rh-cargo" placeholder="Ex: ASG"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Nº da Vaga</label><input class="rhf-i" id="ref-vaga" type="text" list="dl-rh-vaganum" placeholder="Ex: 1682"><datalist id="dl-rh-vaganum"></datalist></div>
+          <div><label class="rhf-l">Etapa</label><select class="rhf-i" id="ref-etapa"><option>ENTREVISTA</option><option>EXAME</option><option>INTEGRAÇÃO</option><option>CONTRATADO</option></select></div>
+          <div><label class="rhf-l">Situação</label><select class="rhf-i" id="ref-situacao"><option>EM PROCESSO</option><option>CONTRATADO</option><option>REPROVADO</option><option>NÃO COMPARECEU</option><option>DESISTIU</option><option>RECUSOU A VAGA</option></select></div>
+          <div><label class="rhf-l">Motivo (se não passou)</label><select class="rhf-i" id="ref-motivo"><option value="">—</option><option>SEM EXPERIÊNCIA</option><option>PERFIL INADEQUADO</option><option>PRETENSÃO SALARIAL</option><option>NÃO ACEITOU A ESCALA</option><option>NÃO ACEITOU O LOCAL</option><option>REPROVADO NO EXAME</option><option>NÃO COMPARECEU</option><option>DESISTIU</option><option>OUTRO</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Observação</label><input class="rhf-i" id="ref-obs" type="text" placeholder="Anotações da entrevista (opcional)"></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="rh-btn" id="reBtnSalvar">💾 Salvar Entrevista</button>
+          <button type="button" class="rh-btn rh-btn-sec" onclick="rhEntLimpar()">✖ Limpar</button>
+          <span id="re-form-msg" style="align-self:center;font-size:.75rem;font-weight:700"></span>
+        </div>
+      </form>
+    </div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Entrevistas Registradas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, vaga, cargo..." id="s-rhentrev" oninput="rhEntRenderTbl()"></div></div><div id="re-tbl" style="overflow-x:auto"></div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1123,7 +1173,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1140,6 +1190,7 @@ function navTo(p,btn){
   else if(p==="clientes"){renderClientes();}
   else if(p==="painelacomp"){}
   else if(p==="rhvagas"){rhLoad();}
+  else if(p==="rhentrev"){rhEntLoad();}
   else{updVGCharts();}
 }
 
@@ -2771,6 +2822,149 @@ function rhExcluir(id){
   fetch("/api/rh?id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
     if(!r.ok)throw new Error("HTTP "+r.status);
     rhLoad();
+  }).catch(err=>alert("Erro ao excluir: "+err.message));
+}
+/* ===== MÓDULO RH — ENTREVISTAS & FUNIL ===== */
+let RH_ENT=[];
+const RE_ETAPA_COLORS={"ENTREVISTA":"#4f46e5","EXAME":"#ca8a04","INTEGRAÇÃO":"#0369a1","CONTRATADO":"#16a34a"};
+const RE_SIT_COLORS={"EM PROCESSO":"#f97316","CONTRATADO":"#16a34a","REPROVADO":"#dc2626","NÃO COMPARECEU":"#6b7280","DESISTIU":"#6b7280","RECUSOU A VAGA":"#b45309"};
+function rhEntLoad(){
+  const dt=document.getElementById("ref-data");
+  if(dt&&!dt.value)dt.value=ymd(new Date());
+  const tbl=document.getElementById("re-tbl");
+  if(tbl&&!RH_ENT.length)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Carregando entrevistas…</div>';
+  const pVagas=RH_VAGAS.length?Promise.resolve():fetch("/api/rh?t=vagas").then(r=>r.json()).then(j=>{RH_VAGAS=(j&&j.rows)||[];}).catch(()=>{});
+  const pEnt=fetch("/api/rh?t=entrevistas").then(r=>r.json()).then(j=>{RH_ENT=(j&&j.rows)||[];});
+  Promise.all([pVagas,pEnt]).then(()=>{
+    const dl=document.getElementById("dl-rh-vaganum");
+    if(dl)dl.innerHTML=RH_VAGAS.filter(v=>v.status!=="PREENCHIDA"&&v.status!=="CANCELADA").map(v=>`<option value="${v.numero_vaga}">${v.numero_vaga} — ${v.cargo||""} ${v.posto?("· "+v.posto):""}</option>`).join("");
+    rhEntRender();
+  }).catch(err=>{
+    console.error("Erro ao carregar entrevistas:",err);
+    if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar entrevistas. Verifique a conexão.</div>';
+  });
+}
+function rhEntRender(){
+  const v=RH_ENT;
+  const proc=v.filter(x=>x.situacao==="EM PROCESSO");
+  const contr=v.filter(x=>x.situacao==="CONTRATADO").length;
+  const fin=v.filter(x=>x.situacao!=="EM PROCESSO").length;
+  document.getElementById("re-tot").textContent=v.length;
+  const vagasDist=new Set(v.map(x=>x.vaga_numero).filter(Boolean)).size;
+  document.getElementById("re-tots").innerHTML=vagasDist?`para <b>${vagasDist}</b> vagas`:"—";
+  document.getElementById("re-proc").textContent=proc.length;
+  document.getElementById("re-contr").textContent=contr;
+  document.getElementById("re-contrs").innerHTML=v.length?`<b>${(contr/v.length*100).toFixed(0)}%</b> das entrevistas`:"—";
+  document.getElementById("re-taxa").textContent=fin?((contr/fin*100).toFixed(0)+"%"):"—";
+  document.getElementById("re-f1").textContent=proc.filter(x=>x.etapa==="ENTREVISTA").length;
+  document.getElementById("re-f2").textContent=proc.filter(x=>x.etapa==="EXAME").length;
+  document.getElementById("re-f3").textContent=proc.filter(x=>x.etapa==="INTEGRAÇÃO").length;
+  document.getElementById("re-f4").textContent=contr;
+  // motivos de reprovação
+  const mot={};
+  v.forEach(x=>{if(x.motivo_reprovacao&&x.situacao!=="EM PROCESSO"&&x.situacao!=="CONTRATADO")mot[x.motivo_reprovacao]=(mot[x.motivo_reprovacao]||0)+1;});
+  const motArr=Object.entries(mot).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const motMax=motArr.length?motArr[0][1]:1;
+  document.getElementById("re-motivos").innerHTML=motArr.length?motArr.map(([k,n])=>`<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>${k}</span><b>${n}</b></div><div style="background:#fecaca;height:6px;border-radius:3px;width:${(n/motMax*100).toFixed(0)}%;margin-bottom:9px"></div>`).join(""):'<span style="color:#94a3b8">Nenhuma reprovação registrada ainda.</span>';
+  // sexo por cargo
+  const sx={};
+  v.forEach(x=>{const c=x.cargo||"—";if(!sx[c])sx[c]={F:0,M:0};if(x.sexo==="FEMININO")sx[c].F++;else if(x.sexo==="MASCULINO")sx[c].M++;});
+  const sxArr=Object.entries(sx).filter(([,o])=>o.F+o.M>0).sort((a,b)=>(b[1].F+b[1].M)-(a[1].F+a[1].M)).slice(0,6);
+  document.getElementById("re-sexo").innerHTML=sxArr.length?sxArr.map(([c,o])=>{const t=o.F+o.M;return`<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>${c}</span><span><b style="color:#d4537e">${o.F}</b> M · <b style="color:#378add">${o.M}</b> H</span></div><div style="display:flex;height:6px;border-radius:3px;overflow:hidden;margin-bottom:9px"><div style="background:#ed93b1;width:${(o.F/t*100).toFixed(0)}%"></div><div style="background:#85b7eb;width:${(o.M/t*100).toFixed(0)}%"></div></div>`;}).join("")+'<div style="font-size:.65rem;color:#94a3b8">rosa = mulheres · azul = homens</div>':'<span style="color:#94a3b8">Nenhum candidato com sexo informado.</span>';
+  rhEntRenderTbl();
+}
+function rhEntRenderTbl(){
+  const el=document.getElementById("re-tbl");if(!el)return;
+  const q=(document.getElementById("s-rhentrev")?.value||"").toUpperCase();
+  let rows=RH_ENT;
+  if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
+  if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma entrevista registrada ainda. Use o formulário acima para registrar a primeira. 🚀</div>';return;}
+  let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
+  ["Data","Candidato","Sexo","Cargo","Vaga","Etapa","Situação","Motivo","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  h+='</tr></thead><tbody>';
+  rows.forEach(x=>{
+    const ce=RE_ETAPA_COLORS[x.etapa]||"#64748b";
+    const cs=RE_SIT_COLORS[x.situacao]||"#64748b";
+    h+=`<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_entrevista)}</td>
+      <td style="padding:8px 10px;font-weight:700;color:#0d1f35">${x.candidato||"—"}</td>
+      <td style="padding:8px 10px">${x.sexo?x.sexo[0]:"—"}</td>
+      <td style="padding:8px 10px">${x.cargo||"—"}</td>
+      <td style="padding:8px 10px;font-weight:700">${x.vaga_numero||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${ce}18;color:${ce};border:1px solid ${ce}40">${x.etapa||"—"}</span></td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cs}18;color:${cs};border:1px solid ${cs}40">${x.situacao||"—"}</span></td>
+      <td style="padding:8px 10px">${x.motivo_reprovacao||"—"}</td>
+      <td style="padding:8px 10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(x.observacao||"").replace(/"/g,"&quot;")}">${x.observacao||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-act" onclick="rhEntEditar(${x.id})" title="Editar">✏️</span><span class="rh-act" onclick="rhEntExcluir(${x.id})" title="Excluir">🗑️</span></td>
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+function rhEntSalvar(e){
+  e.preventDefault();
+  const id=document.getElementById("ref-id").value;
+  const body={
+    data_entrevista:document.getElementById("ref-data").value||null,
+    candidato:document.getElementById("ref-candidato").value.trim().toUpperCase(),
+    sexo:document.getElementById("ref-sexo").value,
+    cargo:document.getElementById("ref-cargo").value.trim().toUpperCase(),
+    vaga_numero:document.getElementById("ref-vaga").value.trim(),
+    etapa:document.getElementById("ref-etapa").value,
+    situacao:document.getElementById("ref-situacao").value,
+    motivo_reprovacao:document.getElementById("ref-motivo").value,
+    observacao:document.getElementById("ref-obs").value.trim(),
+    criado_por:sessionStorage.getItem("userNome")||null
+  };
+  if(body.situacao==="CONTRATADO")body.etapa="CONTRATADO";
+  if(body.situacao==="NÃO COMPARECEU"&&!body.motivo_reprovacao)body.motivo_reprovacao="NÃO COMPARECEU";
+  if(body.situacao==="DESISTIU"&&!body.motivo_reprovacao)body.motivo_reprovacao="DESISTIU";
+  const msg=document.getElementById("re-form-msg");
+  const btn=document.getElementById("reBtnSalvar");
+  btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
+  const method=id?"PATCH":"POST";
+  if(id)body.id=id;
+  fetch("/api/rh?t=entrevistas",{method:method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(!ok)throw new Error((j&&j.error)||"erro desconhecido");
+      msg.style.color="#16a34a";msg.textContent=id?"✔ Entrevista atualizada!":"✔ Entrevista registrada!";
+      rhEntLimpar(true);
+      rhEntLoad();
+      setTimeout(()=>{msg.textContent="";},2500);
+    })
+    .catch(err=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar: "+err.message;})
+    .finally(()=>{btn.disabled=false;});
+  return false;
+}
+function rhEntLimpar(keepMsg){
+  document.getElementById("reForm").reset();
+  document.getElementById("ref-id").value="";
+  document.getElementById("ref-data").value=ymd(new Date());
+  document.getElementById("re-form-title").textContent="➕ Nova Entrevista";
+  if(keepMsg!==true)document.getElementById("re-form-msg").textContent="";
+}
+function rhEntEditar(id){
+  const x=RH_ENT.find(v=>String(v.id)===String(id));if(!x)return;
+  document.getElementById("ref-id").value=x.id;
+  document.getElementById("ref-data").value=x.data_entrevista?String(x.data_entrevista).slice(0,10):"";
+  document.getElementById("ref-candidato").value=x.candidato||"";
+  document.getElementById("ref-sexo").value=x.sexo||"";
+  document.getElementById("ref-cargo").value=x.cargo||"";
+  document.getElementById("ref-vaga").value=x.vaga_numero||"";
+  document.getElementById("ref-etapa").value=x.etapa||"ENTREVISTA";
+  document.getElementById("ref-situacao").value=x.situacao||"EM PROCESSO";
+  document.getElementById("ref-motivo").value=x.motivo_reprovacao||"";
+  document.getElementById("ref-obs").value=x.observacao||"";
+  document.getElementById("re-form-title").textContent="✏️ Editando — "+(x.candidato||"");
+  document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
+}
+function rhEntExcluir(id){
+  const x=RH_ENT.find(v=>String(v.id)===String(id));
+  if(!confirm("Excluir a entrevista de "+(x?x.candidato:"")+"? Essa ação não pode ser desfeita."))return;
+  fetch("/api/rh?t=entrevistas&id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    rhEntLoad();
   }).catch(err=>alert("Erro ao excluir: "+err.message));
 }
 function init(){
