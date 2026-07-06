@@ -1738,7 +1738,7 @@ function skDet(sec,type,card){
       liberado:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado")),t:"🔓 Funcionários Liberados",fill:"#d97706",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="liberado"),key:"NOME"},
       abandono:{rows:()=>_grpByTipo((DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono")),t:"🚷 Funcionários em Abandono",fill:"#1e2d3e",arr:()=>(DASHBOARD_DATA.presenca||[]).filter(r=>_categorizaPres(r)==="abandono"),key:"NOME"},
       feriasAtivos:{rows:()=>{const nm=new Set((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO).includes("FERIAS TRAB")).map(r=>String(r.NOME||"").trim().toUpperCase()));return cnt((DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase())),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v}));},t:"🏖️ Férias Trabalhadas por Cargo",fill:"#ca8a04",arr:()=>{const nm=new Set((DASHBOARD_DATA.presenca||[]).filter(r=>normTxt(r.DESCSITUACAO).includes("FERIAS TRAB")).map(r=>String(r.NOME||"").trim().toUpperCase()));return(DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase()));},key:"CARGO"},
-      ftsAtivos:{rows:()=>{const nm=new Set((DASHBOARD_DATA.fts||[]).map(r=>String(r.NOME||"").trim().toUpperCase()));return cnt((DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase())),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v}));},t:"🔀 FTs por Cargo",fill:"#0d9488",arr:()=>{const nm=new Set((DASHBOARD_DATA.fts||[]).map(r=>String(r.NOME||"").trim().toUpperCase()));return(DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase()));},key:"CARGO"}
+      ftsAtivos:{rows:()=>{const fa=DASHBOARD_DATA.fts||[];const md=fa.reduce((m,r)=>{const d=String(r.DATA||"");return d>m?d:m;},"");const nm=new Set(fa.filter(r=>!md||String(r.DATA||"")===md).map(r=>String(r.NOME||"").trim().toUpperCase()));return cnt((DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase())),"CARGO").slice(0,15).map(([k,v])=>({NOME:k,v}));},t:"🔀 FTs por Cargo (dia atual)",fill:"#0d9488",arr:()=>{const fa=DASHBOARD_DATA.fts||[];const md=fa.reduce((m,r)=>{const d=String(r.DATA||"");return d>m?d:m;},"");const nm=new Set(fa.filter(r=>!md||String(r.DATA||"")===md).map(r=>String(r.NOME||"").trim().toUpperCase()));return(DASHBOARD_DATA.ativos||[]).filter(r=>nm.has(String(r.NOME||"").trim().toUpperCase()));},key:"CARGO"}
     },
     dispo:{
       total:{rows:()=>F.dispo.map(r=>({NOME:r.NOME,v:1,sub:r.TURNO+" · "+r.RESERVA})),t:"🔴 Todos Sem Alocação",fill:"#dc2626"},
@@ -1923,9 +1923,12 @@ function renderAtivos(){
   }
   function cnt(arr,key){const m={};for(const r of arr){const v=r[key]||"—";m[v]=(m[v]||0)+1;}return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
   // Férias Trabalhadas vem da Ficha de Presença (DESCSITUACAO="FERIAS TRAB."); FTs vem de data.fts (DESCTPCOBERTURA="FT")
+  // Considera apenas o dia mais recente (não o acumulado do período), igual aos demais cards
   const presAll=DASHBOARD_DATA.presenca||[];
+  const ftsAll=DASHBOARD_DATA.fts||[];
+  const _maxFtDate=ftsAll.reduce((m,r)=>{const d=String(r.DATA||"");return d>m?d:m;},"");
   const nomesFerTrab=new Set(presAll.filter(r=>normTxt(r.DESCSITUACAO).includes("FERIAS TRAB")).map(r=>String(r.NOME||"").trim().toUpperCase()));
-  const nomesFt=new Set((DASHBOARD_DATA.fts||[]).map(r=>String(r.NOME||"").trim().toUpperCase()));
+  const nomesFt=new Set(ftsAll.filter(r=>!_maxFtDate||String(r.DATA||"")===_maxFtDate).map(r=>String(r.NOME||"").trim().toUpperCase()));
   const atFerTrab=at.filter(r=>nomesFerTrab.has(String(r.NOME||"").trim().toUpperCase()));
   const atFt=at.filter(r=>nomesFt.has(String(r.NOME||"").trim().toUpperCase()));
   const atBase=at.filter(r=>{const k=String(r.NOME||"").trim().toUpperCase();return!nomesFerTrab.has(k)&&!nomesFt.has(k);});
