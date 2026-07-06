@@ -542,16 +542,14 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <!-- FUNCIONÁRIOS ATIVOS -->
   <div class="page" id="pg-ativos">
     <div class="sec-hdr"><span class="sec-hdr-ic">👤</span><div><div class="sec-hdr-t">Funcionários Ativos</div><div class="sec-hdr-sub">Quadro completo de pessoal ativo no Grupo ServCamp</div></div></div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(7,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(5,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('ativos','total',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-bl">Fixo</span></div><div class="sk-lbl">Total Ativos</div><div class="sk-v" id="at-tot">—</div><div class="sk-sub" id="at-tots">—</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('ativos','diurno',this)"><div class="sk-top"><span class="sk-ic">☀️</span></div><div class="sk-lbl">Turno Diurno</div><div class="sk-v" id="at-di">—</div><div class="sk-sub" id="at-dis">—</div></div>
       <div class="sk sk-or clickable" onclick="skDet('ativos','noturno',this)"><div class="sk-top"><span class="sk-ic">🌙</span></div><div class="sk-lbl">Turno Noturno</div><div class="sk-v" id="at-no">—</div><div class="sk-sub" id="at-nos">—</div></div>
       <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Efetivos</div><div class="sk-v" id="at-efe">—</div><div class="sk-sub" id="at-efes">—</div></div>
       <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🔄</span></div><div class="sk-lbl">Plantonistas</div><div class="sk-v" id="at-plan">—</div><div class="sk-sub" id="at-plans">—</div></div>
-      <div class="sk sk-ye clickable" onclick="skDet('ativos','feriasAtivos',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias Trabalhadas</div><div class="sk-v" id="at-fertrab">—</div><div class="sk-sub" id="at-fertrabs">—</div></div>
-      <div class="sk sk-te clickable" onclick="skDet('ativos','ftsAtivos',this)"><div class="sk-top"><span class="sk-ic">🔀</span></div><div class="sk-lbl">FTs</div><div class="sk-v" id="at-fts">—</div><div class="sk-sub" id="at-ftss">—</div></div>
     </div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(7,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(9,1fr)">
       <div class="sk sk-bl clickable" onclick="skDet('ativos','ferias',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias</div><div class="sk-v" id="at-ferias">—</div><div class="sk-sub" id="at-feriass">—</div></div>
       <div class="sk sk-gr clickable" onclick="skDet('ativos','inss',this)"><div class="sk-top"><span class="sk-ic">🏥</span></div><div class="sk-lbl">INSS</div><div class="sk-v" id="at-inss">—</div><div class="sk-sub" id="at-insss">—</div></div>
       <div class="sk sk-or clickable" onclick="skDet('ativos','folga',this)"><div class="sk-top"><span class="sk-ic">😴</span></div><div class="sk-lbl">Folga</div><div class="sk-v" id="at-folga">—</div><div class="sk-sub" id="at-folgas">—</div></div>
@@ -560,6 +558,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="sk sk-re clickable" onclick="skDet('ativos','suspensao',this)"><div class="sk-top"><span class="sk-ic">⛔</span></div><div class="sk-lbl">Suspensão</div><div class="sk-v" id="at-susp">—</div><div class="sk-sub" id="at-susps">—</div></div>
       <div class="sk sk-dkbl clickable" onclick="skDet('ativos','abandono',this)"><div class="sk-top"><span class="sk-ic">🚷</span></div><div class="sk-lbl">Abandono</div><div class="sk-v" id="at-aband">—</div><div class="sk-sub" id="at-abands">—</div></div>
       <div class="sk sk-ye clickable" onclick="skDet('ativos','liberado',this)"><div class="sk-top"><span class="sk-ic">🔓</span></div><div class="sk-lbl">Liberado</div><div class="sk-v" id="at-lib">—</div><div class="sk-sub" id="at-libs">—</div></div>
+      <div class="sk sk-ye clickable" onclick="skDet('ativos','feriasAtivos',this)"><div class="sk-top"><span class="sk-ic">🏖️</span></div><div class="sk-lbl">Férias Trabalhadas</div><div class="sk-v" id="at-fertrab">—</div><div class="sk-sub" id="at-fertrabs">—</div></div>
+      <div class="sk sk-te clickable" onclick="skDet('ativos','ftsAtivos',this)"><div class="sk-top"><span class="sk-ic">🔀</span></div><div class="sk-lbl">FTs</div><div class="sk-v" id="at-fts">—</div><div class="sk-sub" id="at-ftss">—</div></div>
     </div>
     <div class="det-panel" id="det-ativos"><div class="det-hdr" id="det-ativos-hdr"><span class="det-title" id="det-ativos-title"></span><button class="det-close" onclick="closeDet('ativos')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-ativos-body"></div><div class="det-sub" id="det-ativos-sub"></div></div></div>
     <div id="cargo-situacao-wrap"></div>
