@@ -885,16 +885,17 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
           <div><label class="rhf-l">Data da Entrevista</label><input class="rhf-i" id="ref-data" type="date"></div>
           <div><label class="rhf-l">Candidato *</label><input class="rhf-i" id="ref-candidato" type="text" placeholder="Nome completo" required></div>
+          <div><label class="rhf-l">Telefone (opcional)</label><input class="rhf-i" id="ref-telefone" type="tel" placeholder="Ex: (19) 99999-9999"></div>
           <div><label class="rhf-l">Sexo</label><select class="rhf-i" id="ref-sexo"><option value="">—</option><option>FEMININO</option><option>MASCULINO</option></select></div>
-          <div><label class="rhf-l">Cargo</label><input class="rhf-i" id="ref-cargo" type="text" list="dl-rh-cargo" placeholder="Ex: ASG"></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Cargo</label><input class="rhf-i" id="ref-cargo" type="text" list="dl-rh-cargo" placeholder="Ex: ASG"></div>
           <div><label class="rhf-l">Nº da Vaga</label><input class="rhf-i" id="ref-vaga" type="text" list="dl-rh-vaganum" placeholder="Ex: 1682"><datalist id="dl-rh-vaganum"></datalist></div>
           <div><label class="rhf-l">Etapa</label><select class="rhf-i" id="ref-etapa"><option>ENTREVISTA</option><option>EXAME</option><option>INTEGRAÇÃO</option><option>CONTRATADO</option></select></div>
           <div><label class="rhf-l">Situação</label><select class="rhf-i" id="ref-situacao"><option>EM PROCESSO</option><option>CONTRATADO</option><option>REPROVADO</option><option>NÃO COMPARECEU</option><option>DESISTIU</option><option>RECUSOU A VAGA</option></select></div>
-          <div><label class="rhf-l">Motivo (se não passou)</label><select class="rhf-i" id="ref-motivo"><option value="">—</option><option>SEM EXPERIÊNCIA</option><option>PERFIL INADEQUADO</option><option>PRETENSÃO SALARIAL</option><option>NÃO ACEITOU A ESCALA</option><option>NÃO ACEITOU O LOCAL</option><option>REPROVADO NO EXAME</option><option>NÃO COMPARECEU</option><option>DESISTIU</option><option>OUTRO</option></select></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Motivo (se não passou) — escolha ou escreva</label><input class="rhf-i" id="ref-motivo" type="text" list="dl-rh-motivo" placeholder="Escolha da lista ou digite o motivo"><datalist id="dl-rh-motivo"><option>SEM EXPERIÊNCIA</option><option>PERFIL INADEQUADO</option><option>PRETENSÃO SALARIAL</option><option>NÃO ACEITOU A ESCALA</option><option>NÃO ACEITOU O LOCAL</option><option>REPROVADO NO EXAME</option><option>NÃO COMPARECEU</option><option>DESISTIU</option></datalist></div>
           <div><label class="rhf-l">Observação</label><input class="rhf-i" id="ref-obs" type="text" placeholder="Anotações da entrevista (opcional)"></div>
         </div>
         <div style="display:flex;gap:10px">
@@ -2880,7 +2881,7 @@ function rhEntRenderTbl(){
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma entrevista registrada ainda. Use o formulário acima para registrar a primeira. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
-  ["Data","Candidato","Sexo","Cargo","Vaga","Etapa","Situação","Motivo","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  ["Data","Candidato","Telefone","Sexo","Cargo","Vaga","Etapa","Situação","Motivo","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
   h+='</tr></thead><tbody>';
   rows.forEach(x=>{
     const ce=RE_ETAPA_COLORS[x.etapa]||"#64748b";
@@ -2888,6 +2889,7 @@ function rhEntRenderTbl(){
     h+=`<tr style="border-bottom:1px solid #f1f5f9">
       <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_entrevista)}</td>
       <td style="padding:8px 10px;font-weight:700;color:#0d1f35">${x.candidato||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap">${x.telefone||"—"}</td>
       <td style="padding:8px 10px">${x.sexo?x.sexo[0]:"—"}</td>
       <td style="padding:8px 10px">${x.cargo||"—"}</td>
       <td style="padding:8px 10px;font-weight:700">${x.vaga_numero||"—"}</td>
@@ -2908,11 +2910,12 @@ function rhEntSalvar(e){
     data_entrevista:document.getElementById("ref-data").value||null,
     candidato:document.getElementById("ref-candidato").value.trim().toUpperCase(),
     sexo:document.getElementById("ref-sexo").value,
+    telefone:document.getElementById("ref-telefone").value.trim(),
     cargo:document.getElementById("ref-cargo").value.trim().toUpperCase(),
     vaga_numero:document.getElementById("ref-vaga").value.trim(),
     etapa:document.getElementById("ref-etapa").value,
     situacao:document.getElementById("ref-situacao").value,
-    motivo_reprovacao:document.getElementById("ref-motivo").value,
+    motivo_reprovacao:document.getElementById("ref-motivo").value.trim().toUpperCase(),
     observacao:document.getElementById("ref-obs").value.trim(),
     criado_por:sessionStorage.getItem("userNome")||null
   };
@@ -2950,6 +2953,7 @@ function rhEntEditar(id){
   document.getElementById("ref-data").value=x.data_entrevista?String(x.data_entrevista).slice(0,10):"";
   document.getElementById("ref-candidato").value=x.candidato||"";
   document.getElementById("ref-sexo").value=x.sexo||"";
+  document.getElementById("ref-telefone").value=x.telefone||"";
   document.getElementById("ref-cargo").value=x.cargo||"";
   document.getElementById("ref-vaga").value=x.vaga_numero||"";
   document.getElementById("ref-etapa").value=x.etapa||"ENTREVISTA";

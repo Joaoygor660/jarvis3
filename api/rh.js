@@ -13,7 +13,7 @@ const TABLES = {
   entrevistas: {
     table: "rh_entrevistas",
     required: ["candidato"],
-    fields: ["data_entrevista","candidato","sexo","cargo","vaga_numero","etapa","situacao","motivo_reprovacao","observacao","criado_por"]
+    fields: ["data_entrevista","candidato","sexo","telefone","cargo","vaga_numero","etapa","situacao","motivo_reprovacao","observacao","criado_por"]
   }
 };
 
