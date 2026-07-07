@@ -99,5 +99,31 @@ module.exports = async function handler(req, res) {
   }
 
   const data = await resp.json().catch(() => null);
+
+  // Dispara webhook do n8n (WhatsApp via Evolution) ao cadastrar candidato NOVO com telefone.
+  // Só em POST de entrevistas, só se houver telefone, e só se a URL estiver configurada.
+  // Falha do n8n NÃO bloqueia o cadastro (try/catch).
+  if (req.method === "POST" && tKey === "entrevistas" && process.env.N8N_WEBHOOK_URL) {
+    const novo = Array.isArray(data) ? data[0] : null;
+    if (novo && novo.telefone) {
+      try {
+        await fetch(process.env.N8N_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            evento: "novo_candidato",
+            nome: novo.candidato || "",
+            telefone: novo.telefone || "",
+            cargo: novo.cargo || "",
+            vaga: novo.vaga_numero || "",
+            data: novo.data_entrevista || ""
+          })
+        });
+      } catch (e) {
+        // n8n indisponível — segue sem quebrar o cadastro
+      }
+    }
+  }
+
   return res.status(200).json({ ok: true, rows: data });
 };
