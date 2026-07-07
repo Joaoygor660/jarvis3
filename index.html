@@ -973,12 +973,13 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div><label class="rhf-l">Cargo</label><input class="rhf-i" id="rrf-cargo" type="text" list="dl-rh-cargo" placeholder="Ex: ASG"></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Nº da Vaga (aberta) *</label><input class="rhf-i" id="rrf-vaga" type="text" list="dl-rh-vagares" placeholder="Só vagas abertas" required onchange="rhResVagaFill()"><datalist id="dl-rh-vagares"></datalist></div>
           <div><label class="rhf-l">Área / Supervisor</label><input class="rhf-i" id="rrf-area" type="text" list="dl-rh-area" placeholder="Ex: FRANK"></div>
-          <div><label class="rhf-l">Posto Oferecido</label><input class="rhf-i" id="rrf-posto" type="text" placeholder="Ex: COND MILANO"></div>
+          <div><label class="rhf-l">Posto Oferecido</label><input class="rhf-i" id="rrf-posto" type="text" placeholder="Preenche pela vaga"></div>
           <div><label class="rhf-l">Resultado *</label><select class="rhf-i" id="rrf-resultado"><option>ACEITOU</option><option>RECUSOU</option><option>EFETIVADO</option></select></div>
-          <div><label class="rhf-l">Motivo da Recusa</label><input class="rhf-i" id="rrf-motivo" type="text" list="dl-rh-motrecusa" placeholder="Escolha ou digite"><datalist id="dl-rh-motrecusa"><option>DISTÂNCIA / LOCAL</option><option>ESCALA / HORÁRIO</option><option>JÁ ESTAVA ALOCADO</option><option>PROBLEMAS PESSOAIS</option><option>PROBLEMAS DE SAÚDE</option><option>SEM INTERESSE</option><option>NÃO ATENDEU</option></datalist></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Motivo da Recusa</label><input class="rhf-i" id="rrf-motivo" type="text" list="dl-rh-motrecusa" placeholder="Escolha ou digite"><datalist id="dl-rh-motrecusa"><option>DISTÂNCIA / LOCAL</option><option>ESCALA / HORÁRIO</option><option>JÁ ESTAVA ALOCADO</option><option>PROBLEMAS PESSOAIS</option><option>PROBLEMAS DE SAÚDE</option><option>SEM INTERESSE</option><option>NÃO ATENDEU</option></datalist></div>
           <div><label class="rhf-l">Observação</label><input class="rhf-i" id="rrf-obs" type="text" placeholder="Anotações (opcional)"></div>
         </div>
         <div style="display:flex;gap:10px">
@@ -3234,13 +3235,23 @@ function rhResLoad(){
   }
   const tbl=document.getElementById("rr-tbl");
   if(tbl&&!RH_RES.length)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Carregando oportunidades…</div>';
-  fetch("/api/rh?t=reservas").then(r=>r.json()).then(j=>{
-    RH_RES=(j&&j.rows)||[];
+  const pVagas=fetch("/api/rh?t=vagas").then(r=>r.json()).then(j=>{RH_VAGAS=(j&&j.rows)||RH_VAGAS;}).catch(()=>{});
+  const pRes=fetch("/api/rh?t=reservas").then(r=>r.json()).then(j=>{RH_RES=(j&&j.rows)||[];});
+  Promise.all([pVagas,pRes]).then(()=>{
+    const dlV=document.getElementById("dl-rh-vagares");
+    if(dlV)dlV.innerHTML=RH_VAGAS.filter(v=>v.status!=="PREENCHIDA"&&v.status!=="CANCELADA").map(v=>`<option value="${v.numero_vaga}">${v.numero_vaga} — ${v.cargo||""} ${v.posto?("· "+v.posto):""}</option>`).join("");
     rhResRender();
   }).catch(err=>{
     console.error("Erro ao carregar oportunidades:",err);
     if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar oportunidades. Verifique a conexão.</div>';
   });
+}
+function rhResVagaFill(){
+  const num=document.getElementById("rrf-vaga").value.trim();
+  const vaga=RH_VAGAS.find(v=>String(v.numero_vaga)===num&&v.status!=="PREENCHIDA"&&v.status!=="CANCELADA");
+  if(!vaga)return;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&!el.value&&v&&v!=="—")el.value=v;};
+  set("rrf-posto",vaga.posto);set("rrf-area",vaga.area);set("rrf-cargo",vaga.cargo);
 }
 function rhResAutoFill(){
   if(typeof DASHBOARD_DATA==="undefined"||!DASHBOARD_DATA||!DASHBOARD_DATA.ativos)return;
@@ -3281,7 +3292,7 @@ function rhResRenderTbl(){
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma oportunidade registrada ainda. Use o formulário acima para registrar a primeira. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
-  ["Data","Funcionário","RE","Cargo","Área","Posto Oferecido","Resultado","Motivo Recusa","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  ["Data","Funcionário","RE","Cargo","Área","Vaga","Posto Oferecido","Resultado","Motivo Recusa","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
   h+='</tr></thead><tbody>';
   rows.forEach(x=>{
     const cr=RR_RES_COLORS[x.resultado]||"#64748b";
@@ -3291,6 +3302,7 @@ function rhResRenderTbl(){
       <td style="padding:8px 10px">${x.re||"—"}</td>
       <td style="padding:8px 10px">${x.cargo||"—"}</td>
       <td style="padding:8px 10px">${x.area||"—"}</td>
+      <td style="padding:8px 10px;font-weight:700">${x.vaga_numero||"—"}</td>
       <td style="padding:8px 10px">${x.posto_oferecido||"—"}</td>
       <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cr}18;color:${cr};border:1px solid ${cr}40">${x.resultado||"—"}</span></td>
       <td style="padding:8px 10px">${x.motivo_recusa||"—"}</td>
@@ -3310,6 +3322,7 @@ function rhResSalvar(e){
     re:document.getElementById("rrf-re").value.trim(),
     cargo:document.getElementById("rrf-cargo").value.trim().toUpperCase(),
     area:document.getElementById("rrf-area").value.trim().toUpperCase(),
+    vaga_numero:document.getElementById("rrf-vaga").value.trim(),
     posto_oferecido:document.getElementById("rrf-posto").value.trim().toUpperCase(),
     resultado:document.getElementById("rrf-resultado").value,
     motivo_recusa:document.getElementById("rrf-motivo").value.trim().toUpperCase(),
@@ -3318,6 +3331,13 @@ function rhResSalvar(e){
   };
   const msg=document.getElementById("rr-form-msg");
   const btn=document.getElementById("rrBtnSalvar");
+  // Só permite oferecer vaga que está aberta (na edição, aceita a vaga original do registro)
+  const vagaAberta=RH_VAGAS.some(v=>String(v.numero_vaga)===body.vaga_numero&&v.status!=="PREENCHIDA"&&v.status!=="CANCELADA");
+  const vagaOriginal=id?String((RH_RES.find(r=>String(r.id)===String(id))||{}).vaga_numero||""):"";
+  if(!vagaAberta&&body.vaga_numero!==vagaOriginal){
+    msg.style.color="#dc2626";msg.textContent="⚠ A vaga "+body.vaga_numero+" não está aberta. Só é possível oferecer vagas abertas.";
+    return false;
+  }
   btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
   const method=id?"PATCH":"POST";
   if(id)body.id=id;
@@ -3349,6 +3369,7 @@ function rhResEditar(id){
   document.getElementById("rrf-re").value=x.re||"";
   document.getElementById("rrf-cargo").value=x.cargo||"";
   document.getElementById("rrf-area").value=x.area||"";
+  document.getElementById("rrf-vaga").value=x.vaga_numero||"";
   document.getElementById("rrf-posto").value=x.posto_oferecido||"";
   document.getElementById("rrf-resultado").value=x.resultado||"ACEITOU";
   document.getElementById("rrf-motivo").value=x.motivo_recusa||"";
