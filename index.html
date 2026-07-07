@@ -1047,32 +1047,32 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div id="rdash-loading" style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando dados de RH…</div>
     <div id="rdash-body" style="display:none">
       <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
-        <div class="sk sk-re"><div class="sk-top"><span class="sk-ic">🔴</span></div><div class="sk-lbl">Vagas em Aberto</div><div class="sk-v" id="rd-k-vagas">—</div><div class="sk-sub" id="rd-k-vagass">—</div></div>
-        <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🚪</span></div><div class="sk-lbl">Desligamentos</div><div class="sk-v" id="rd-k-desl">—</div><div class="sk-sub" id="rd-k-desls">—</div></div>
-        <div class="sk sk-te"><div class="sk-top"><span class="sk-ic">📊</span></div><div class="sk-lbl">Turnover</div><div class="sk-v" id="rd-k-turn">—</div><div class="sk-sub">desligados ÷ quadro ativo</div></div>
-        <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Contratações</div><div class="sk-v" id="rd-k-contr">—</div><div class="sk-sub" id="rd-k-contrs">—</div></div>
+        <div class="sk sk-re clickable" onclick="rhDashDet('vagas')"><div class="sk-top"><span class="sk-ic">🔴</span></div><div class="sk-lbl">Vagas em Aberto</div><div class="sk-v" id="rd-k-vagas">—</div><div class="sk-sub" id="rd-k-vagass">—</div></div>
+        <div class="sk sk-or clickable" onclick="rhDashDet('desl')"><div class="sk-top"><span class="sk-ic">🚪</span></div><div class="sk-lbl">Desligamentos</div><div class="sk-v" id="rd-k-desl">—</div><div class="sk-sub" id="rd-k-desls">—</div></div>
+        <div class="sk sk-te clickable" onclick="rhDashDet('turn')"><div class="sk-top"><span class="sk-ic">📊</span></div><div class="sk-lbl">Turnover</div><div class="sk-v" id="rd-k-turn">—</div><div class="sk-sub">desligados ÷ quadro ativo</div></div>
+        <div class="sk sk-gr clickable" onclick="rhDashDet('contr')"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Contratações</div><div class="sk-v" id="rd-k-contr">—</div><div class="sk-sub" id="rd-k-contrs">—</div></div>
       </div>
       <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
-        <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🗣️</span></div><div class="sk-lbl">Entrevistas</div><div class="sk-v" id="rd-k-entr">—</div><div class="sk-sub" id="rd-k-entrs">—</div></div>
-        <div class="sk sk-pu"><div class="sk-top"><span class="sk-ic">🎯</span></div><div class="sk-lbl">Taxa de Aprovação</div><div class="sk-v" id="rd-k-taxa">—</div><div class="sk-sub">contratados ÷ finalizados</div></div>
-        <div class="sk sk-te"><div class="sk-top"><span class="sk-ic">⭐</span></div><div class="sk-lbl">Efetivações</div><div class="sk-v" id="rd-k-efet">—</div><div class="sk-sub">reservas → efetivos</div></div>
-        <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">🎓</span></div><div class="sk-lbl">Cobertura Treino</div><div class="sk-v" id="rd-k-trein">—</div><div class="sk-sub">quadro treinado</div></div>
+        <div class="sk sk-bl clickable" onclick="rhDashDet('entr')"><div class="sk-top"><span class="sk-ic">🗣️</span></div><div class="sk-lbl">Entrevistas</div><div class="sk-v" id="rd-k-entr">—</div><div class="sk-sub" id="rd-k-entrs">—</div></div>
+        <div class="sk sk-pu clickable" onclick="rhDashDet('taxa')"><div class="sk-top"><span class="sk-ic">🎯</span></div><div class="sk-lbl">Taxa de Aprovação</div><div class="sk-v" id="rd-k-taxa">—</div><div class="sk-sub">contratados ÷ finalizados</div></div>
+        <div class="sk sk-te clickable" onclick="rhDashDet('efet')"><div class="sk-top"><span class="sk-ic">⭐</span></div><div class="sk-lbl">Efetivações</div><div class="sk-v" id="rd-k-efet">—</div><div class="sk-sub">reservas → efetivos</div></div>
+        <div class="sk sk-gr clickable" onclick="rhDashDet('trein')"><div class="sk-top"><span class="sk-ic">🎓</span></div><div class="sk-lbl">Cobertura Treino</div><div class="sk-v" id="rd-k-trein">—</div><div class="sk-sub">quadro treinado</div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0">
         <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px">
           <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:14px">🗣️ Funil de Recrutamento</div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-            <div style="background:#eef2ff;border-radius:10px;padding:12px;text-align:center"><div style="font-size:.62rem;font-weight:800;color:#4f46e5">ENTREVISTA</div><div style="font-size:1.4rem;font-weight:900;color:#312e81" id="rd-fun1">—</div></div>
-            <div style="background:#fef9c3;border-radius:10px;padding:12px;text-align:center"><div style="font-size:.62rem;font-weight:800;color:#a16207">EXAME</div><div style="font-size:1.4rem;font-weight:900;color:#713f12" id="rd-fun2">—</div></div>
-            <div style="background:#e0f2fe;border-radius:10px;padding:12px;text-align:center"><div style="font-size:.62rem;font-weight:800;color:#0369a1">INTEGRAÇÃO</div><div style="font-size:1.4rem;font-weight:900;color:#0c4a6e" id="rd-fun3">—</div></div>
-            <div style="background:#dcfce7;border-radius:10px;padding:12px;text-align:center"><div style="font-size:.62rem;font-weight:800;color:#15803d">CONTRATADO</div><div style="font-size:1.4rem;font-weight:900;color:#14532d" id="rd-fun4">—</div></div>
+            <div onclick="rhDashDet('fun:ENTREVISTA')" style="background:#eef2ff;border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:.62rem;font-weight:800;color:#4f46e5">ENTREVISTA</div><div style="font-size:1.4rem;font-weight:900;color:#312e81" id="rd-fun1">—</div></div>
+            <div onclick="rhDashDet('fun:EXAME')" style="background:#fef9c3;border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:.62rem;font-weight:800;color:#a16207">EXAME</div><div style="font-size:1.4rem;font-weight:900;color:#713f12" id="rd-fun2">—</div></div>
+            <div onclick="rhDashDet('fun:INTEGRAÇÃO')" style="background:#e0f2fe;border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:.62rem;font-weight:800;color:#0369a1">INTEGRAÇÃO</div><div style="font-size:1.4rem;font-weight:900;color:#0c4a6e" id="rd-fun3">—</div></div>
+            <div onclick="rhDashDet('contr')" style="background:#dcfce7;border-radius:10px;padding:12px;text-align:center;cursor:pointer"><div style="font-size:.62rem;font-weight:800;color:#15803d">CONTRATADO</div><div style="font-size:1.4rem;font-weight:900;color:#14532d" id="rd-fun4">—</div></div>
           </div>
         </div>
-        <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🚪 Motivos de Saída</div><div id="rd-c-motsaida" style="font-size:.76rem;color:#334155">—</div></div>
+        <div onclick="rhDashDet('motsaida')" style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px;cursor:pointer"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🚪 Motivos de Saída</div><div id="rd-c-motsaida" style="font-size:.76rem;color:#334155">—</div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
-        <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">📉 Motivos de Reprovação</div><div id="rd-c-motrep" style="font-size:.76rem;color:#334155">—</div></div>
-        <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🚪 Desligamentos por Cargo</div><div id="rd-c-cargo" style="font-size:.76rem;color:#334155">—</div></div>
+        <div onclick="rhDashDet('motrep')" style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px;cursor:pointer"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">📉 Motivos de Reprovação</div><div id="rd-c-motrep" style="font-size:.76rem;color:#334155">—</div></div>
+        <div onclick="rhDashDet('cargo')" style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px;cursor:pointer"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🚪 Desligamentos por Cargo</div><div id="rd-c-cargo" style="font-size:.76rem;color:#334155">—</div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔄 Reservas — Aproveitamento</div><div id="rd-c-reservas" style="font-size:.76rem;color:#334155">—</div></div>
@@ -3649,6 +3649,7 @@ function rhTreExcluir(id){
 }
 /* ===== PAINEL RH — DIRETORIA (consolidado, somente leitura) ===== */
 let RDASH={vagas:[],entrev:[],desl:[],res:[],trein:[],loaded:false};
+let RDASH_CUR=null;
 let RDASH_PER="mes";
 function rhDashPer(p){
   RDASH_PER=p;
@@ -3688,7 +3689,9 @@ function rhDashRender(){
   const trein=RDASH.trein.filter(x=>inPer(x.data_treinamento));
   const ativosN=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos)?new Set(DASHBOARD_DATA.ativos.map(r=>String(r.NOME||"").trim().toUpperCase())).size:0;
   // KPIs
-  const vagasAb=vagas.filter(v=>v.status!=="PREENCHIDA"&&v.status!=="CANCELADA").length;
+  const vagasAbArr=vagas.filter(v=>v.status!=="PREENCHIDA"&&v.status!=="CANCELADA");
+  const vagasAb=vagasAbArr.length;
+  RDASH_CUR={vagasAb:vagasAbArr,entrev:entrev,desl:desl,res:res,trein:trein};
   const vagasAtras=vagas.filter(v=>{if(v.status==="PREENCHIDA"||v.status==="CANCELADA"||!v.data_abertura)return false;const d=(new Date()-new Date(v.data_abertura+"T00:00:00"))/86400000;return d>=15;}).length;
   document.getElementById("rd-k-vagas").textContent=vagasAb;
   document.getElementById("rd-k-vagass").innerHTML=vagasAtras?`<b style="color:#dc2626">${vagasAtras}</b> há +15 dias`:"em dia";
@@ -3719,10 +3722,50 @@ function rhDashRender(){
   _rdBars(document.getElementById("rd-c-cargo"),_rdTop(desl,"cargo"),"#ddd6fe");
   // Reservas
   const rAceit=res.filter(x=>x.resultado==="ACEITOU").length,rRec=res.filter(x=>x.resultado==="RECUSOU").length,rEf=res.filter(x=>x.resultado==="EFETIVADO").length;
-  document.getElementById("rd-c-reservas").innerHTML=res.length?`<div style="display:flex;gap:10px;text-align:center"><div style="flex:1;background:#dcfce7;border-radius:8px;padding:10px"><div style="font-size:1.3rem;font-weight:900;color:#15803d">${rAceit}</div><div style="font-size:.65rem;font-weight:700;color:#15803d">ACEITARAM</div></div><div style="flex:1;background:#fee2e2;border-radius:8px;padding:10px"><div style="font-size:1.3rem;font-weight:900;color:#b91c1c">${rRec}</div><div style="font-size:.65rem;font-weight:700;color:#b91c1c">RECUSARAM</div></div><div style="flex:1;background:#dbeafe;border-radius:8px;padding:10px"><div style="font-size:1.3rem;font-weight:900;color:#1e40af">${rEf}</div><div style="font-size:.65rem;font-weight:700;color:#1e40af">EFETIVADOS</div></div></div><div style="margin-top:10px;font-size:.72rem;color:#64748b">${res.length} oportunidades oferecidas no período</div>`:'<span style="color:#94a3b8">Sem oportunidades no período.</span>';
+  document.getElementById("rd-c-reservas").innerHTML=res.length?`<div style="display:flex;gap:10px;text-align:center"><div onclick="rhDashDet('res:ACEITOU')" style="flex:1;background:#dcfce7;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#15803d">${rAceit}</div><div style="font-size:.65rem;font-weight:700;color:#15803d">ACEITARAM</div></div><div onclick="rhDashDet('res:RECUSOU')" style="flex:1;background:#fee2e2;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#b91c1c">${rRec}</div><div style="font-size:.65rem;font-weight:700;color:#b91c1c">RECUSARAM</div></div><div onclick="rhDashDet('res:EFETIVADO')" style="flex:1;background:#dbeafe;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#1e40af">${rEf}</div><div style="font-size:.65rem;font-weight:700;color:#1e40af">EFETIVADOS</div></div></div><div style="margin-top:10px;font-size:.72rem;color:#64748b">${res.length} oportunidades oferecidas no período</div>`:'<span style="color:#94a3b8">Sem oportunidades no período.</span>';
   // Treino
   const vids=trein.reduce((s,x)=>s+(parseInt(x.qtd_videos)||0),0),visitas=trein.filter(x=>x.tipo==="VISITA AO POSTO").length;
-  document.getElementById("rd-c-treino").innerHTML=trein.length?`<div style="display:flex;gap:10px;text-align:center"><div style="flex:1;background:#eef2ff;border-radius:8px;padding:10px"><div style="font-size:1.3rem;font-weight:900;color:#4f46e5">${vids}</div><div style="font-size:.65rem;font-weight:700;color:#4f46e5">🎬 VÍDEOS</div></div><div style="flex:1;background:#e0f2fe;border-radius:8px;padding:10px"><div style="font-size:1.3rem;font-weight:900;color:#0369a1">${visitas}</div><div style="font-size:.65rem;font-weight:700;color:#0369a1">📍 VISITAS</div></div><div style="flex:1;background:#dcfce7;border-radius:8px;padding:10px"><div style="font-size:1.3rem;font-weight:900;color:#15803d">${treinados}</div><div style="font-size:.65rem;font-weight:700;color:#15803d">👥 PESSOAS</div></div></div><div style="margin-top:10px;font-size:.72rem;color:#64748b">${trein.length} treinamentos registrados no período</div>`:'<span style="color:#94a3b8">Sem treinamentos no período.</span>';
+  document.getElementById("rd-c-treino").innerHTML=trein.length?`<div style="display:flex;gap:10px;text-align:center"><div onclick="rhDashDet('tre:videos')" style="flex:1;background:#eef2ff;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#4f46e5">${vids}</div><div style="font-size:.65rem;font-weight:700;color:#4f46e5">🎬 VÍDEOS</div></div><div onclick="rhDashDet('tre:visitas')" style="flex:1;background:#e0f2fe;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#0369a1">${visitas}</div><div style="font-size:.65rem;font-weight:700;color:#0369a1">📍 VISITAS</div></div><div onclick="rhDashDet('tre:pessoas')" style="flex:1;background:#dcfce7;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#15803d">${treinados}</div><div style="font-size:.65rem;font-weight:700;color:#15803d">👥 PESSOAS</div></div></div><div style="margin-top:10px;font-size:.72rem;color:#64748b">${trein.length} treinamentos registrados no período</div>`:'<span style="color:#94a3b8">Sem treinamentos no período.</span>';
+}
+function _rdModal(title,headers,rows){
+  const ex=document.getElementById("rdModal");if(ex)ex.remove();
+  const ov=document.createElement("div");
+  ov.id="rdModal";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:30px";
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  let h='<div style="background:#fff;border-radius:16px;max-width:920px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid #e5e9f0;position:sticky;top:0;background:#fff"><div style="font-size:.92rem;font-weight:800;color:#0d1f35">'+title+' <span style="color:#94a3b8;font-weight:600">('+rows.length+')</span></div><span onclick="document.getElementById(\'rdModal\').remove()" style="cursor:pointer;font-size:1rem;color:#64748b;padding:4px 10px;border-radius:8px">✖</span></div>';
+  if(!rows.length){h+='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Sem registros no período.</div>';}
+  else{
+    h+='<table style="width:100%;border-collapse:collapse;font-size:.76rem"><thead><tr style="background:#f8fafc">';
+    headers.forEach(function(c){h+='<th style="padding:9px 12px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">'+c+'</th>';});
+    h+='</tr></thead><tbody>';
+    rows.forEach(function(r){h+='<tr style="border-bottom:1px solid #f1f5f9">';r.forEach(function(c,i){h+='<td style="padding:8px 12px;'+(i===0?'font-weight:700;color:#0d1f35;white-space:nowrap':'color:#334155')+'">'+(c!=null&&c!==""?c:"—")+'</td>';});h+='</tr>';});
+    h+='</tbody></table>';
+  }
+  h+='</div>';
+  ov.innerHTML=h;
+  document.body.appendChild(ov);
+}
+function rhDashDet(kind){
+  const C=RDASH_CUR;if(!C)return;
+  const f=rhFmt;
+  let title="",headers=[],rows=[];
+  if(kind==="vagas"){title="🔴 Vagas em Aberto";headers=["Nº","Cargo","Posto","Área","Status","Dias"];rows=C.vagasAb.map(v=>[v.numero_vaga,v.cargo,v.posto,v.area,v.status,rhDias(v)]);}
+  else if(kind==="desl"||kind==="turn"||kind==="motsaida"){title="🚪 Desligamentos";headers=["Data","Funcionário","Cargo","Área","Tipo","Motivo"];rows=C.desl.map(x=>[f(x.data_desligamento),x.funcionario,x.cargo,x.area,x.tipo,x.motivo]);}
+  else if(kind==="cargo"){title="🚪 Desligamentos por Cargo";headers=["Data","Funcionário","Cargo","Área","Tipo","Motivo"];rows=C.desl.slice().sort((a,b)=>String(a.cargo||"").localeCompare(String(b.cargo||""))).map(x=>[f(x.data_desligamento),x.funcionario,x.cargo,x.area,x.tipo,x.motivo]);}
+  else if(kind==="contr"){title="✅ Contratações";headers=["Data","Candidato","Cargo","Vaga","Telefone"];rows=C.entrev.filter(x=>x.situacao==="CONTRATADO").map(x=>[f(x.data_entrevista),x.candidato,x.cargo,x.vaga_numero,x.telefone]);}
+  else if(kind==="entr"){title="🗣️ Entrevistas";headers=["Data","Candidato","Cargo","Vaga","Etapa","Situação"];rows=C.entrev.map(x=>[f(x.data_entrevista),x.candidato,x.cargo,x.vaga_numero,x.etapa,x.situacao]);}
+  else if(kind==="taxa"){title="🎯 Entrevistas Finalizadas";headers=["Data","Candidato","Cargo","Situação","Motivo"];rows=C.entrev.filter(x=>x.situacao!=="EM PROCESSO").map(x=>[f(x.data_entrevista),x.candidato,x.cargo,x.situacao,x.motivo_reprovacao]);}
+  else if(kind==="motrep"){title="📉 Reprovações";headers=["Data","Candidato","Cargo","Situação","Motivo"];rows=C.entrev.filter(x=>x.situacao!=="EM PROCESSO"&&x.situacao!=="CONTRATADO"&&x.motivo_reprovacao).map(x=>[f(x.data_entrevista),x.candidato,x.cargo,x.situacao,x.motivo_reprovacao]);}
+  else if(kind==="efet"){title="⭐ Efetivações";headers=["Data","Funcionário","Cargo","Vaga","Posto"];rows=C.res.filter(x=>x.resultado==="EFETIVADO").map(x=>[f(x.data_oportunidade),x.funcionario,x.cargo,x.vaga_numero,x.posto_oferecido]);}
+  else if(kind==="trein"){title="🎓 Treinamentos";headers=["Data","Funcionário","Cargo","Tipo","Vídeos","Tema"];rows=C.trein.map(x=>[f(x.data_treinamento),x.funcionario,x.cargo,x.tipo,x.qtd_videos,x.tema]);}
+  else if(kind.indexOf("fun:")===0){const et=kind.slice(4);title="🗣️ Funil — "+et;headers=["Data","Candidato","Cargo","Vaga"];rows=C.entrev.filter(x=>x.situacao==="EM PROCESSO"&&x.etapa===et).map(x=>[f(x.data_entrevista),x.candidato,x.cargo,x.vaga_numero]);}
+  else if(kind.indexOf("res:")===0){const rr=kind.slice(4);title="🔄 Reservas — "+rr;headers=["Data","Funcionário","Cargo","Vaga","Posto","Motivo Recusa"];rows=C.res.filter(x=>x.resultado===rr).map(x=>[f(x.data_oportunidade),x.funcionario,x.cargo,x.vaga_numero,x.posto_oferecido,x.motivo_recusa]);}
+  else if(kind==="tre:videos"){title="🎬 Treinamentos com Vídeo";headers=["Data","Funcionário","Cargo","Vídeos","Tema"];rows=C.trein.filter(x=>parseInt(x.qtd_videos)>0).map(x=>[f(x.data_treinamento),x.funcionario,x.cargo,x.qtd_videos,x.tema]);}
+  else if(kind==="tre:visitas"){title="📍 Visitas ao Posto";headers=["Data","Funcionário","Cargo","Posto","Tema","Treinador"];rows=C.trein.filter(x=>x.tipo==="VISITA AO POSTO").map(x=>[f(x.data_treinamento),x.funcionario,x.cargo,x.posto,x.tema,x.treinador]);}
+  else if(kind==="tre:pessoas"){title="👥 Pessoas Treinadas";headers=["Data","Funcionário","Cargo","Tipo","Tema"];rows=C.trein.map(x=>[f(x.data_treinamento),x.funcionario,x.cargo,x.tipo,x.tema]);}
+  _rdModal(title,headers,rows);
 }
 function init(){
   loadFromSupabase().then(function(got){
