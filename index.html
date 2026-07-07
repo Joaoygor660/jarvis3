@@ -459,6 +459,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ni" onclick="navTo('rhvagas',this)" style="position:relative"><span class="ni-ic">📋</span><span>Controle de Vagas</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
     <div class="ni" onclick="navTo('rhentrev',this)" style="position:relative"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
     <div class="ni" onclick="navTo('rhdesl',this)" style="position:relative"><span class="ni-ic">🚪</span><span>Desligamentos</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
+    <div class="ni" onclick="navTo('rhres',this)" style="position:relative"><span class="ni-ic">🔄</span><span>Reservas → Efetivação</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
   </div>
   <div class="sb-foot upload-btn" id="btnNovoExcel">
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
@@ -949,6 +950,46 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Desligamentos Registrados</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, cargo, motivo..." id="s-rhdesl" oninput="rhDesRenderTbl()"></div></div><div id="rd-tbl" style="overflow-x:auto"></div></div>
   </div>
+  <div class="page" id="pg-rhres">
+    <div class="sec-hdr"><span class="sec-hdr-ic">🔄</span><div><div class="sec-hdr-t">RH — Reservas → Efetivação</div><div class="sec-hdr-sub">Oportunidades oferecidas aos reservas: quem aceitou, quem recusou e quem virou efetivo</div></div></div>
+    <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
+      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🎯</span></div><div class="sk-lbl">Oportunidades Dadas</div><div class="sk-v" id="rr-tot">—</div><div class="sk-sub" id="rr-tots">—</div></div>
+      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">👍</span></div><div class="sk-lbl">Aceitas</div><div class="sk-v" id="rr-aceit">—</div><div class="sk-sub" id="rr-aceits">—</div></div>
+      <div class="sk sk-re"><div class="sk-top"><span class="sk-ic">👎</span></div><div class="sk-lbl">Recusadas</div><div class="sk-v" id="rr-recus">—</div><div class="sk-sub" id="rr-recuss">—</div></div>
+      <div class="sk sk-te"><div class="sk-top"><span class="sk-ic">⭐</span></div><div class="sk-lbl">Efetivados</div><div class="sk-v" id="rr-efet">—</div><div class="sk-sub">reservas que viraram efetivos</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Motivos de Recusa</div><div id="rr-motivos" style="font-size:.78rem;color:#334155">—</div></div>
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Oportunidades por Reserva</div><div id="rr-ranking" style="font-size:.78rem;color:#334155">—</div></div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 22px;margin-bottom:18px">
+      <div style="font-size:.82rem;font-weight:800;color:#0d1f35;margin-bottom:14px" id="rr-form-title">➕ Nova Oportunidade</div>
+      <form onsubmit="return rhResSalvar(event)" id="rrForm">
+        <input type="hidden" id="rrf-id">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Data da Oportunidade</label><input class="rhf-i" id="rrf-data" type="date"></div>
+          <div><label class="rhf-l">Funcionário (Reserva) *</label><input class="rhf-i" id="rrf-func" type="text" list="dl-rh-reserva" placeholder="Nome completo" required onchange="rhResAutoFill()"><datalist id="dl-rh-reserva"></datalist></div>
+          <div><label class="rhf-l">RE</label><input class="rhf-i" id="rrf-re" type="text" placeholder="Ex: 4603"></div>
+          <div><label class="rhf-l">Cargo</label><input class="rhf-i" id="rrf-cargo" type="text" list="dl-rh-cargo" placeholder="Ex: ASG"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Área / Supervisor</label><input class="rhf-i" id="rrf-area" type="text" list="dl-rh-area" placeholder="Ex: FRANK"></div>
+          <div><label class="rhf-l">Posto Oferecido</label><input class="rhf-i" id="rrf-posto" type="text" placeholder="Ex: COND MILANO"></div>
+          <div><label class="rhf-l">Resultado *</label><select class="rhf-i" id="rrf-resultado"><option>ACEITOU</option><option>RECUSOU</option><option>EFETIVADO</option></select></div>
+          <div><label class="rhf-l">Motivo da Recusa</label><input class="rhf-i" id="rrf-motivo" type="text" list="dl-rh-motrecusa" placeholder="Escolha ou digite"><datalist id="dl-rh-motrecusa"><option>DISTÂNCIA / LOCAL</option><option>ESCALA / HORÁRIO</option><option>JÁ ESTAVA ALOCADO</option><option>PROBLEMAS PESSOAIS</option><option>PROBLEMAS DE SAÚDE</option><option>SEM INTERESSE</option><option>NÃO ATENDEU</option></datalist></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Observação</label><input class="rhf-i" id="rrf-obs" type="text" placeholder="Anotações (opcional)"></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="rh-btn" id="rrBtnSalvar">💾 Salvar Oportunidade</button>
+          <button type="button" class="rh-btn rh-btn-sec" onclick="rhResLimpar()">✖ Limpar</button>
+          <span id="rr-form-msg" style="align-self:center;font-size:.75rem;font-weight:700"></span>
+        </div>
+      </form>
+    </div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Oportunidades Registradas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, posto, resultado..." id="s-rhres" oninput="rhResRenderTbl()"></div></div><div id="rr-tbl" style="overflow-x:auto"></div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1216,7 +1257,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1235,6 +1276,7 @@ function navTo(p,btn){
   else if(p==="rhvagas"){rhLoad();}
   else if(p==="rhentrev"){rhEntLoad();}
   else if(p==="rhdesl"){rhDesLoad();}
+  else if(p==="rhres"){rhResLoad();}
   else{updVGCharts();}
 }
 
@@ -3175,6 +3217,151 @@ function rhDesExcluir(id){
   fetch("/api/rh?t=desligamentos&id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
     if(!r.ok)throw new Error("HTTP "+r.status);
     rhDesLoad();
+  }).catch(err=>alert("Erro ao excluir: "+err.message));
+}
+/* ===== MÓDULO RH — RESERVAS → EFETIVAÇÃO ===== */
+let RH_RES=[];
+const RR_RES_COLORS={"ACEITOU":"#16a34a","RECUSOU":"#dc2626","EFETIVADO":"#2e8fef"};
+function rhResLoad(){
+  const dt=document.getElementById("rrf-data");
+  if(dt&&!dt.value)dt.value=ymd(new Date());
+  const dl=document.getElementById("dl-rh-reserva");
+  if(dl&&typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos){
+    const todos=DASHBOARD_DATA.ativos;
+    const reservas=todos.filter(r=>String(r.TIPO||"").toUpperCase().includes("RESERV")||String(r.TPCLIENTE||"").toUpperCase().includes("RESERV"));
+    const lista=reservas.length?reservas:todos;
+    dl.innerHTML=lista.map(r=>`<option value="${String(r.NOME||"").replace(/"/g,"&quot;")}">${r.CARGO||""} · ${r.AREA||""}</option>`).join("");
+  }
+  const tbl=document.getElementById("rr-tbl");
+  if(tbl&&!RH_RES.length)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Carregando oportunidades…</div>';
+  fetch("/api/rh?t=reservas").then(r=>r.json()).then(j=>{
+    RH_RES=(j&&j.rows)||[];
+    rhResRender();
+  }).catch(err=>{
+    console.error("Erro ao carregar oportunidades:",err);
+    if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar oportunidades. Verifique a conexão.</div>';
+  });
+}
+function rhResAutoFill(){
+  if(typeof DASHBOARD_DATA==="undefined"||!DASHBOARD_DATA||!DASHBOARD_DATA.ativos)return;
+  const nome=document.getElementById("rrf-func").value.trim().toUpperCase();
+  const emp=DASHBOARD_DATA.ativos.find(r=>String(r.NOME||"").trim().toUpperCase()===nome);
+  if(!emp)return;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&!el.value&&v&&v!=="—")el.value=v;};
+  set("rrf-re",emp.RE);set("rrf-cargo",emp.CARGO);set("rrf-area",emp.AREA);
+}
+function rhResRender(){
+  const v=RH_RES;
+  const aceit=v.filter(x=>x.resultado==="ACEITOU").length;
+  const recus=v.filter(x=>x.resultado==="RECUSOU").length;
+  const efet=v.filter(x=>x.resultado==="EFETIVADO").length;
+  const pessoas=new Set(v.map(x=>String(x.funcionario||"").trim().toUpperCase()).filter(Boolean)).size;
+  document.getElementById("rr-tot").textContent=v.length;
+  document.getElementById("rr-tots").innerHTML=pessoas?`para <b>${pessoas}</b> reservas`:"—";
+  document.getElementById("rr-aceit").textContent=aceit;
+  document.getElementById("rr-aceits").innerHTML=v.length?`<b>${(aceit/v.length*100).toFixed(0)}%</b> das oportunidades`:"—";
+  document.getElementById("rr-recus").textContent=recus;
+  document.getElementById("rr-recuss").innerHTML=v.length?`<b>${(recus/v.length*100).toFixed(0)}%</b> das oportunidades`:"—";
+  document.getElementById("rr-efet").textContent=efet;
+  const mot={};
+  v.forEach(x=>{if(x.motivo_recusa&&x.resultado==="RECUSOU")mot[x.motivo_recusa]=(mot[x.motivo_recusa]||0)+1;});
+  const motArr=Object.entries(mot).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const motMax=motArr.length?motArr[0][1]:1;
+  document.getElementById("rr-motivos").innerHTML=motArr.length?motArr.map(([k,n])=>`<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>${k}</span><b>${n}</b></div><div style="background:#fecaca;height:6px;border-radius:3px;width:${(n/motMax*100).toFixed(0)}%;margin-bottom:9px"></div>`).join(""):'<span style="color:#94a3b8">Nenhuma recusa registrada ainda.</span>';
+  const pes={};
+  v.forEach(x=>{const k=String(x.funcionario||"—").trim().toUpperCase();if(!pes[k])pes[k]={t:0,a:0,r:0,e:0};pes[k].t++;if(x.resultado==="ACEITOU")pes[k].a++;else if(x.resultado==="RECUSOU")pes[k].r++;else if(x.resultado==="EFETIVADO")pes[k].e++;});
+  const pesArr=Object.entries(pes).sort((a,b)=>b[1].t-a[1].t).slice(0,6);
+  document.getElementById("rr-ranking").innerHTML=pesArr.length?pesArr.map(([k,o])=>`<div style="display:flex;justify-content:space-between;margin-bottom:7px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${k}</span><span><b>${o.t}</b> oport. · <span style="color:#16a34a">${o.a}👍</span> <span style="color:#dc2626">${o.r}👎</span>${o.e?` <span style="color:#2e8fef">${o.e}⭐</span>`:""}</span></div>`).join(""):'<span style="color:#94a3b8">Nenhuma oportunidade registrada ainda.</span>';
+  rhResRenderTbl();
+}
+function rhResRenderTbl(){
+  const el=document.getElementById("rr-tbl");if(!el)return;
+  const q=(document.getElementById("s-rhres")?.value||"").toUpperCase();
+  let rows=RH_RES;
+  if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
+  if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma oportunidade registrada ainda. Use o formulário acima para registrar a primeira. 🚀</div>';return;}
+  let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
+  ["Data","Funcionário","RE","Cargo","Área","Posto Oferecido","Resultado","Motivo Recusa","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  h+='</tr></thead><tbody>';
+  rows.forEach(x=>{
+    const cr=RR_RES_COLORS[x.resultado]||"#64748b";
+    h+=`<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_oportunidade)}</td>
+      <td style="padding:8px 10px;font-weight:700;color:#0d1f35">${x.funcionario||"—"}</td>
+      <td style="padding:8px 10px">${x.re||"—"}</td>
+      <td style="padding:8px 10px">${x.cargo||"—"}</td>
+      <td style="padding:8px 10px">${x.area||"—"}</td>
+      <td style="padding:8px 10px">${x.posto_oferecido||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cr}18;color:${cr};border:1px solid ${cr}40">${x.resultado||"—"}</span></td>
+      <td style="padding:8px 10px">${x.motivo_recusa||"—"}</td>
+      <td style="padding:8px 10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(x.observacao||"").replace(/"/g,"&quot;")}">${x.observacao||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-act" onclick="rhResEditar(${x.id})" title="Editar">✏️</span><span class="rh-act" onclick="rhResExcluir(${x.id})" title="Excluir">🗑️</span></td>
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+function rhResSalvar(e){
+  e.preventDefault();
+  const id=document.getElementById("rrf-id").value;
+  const body={
+    data_oportunidade:document.getElementById("rrf-data").value||null,
+    funcionario:document.getElementById("rrf-func").value.trim().toUpperCase(),
+    re:document.getElementById("rrf-re").value.trim(),
+    cargo:document.getElementById("rrf-cargo").value.trim().toUpperCase(),
+    area:document.getElementById("rrf-area").value.trim().toUpperCase(),
+    posto_oferecido:document.getElementById("rrf-posto").value.trim().toUpperCase(),
+    resultado:document.getElementById("rrf-resultado").value,
+    motivo_recusa:document.getElementById("rrf-motivo").value.trim().toUpperCase(),
+    observacao:document.getElementById("rrf-obs").value.trim(),
+    criado_por:sessionStorage.getItem("userNome")||null
+  };
+  const msg=document.getElementById("rr-form-msg");
+  const btn=document.getElementById("rrBtnSalvar");
+  btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
+  const method=id?"PATCH":"POST";
+  if(id)body.id=id;
+  fetch("/api/rh?t=reservas",{method:method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(!ok)throw new Error((j&&j.error)||"erro desconhecido");
+      msg.style.color="#16a34a";msg.textContent=id?"✔ Oportunidade atualizada!":"✔ Oportunidade registrada!";
+      rhResLimpar(true);
+      rhResLoad();
+      setTimeout(()=>{msg.textContent="";},2500);
+    })
+    .catch(err=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar: "+err.message;})
+    .finally(()=>{btn.disabled=false;});
+  return false;
+}
+function rhResLimpar(keepMsg){
+  document.getElementById("rrForm").reset();
+  document.getElementById("rrf-id").value="";
+  document.getElementById("rrf-data").value=ymd(new Date());
+  document.getElementById("rr-form-title").textContent="➕ Nova Oportunidade";
+  if(keepMsg!==true)document.getElementById("rr-form-msg").textContent="";
+}
+function rhResEditar(id){
+  const x=RH_RES.find(v=>String(v.id)===String(id));if(!x)return;
+  document.getElementById("rrf-id").value=x.id;
+  document.getElementById("rrf-data").value=x.data_oportunidade?String(x.data_oportunidade).slice(0,10):"";
+  document.getElementById("rrf-func").value=x.funcionario||"";
+  document.getElementById("rrf-re").value=x.re||"";
+  document.getElementById("rrf-cargo").value=x.cargo||"";
+  document.getElementById("rrf-area").value=x.area||"";
+  document.getElementById("rrf-posto").value=x.posto_oferecido||"";
+  document.getElementById("rrf-resultado").value=x.resultado||"ACEITOU";
+  document.getElementById("rrf-motivo").value=x.motivo_recusa||"";
+  document.getElementById("rrf-obs").value=x.observacao||"";
+  document.getElementById("rr-form-title").textContent="✏️ Editando — "+(x.funcionario||"");
+  document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
+}
+function rhResExcluir(id){
+  const x=RH_RES.find(v=>String(v.id)===String(id));
+  if(!confirm("Excluir a oportunidade de "+(x?x.funcionario:"")+"? Essa ação não pode ser desfeita."))return;
+  fetch("/api/rh?t=reservas&id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    rhResLoad();
   }).catch(err=>alert("Erro ao excluir: "+err.message));
 }
 function init(){

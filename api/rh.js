@@ -19,6 +19,11 @@ const TABLES = {
     table: "rh_desligamentos",
     required: ["funcionario"],
     fields: ["data_desligamento","funcionario","re","cargo","area","posto","tipo","motivo","data_admissao","observacao","criado_por"]
+  },
+  reservas: {
+    table: "rh_reservas",
+    required: ["funcionario"],
+    fields: ["data_oportunidade","funcionario","re","cargo","area","posto_oferecido","resultado","motivo_recusa","observacao","criado_por"]
   }
 };
 
