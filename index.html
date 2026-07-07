@@ -1185,11 +1185,10 @@ function applyUserUI(){
   document.querySelectorAll(".upload-btn,#btnNovoExcel").forEach(function(el){el.style.display=isAdmin?"":"none";});
   const rhSec=document.getElementById("navSecRH");
   if(rhSec)rhSec.style.display=isAdmin?"":"none";
-  // Painel RH executivo: admin + diretoria (cargo contém "DIRET")
-  const cargo=(sessionStorage.getItem("userCargo")||"").toUpperCase();
-  const canRHDash=isAdmin||cargo.indexOf("DIRET")>=0;
+  // Painel RH executivo: por enquanto SOMENTE admin (João Ygor).
+  // Quando liberar para a diretoria, trocar para: isAdmin || cargo.indexOf("DIRET")>=0
   const rhDashSec=document.getElementById("navSecRHDash");
-  if(rhDashSec)rhDashSec.style.display=canRHDash?"":"none";
+  if(rhDashSec)rhDashSec.style.display=isAdmin?"":"none";
 }
 function showWelcome(){
   const nome=sessionStorage.getItem("userNome")||"";
