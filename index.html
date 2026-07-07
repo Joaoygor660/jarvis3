@@ -850,8 +850,9 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div><label class="rhf-l">Substituição de</label><input class="rhf-i" id="rhf-subst" type="text" placeholder="Quem saiu (se houver)"></div>
           <div><label class="rhf-l">Status</label><select class="rhf-i" id="rhf-status"><option>ABERTA</option><option>EM ENTREVISTA</option><option>EXAME</option><option>INTEGRAÇÃO</option><option>PREENCHIDA</option><option>CANCELADA</option></select></div>
         </div>
-        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px">
           <div><label class="rhf-l">Critérios da Vaga</label><input class="rhf-i" id="rhf-criterios" type="text" placeholder="Ex: experiência com limpeza, disponibilidade fim de semana"></div>
+          <div><label class="rhf-l">Data de Abertura</label><input class="rhf-i" id="rhf-dtabertura" type="date"></div>
           <div><label class="rhf-l">Preenchida por</label><input class="rhf-i" id="rhf-preenchida" type="text" placeholder="Quem assumiu a vaga"></div>
           <div><label class="rhf-l">Data Fechamento</label><input class="rhf-i" id="rhf-dtfech" type="date"></div>
         </div>
@@ -2875,6 +2876,8 @@ function syncToSupabase(data,fname){
 let RH_VAGAS=[];
 const RH_ST_COLORS={"ABERTA":"#dc2626","EM ENTREVISTA":"#f97316","EXAME":"#eab308","INTEGRAÇÃO":"#2e8fef","PREENCHIDA":"#16a34a","CANCELADA":"#6b7280"};
 function rhLoad(){
+  const dtA=document.getElementById("rhf-dtabertura");
+  if(dtA&&!dtA.value&&!document.getElementById("rhf-id").value)dtA.value=ymd(new Date());
   const dl=document.getElementById("dl-rh-area");
   if(dl&&typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos){
     const set=new Set();DASHBOARD_DATA.ativos.forEach(r=>{if(r.AREA&&r.AREA!=="—")set.add(r.AREA);});
@@ -2962,6 +2965,7 @@ function rhSalvar(e){
     criterios:document.getElementById("rhf-criterios").value.trim(),
     status:document.getElementById("rhf-status").value,
     preenchida_por:document.getElementById("rhf-preenchida").value.trim().toUpperCase(),
+    data_abertura:document.getElementById("rhf-dtabertura").value||ymd(new Date()),
     data_fechamento:document.getElementById("rhf-dtfech").value||null,
     criado_por:sessionStorage.getItem("userNome")||null
   };
@@ -2987,6 +2991,7 @@ function rhSalvar(e){
 function rhLimpar(keepMsg){
   document.getElementById("rhForm").reset();
   document.getElementById("rhf-id").value="";
+  document.getElementById("rhf-dtabertura").value=ymd(new Date());
   document.getElementById("rh-form-title").textContent="➕ Nova Vaga";
   if(keepMsg!==true)document.getElementById("rh-form-msg").textContent="";
 }
@@ -3003,6 +3008,7 @@ function rhEditar(id){
   document.getElementById("rhf-criterios").value=x.criterios||"";
   document.getElementById("rhf-status").value=x.status||"ABERTA";
   document.getElementById("rhf-preenchida").value=x.preenchida_por||"";
+  document.getElementById("rhf-dtabertura").value=x.data_abertura?String(x.data_abertura).slice(0,10):"";
   document.getElementById("rhf-dtfech").value=x.data_fechamento?String(x.data_fechamento).slice(0,10):"";
   document.getElementById("rh-form-title").textContent="✏️ Editando Vaga "+(x.numero_vaga||"");
   document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
