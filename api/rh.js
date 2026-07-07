@@ -24,6 +24,11 @@ const TABLES = {
     table: "rh_reservas",
     required: ["funcionario"],
     fields: ["data_oportunidade","funcionario","re","cargo","area","vaga_numero","posto_oferecido","resultado","motivo_recusa","observacao","criado_por"]
+  },
+  treinamentos: {
+    table: "rh_treinamentos",
+    required: ["funcionario"],
+    fields: ["data_treinamento","funcionario","re","cargo","area","posto","tipo","qtd_videos","tema","treinador","observacao","criado_por"]
   }
 };
 

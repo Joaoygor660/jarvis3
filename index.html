@@ -460,6 +460,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ni" onclick="navTo('rhentrev',this)" style="position:relative"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
     <div class="ni" onclick="navTo('rhdesl',this)" style="position:relative"><span class="ni-ic">🚪</span><span>Desligamentos</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
     <div class="ni" onclick="navTo('rhres',this)" style="position:relative"><span class="ni-ic">🔄</span><span>Reservas → Efetivação</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
+    <div class="ni" onclick="navTo('rhtrein',this)" style="position:relative"><span class="ni-ic">🎓</span><span>Treinamentos</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
   </div>
   <div class="sb-foot upload-btn" id="btnNovoExcel">
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
@@ -991,6 +992,48 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Oportunidades Registradas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, posto, resultado..." id="s-rhres" oninput="rhResRenderTbl()"></div></div><div id="rr-tbl" style="overflow-x:auto"></div></div>
   </div>
+  <div class="page" id="pg-rhtrein">
+    <div class="sec-hdr"><span class="sec-hdr-ic">🎓</span><div><div class="sec-hdr-t">RH — Treinamentos</div><div class="sec-hdr-sub">Vídeos assistidos e visitas de treinamento nos postos</div></div></div>
+    <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
+      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🎓</span></div><div class="sk-lbl">Treinamentos no Mês</div><div class="sk-v" id="rt-mes">—</div><div class="sk-sub" id="rt-mess">—</div></div>
+      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🎬</span></div><div class="sk-lbl">Vídeos Assistidos</div><div class="sk-v" id="rt-videos">—</div><div class="sk-sub">soma de todos os registros</div></div>
+      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">📍</span></div><div class="sk-lbl">Visitas ao Posto</div><div class="sk-v" id="rt-visitas">—</div><div class="sk-sub">treinamentos presenciais</div></div>
+      <div class="sk sk-te"><div class="sk-top"><span class="sk-ic">📊</span></div><div class="sk-lbl">Cobertura do Quadro</div><div class="sk-v" id="rt-cob">—</div><div class="sk-sub">funcionários treinados ÷ ativos</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Treinamentos por Tipo</div><div id="rt-tipos" style="font-size:.78rem;color:#334155">—</div></div>
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.78rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Mais Treinados</div><div id="rt-ranking" style="font-size:.78rem;color:#334155">—</div></div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 22px;margin-bottom:18px">
+      <div style="font-size:.82rem;font-weight:800;color:#0d1f35;margin-bottom:14px" id="rt-form-title">➕ Novo Treinamento</div>
+      <form onsubmit="return rhTreSalvar(event)" id="rtForm">
+        <input type="hidden" id="rtf-id">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Data do Treinamento</label><input class="rhf-i" id="rtf-data" type="date"></div>
+          <div><label class="rhf-l">Funcionário *</label><input class="rhf-i" id="rtf-func" type="text" list="dl-rh-func" placeholder="Nome completo" required onchange="rhTreAutoFill()"></div>
+          <div><label class="rhf-l">RE</label><input class="rhf-i" id="rtf-re" type="text" placeholder="Ex: 4603"></div>
+          <div><label class="rhf-l">Cargo</label><input class="rhf-i" id="rtf-cargo" type="text" list="dl-rh-cargo" placeholder="Ex: ASG"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Área / Supervisor</label><input class="rhf-i" id="rtf-area" type="text" list="dl-rh-area" placeholder="Ex: FRANK"></div>
+          <div><label class="rhf-l">Posto / Cliente</label><input class="rhf-i" id="rtf-posto" type="text" placeholder="Ex: COND MILANO"></div>
+          <div><label class="rhf-l">Tipo *</label><select class="rhf-i" id="rtf-tipo" onchange="rhTreTipoChg()"><option>VÍDEO</option><option>VISITA AO POSTO</option><option>INTEGRAÇÃO</option><option>RECICLAGEM</option><option>OUTRO</option></select></div>
+          <div><label class="rhf-l">Qtd de Vídeos</label><input class="rhf-i" id="rtf-qtd" type="number" min="1" step="1" placeholder="Ex: 3"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Tema do Treinamento</label><input class="rhf-i" id="rtf-tema" type="text" list="dl-rh-tema" placeholder="Escolha ou digite"><datalist id="dl-rh-tema"><option>LIMPEZA</option><option>PORTARIA</option><option>ATENDIMENTO</option><option>SEGURANÇA DO TRABALHO</option><option>PROCEDIMENTOS DO POSTO</option><option>INTEGRAÇÃO</option></datalist></div>
+          <div><label class="rhf-l">Treinador</label><input class="rhf-i" id="rtf-treinador" type="text" placeholder="Quem treinou"></div>
+          <div><label class="rhf-l">Observação</label><input class="rhf-i" id="rtf-obs" type="text" placeholder="Anotações (opcional)"></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="rh-btn" id="rtBtnSalvar">💾 Salvar Treinamento</button>
+          <button type="button" class="rh-btn rh-btn-sec" onclick="rhTreLimpar()">✖ Limpar</button>
+          <span id="rt-form-msg" style="align-self:center;font-size:.75rem;font-weight:700"></span>
+        </div>
+      </form>
+    </div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Treinamentos Registrados</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, tipo, tema..." id="s-rhtrein" oninput="rhTreRenderTbl()"></div></div><div id="rt-tbl" style="overflow-x:auto"></div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1258,7 +1301,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1278,6 +1321,7 @@ function navTo(p,btn){
   else if(p==="rhentrev"){rhEntLoad();}
   else if(p==="rhdesl"){rhDesLoad();}
   else if(p==="rhres"){rhResLoad();}
+  else if(p==="rhtrein"){rhTreLoad();}
   else{updVGCharts();}
 }
 
@@ -3383,6 +3427,169 @@ function rhResExcluir(id){
   fetch("/api/rh?t=reservas&id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
     if(!r.ok)throw new Error("HTTP "+r.status);
     rhResLoad();
+  }).catch(err=>alert("Erro ao excluir: "+err.message));
+}
+/* ===== MÓDULO RH — TREINAMENTOS ===== */
+let RH_TRE=[];
+const RT_TIPO_COLORS={"VÍDEO":"#4f46e5","VISITA AO POSTO":"#0369a1","INTEGRAÇÃO":"#16a34a","RECICLAGEM":"#f97316","OUTRO":"#6b7280"};
+function rhTreLoad(){
+  const dt=document.getElementById("rtf-data");
+  if(dt&&!dt.value)dt.value=ymd(new Date());
+  const dlF=document.getElementById("dl-rh-func");
+  if(dlF&&!dlF.children.length&&typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos){
+    dlF.innerHTML=DASHBOARD_DATA.ativos.map(r=>`<option value="${String(r.NOME||"").replace(/"/g,"&quot;")}">${r.CARGO||""} · ${r.AREA||""}</option>`).join("");
+  }
+  const dlA=document.getElementById("dl-rh-area");
+  if(dlA&&!dlA.children.length&&typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos){
+    const set=new Set();DASHBOARD_DATA.ativos.forEach(r=>{if(r.AREA&&r.AREA!=="—")set.add(r.AREA);});
+    dlA.innerHTML=[...set].sort().map(a=>`<option>${a}</option>`).join("");
+  }
+  const tbl=document.getElementById("rt-tbl");
+  if(tbl&&!RH_TRE.length)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Carregando treinamentos…</div>';
+  fetch("/api/rh?t=treinamentos").then(r=>r.json()).then(j=>{
+    RH_TRE=(j&&j.rows)||[];
+    rhTreRender();
+  }).catch(err=>{
+    console.error("Erro ao carregar treinamentos:",err);
+    if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar treinamentos. Verifique a conexão.</div>';
+  });
+}
+function rhTreAutoFill(){
+  if(typeof DASHBOARD_DATA==="undefined"||!DASHBOARD_DATA||!DASHBOARD_DATA.ativos)return;
+  const nome=document.getElementById("rtf-func").value.trim().toUpperCase();
+  const emp=DASHBOARD_DATA.ativos.find(r=>String(r.NOME||"").trim().toUpperCase()===nome);
+  if(!emp)return;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&!el.value&&v&&v!=="—")el.value=v;};
+  set("rtf-re",emp.RE);set("rtf-cargo",emp.CARGO);set("rtf-area",emp.AREA);set("rtf-posto",emp.LOCAL);
+}
+function rhTreTipoChg(){
+  const tipo=document.getElementById("rtf-tipo").value;
+  const qtd=document.getElementById("rtf-qtd");
+  qtd.disabled=tipo!=="VÍDEO";
+  if(tipo!=="VÍDEO")qtd.value="";
+}
+function rhTreRender(){
+  const v=RH_TRE;
+  const mesAtual=ymd(new Date()).slice(0,7);
+  const noMes=v.filter(x=>String(x.data_treinamento||"").slice(0,7)===mesAtual);
+  const videos=v.reduce((s,x)=>s+(parseInt(x.qtd_videos)||0),0);
+  const visitas=v.filter(x=>x.tipo==="VISITA AO POSTO").length;
+  document.getElementById("rt-mes").textContent=noMes.length;
+  document.getElementById("rt-mess").innerHTML=`<b>${v.length}</b> no total registrado`;
+  document.getElementById("rt-videos").textContent=videos;
+  document.getElementById("rt-visitas").textContent=visitas;
+  const treinados=new Set(v.map(x=>String(x.funcionario||"").trim().toUpperCase()).filter(Boolean)).size;
+  const ativosN=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos)?new Set(DASHBOARD_DATA.ativos.map(r=>String(r.NOME||"").trim().toUpperCase())).size:0;
+  document.getElementById("rt-cob").textContent=ativosN?((treinados/ativosN*100).toFixed(1)+"%"):treinados||"—";
+  const tp={};
+  v.forEach(x=>{const t=x.tipo||"—";tp[t]=(tp[t]||0)+1;});
+  const tpArr=Object.entries(tp).sort((a,b)=>b[1]-a[1]);
+  const tpMax=tpArr.length?tpArr[0][1]:1;
+  document.getElementById("rt-tipos").innerHTML=tpArr.length?tpArr.map(([k,n])=>`<div style="display:flex;justify-content:space-between;margin-bottom:3px"><span>${k}</span><b>${n}</b></div><div style="background:#c7d2fe;height:6px;border-radius:3px;width:${(n/tpMax*100).toFixed(0)}%;margin-bottom:9px"></div>`).join(""):'<span style="color:#94a3b8">Nenhum treinamento registrado ainda.</span>';
+  const pes={};
+  v.forEach(x=>{const k=String(x.funcionario||"—").trim().toUpperCase();if(!pes[k])pes[k]={t:0,vid:0,vis:0};pes[k].t++;pes[k].vid+=(parseInt(x.qtd_videos)||0);if(x.tipo==="VISITA AO POSTO")pes[k].vis++;});
+  const pesArr=Object.entries(pes).sort((a,b)=>b[1].t-a[1].t).slice(0,6);
+  document.getElementById("rt-ranking").innerHTML=pesArr.length?pesArr.map(([k,o])=>`<div style="display:flex;justify-content:space-between;margin-bottom:7px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${k}</span><span><b>${o.t}</b> trein. · <span style="color:#4f46e5">${o.vid}🎬</span> <span style="color:#0369a1">${o.vis}📍</span></span></div>`).join(""):'<span style="color:#94a3b8">Nenhum treinamento registrado ainda.</span>';
+  rhTreRenderTbl();
+}
+function rhTreRenderTbl(){
+  const el=document.getElementById("rt-tbl");if(!el)return;
+  const q=(document.getElementById("s-rhtrein")?.value||"").toUpperCase();
+  let rows=RH_TRE;
+  if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
+  if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhum treinamento registrado ainda. Use o formulário acima para registrar o primeiro. 🚀</div>';return;}
+  let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
+  ["Data","Funcionário","RE","Cargo","Área","Posto","Tipo","Vídeos","Tema","Treinador","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  h+='</tr></thead><tbody>';
+  rows.forEach(x=>{
+    const ct=RT_TIPO_COLORS[x.tipo]||"#64748b";
+    h+=`<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_treinamento)}</td>
+      <td style="padding:8px 10px;font-weight:700;color:#0d1f35">${x.funcionario||"—"}</td>
+      <td style="padding:8px 10px">${x.re||"—"}</td>
+      <td style="padding:8px 10px">${x.cargo||"—"}</td>
+      <td style="padding:8px 10px">${x.area||"—"}</td>
+      <td style="padding:8px 10px">${x.posto||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${ct}18;color:${ct};border:1px solid ${ct}40">${x.tipo||"—"}</span></td>
+      <td style="padding:8px 10px;font-weight:700">${x.qtd_videos||"—"}</td>
+      <td style="padding:8px 10px">${x.tema||"—"}</td>
+      <td style="padding:8px 10px">${x.treinador||"—"}</td>
+      <td style="padding:8px 10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(x.observacao||"").replace(/"/g,"&quot;")}">${x.observacao||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-act" onclick="rhTreEditar(${x.id})" title="Editar">✏️</span><span class="rh-act" onclick="rhTreExcluir(${x.id})" title="Excluir">🗑️</span></td>
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+function rhTreSalvar(e){
+  e.preventDefault();
+  const id=document.getElementById("rtf-id").value;
+  const qtdV=document.getElementById("rtf-qtd").value;
+  const body={
+    data_treinamento:document.getElementById("rtf-data").value||null,
+    funcionario:document.getElementById("rtf-func").value.trim().toUpperCase(),
+    re:document.getElementById("rtf-re").value.trim(),
+    cargo:document.getElementById("rtf-cargo").value.trim().toUpperCase(),
+    area:document.getElementById("rtf-area").value.trim().toUpperCase(),
+    posto:document.getElementById("rtf-posto").value.trim().toUpperCase(),
+    tipo:document.getElementById("rtf-tipo").value,
+    qtd_videos:qtdV?parseInt(qtdV):null,
+    tema:document.getElementById("rtf-tema").value.trim().toUpperCase(),
+    treinador:document.getElementById("rtf-treinador").value.trim().toUpperCase(),
+    observacao:document.getElementById("rtf-obs").value.trim(),
+    criado_por:sessionStorage.getItem("userNome")||null
+  };
+  if(body.tipo==="VÍDEO"&&!body.qtd_videos)body.qtd_videos=1;
+  const msg=document.getElementById("rt-form-msg");
+  const btn=document.getElementById("rtBtnSalvar");
+  btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
+  const method=id?"PATCH":"POST";
+  if(id)body.id=id;
+  fetch("/api/rh?t=treinamentos",{method:method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(!ok)throw new Error((j&&j.error)||"erro desconhecido");
+      msg.style.color="#16a34a";msg.textContent=id?"✔ Treinamento atualizado!":"✔ Treinamento registrado!";
+      rhTreLimpar(true);
+      rhTreLoad();
+      setTimeout(()=>{msg.textContent="";},2500);
+    })
+    .catch(err=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar: "+err.message;})
+    .finally(()=>{btn.disabled=false;});
+  return false;
+}
+function rhTreLimpar(keepMsg){
+  document.getElementById("rtForm").reset();
+  document.getElementById("rtf-id").value="";
+  document.getElementById("rtf-data").value=ymd(new Date());
+  document.getElementById("rtf-qtd").disabled=false;
+  document.getElementById("rt-form-title").textContent="➕ Novo Treinamento";
+  if(keepMsg!==true)document.getElementById("rt-form-msg").textContent="";
+}
+function rhTreEditar(id){
+  const x=RH_TRE.find(v=>String(v.id)===String(id));if(!x)return;
+  document.getElementById("rtf-id").value=x.id;
+  document.getElementById("rtf-data").value=x.data_treinamento?String(x.data_treinamento).slice(0,10):"";
+  document.getElementById("rtf-func").value=x.funcionario||"";
+  document.getElementById("rtf-re").value=x.re||"";
+  document.getElementById("rtf-cargo").value=x.cargo||"";
+  document.getElementById("rtf-area").value=x.area||"";
+  document.getElementById("rtf-posto").value=x.posto||"";
+  document.getElementById("rtf-tipo").value=x.tipo||"VÍDEO";
+  rhTreTipoChg();
+  document.getElementById("rtf-qtd").value=x.qtd_videos||"";
+  document.getElementById("rtf-tema").value=x.tema||"";
+  document.getElementById("rtf-treinador").value=x.treinador||"";
+  document.getElementById("rtf-obs").value=x.observacao||"";
+  document.getElementById("rt-form-title").textContent="✏️ Editando — "+(x.funcionario||"");
+  document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
+}
+function rhTreExcluir(id){
+  const x=RH_TRE.find(v=>String(v.id)===String(id));
+  if(!confirm("Excluir o treinamento de "+(x?x.funcionario:"")+"? Essa ação não pode ser desfeita."))return;
+  fetch("/api/rh?t=treinamentos&id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    rhTreLoad();
   }).catch(err=>alert("Erro ao excluir: "+err.message));
 }
 function init(){
