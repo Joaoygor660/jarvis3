@@ -452,7 +452,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ni" onclick="navTo('restec',this)"><span class="ni-ic">🔧</span><span>Reservas Técnicas</span></div>
     <div class="ni" onclick="navTo('hrextra',this)"><span class="ni-ic">⏰</span><span>Horas Extras</span></div>
     <div class="ni" onclick="navTo('checklist',this)"><span class="ni-ic">📝</span><span>Check List</span></div>
-    <div class="ni" onclick="navTo('reldia',this)" style="position:relative"><span class="ni-ic">📄</span><span>Relatório Diário</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
     <div class="ni" onclick="navTo('painelacomp',this)" style="position:relative"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
   </div>
   <div class="nav-sec" id="navSecRH" style="display:none">
@@ -539,17 +538,14 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <button class="snt" onclick="navTo('fts',null)">🔄 FTS <span class="snt-n" id="sn5">0</span></button>
       <button class="snt snt-alert" onclick="navTo('dispo',null)">🔴 Sem Alocação <span class="snt-n" id="sn6">0</span></button>
     </div>
-    <div class="grid-21">
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Faltas × Coberturas × Postos por Dia</span></div>
-        <div class="cl"><div class="cli"><div class="cld" style="background:#0d1f35"></div>Faltas</div><div class="cli"><div class="cld" style="background:#2e8fef"></div>Coberturas</div><div class="cli"><div class="cld" style="background:#e74c3c"></div>Postos</div></div>
-        <div class="cw" style="height:210px"><canvas id="cVG1"></canvas></div></div>
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Situação Faltas</span></div><div class="cw" style="height:240px"><canvas id="cVG2"></canvas></div></div>
+    <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px;flex-wrap:wrap">
+      <span style="font-size:.92rem;font-weight:900;color:#0d1f35">📄 Relatório Diário</span>
+      <button class="rh-btn rh-btn-sec" onclick="relNav(-1)" style="padding:7px 14px;font-size:.72rem">◀ Dia anterior</button>
+      <select id="reldia-sel" class="rhf-i" style="width:auto;padding:7px 12px;font-weight:800" onchange="relSetDate(this.value)"></select>
+      <button class="rh-btn rh-btn-sec" onclick="relNav(1)" style="padding:7px 14px;font-size:.72rem">Dia seguinte ▶</button>
+      <span id="reldia-info" style="font-size:.72rem;color:#94a3b8"></span>
     </div>
-    <div class="grid-3">
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Faltas por Área</span></div><div class="cw" style="height:195px"><canvas id="cVG3"></canvas></div></div>
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Coberturas por Motivo</span></div><div class="cw" style="height:195px"><canvas id="cVG4"></canvas></div></div>
-      <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Faltas por Turno</span></div><div class="cw" style="height:195px"><canvas id="cVG5"></canvas></div></div>
-    </div>
+    <div id="reldia-blocks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;align-items:start"></div>
   </div>
 
   <!-- FUNCIONÁRIOS ATIVOS -->
@@ -1082,16 +1078,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       </div>
     </div>
   </div>
-  <div class="page" id="pg-reldia">
-    <div class="sec-hdr"><span class="sec-hdr-ic">📄</span><div><div class="sec-hdr-t">Relatório Diário</div><div class="sec-hdr-sub">Todas as operações do dia numa tela só — clique em qualquer linha para ver os nomes</div></div></div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-      <button class="rh-btn rh-btn-sec" onclick="relNav(-1)" style="padding:8px 16px">◀ Dia anterior</button>
-      <select id="reldia-sel" class="rhf-i" style="width:auto;padding:8px 14px;font-weight:800" onchange="relSetDate(this.value)"></select>
-      <button class="rh-btn rh-btn-sec" onclick="relNav(1)" style="padding:8px 16px">Dia seguinte ▶</button>
-      <span id="reldia-info" style="font-size:.72rem;color:#94a3b8"></span>
-    </div>
-    <div id="reldia-blocks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-items:start"></div>
-  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1372,7 +1358,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",reldia:"Relatório Diário"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1394,7 +1380,6 @@ function navTo(p,btn){
   else if(p==="rhres"){rhResLoad();}
   else if(p==="rhtrein"){rhTreLoad();}
   else if(p==="rhdash"){rhDashLoad();}
-  else if(p==="reldia"){renderRelDia();}
   else{updVGCharts();}
 }
 
@@ -1580,6 +1565,8 @@ function topN(arr,key,n){const m={};for(const r of arr){const v=r[key]||"Outros"
 
 // VG CHARTS
 function updVGCharts(){
+  // Gráficos da Visão Geral foram substituídos pelo Relatório Diário
+  if(!document.getElementById("cVG1")){if(typeof renderRelDia==="function")renderRelDia();return;}
   const{faltas,cobertura,justif}=F;
   const fd2=byDay(faltas),cd=byDay(cobertura),pd2=byDay(justif);
   const allD=[...new Set([...fd2.keys,...cd.keys,...pd2.keys])].sort();
@@ -2526,7 +2513,7 @@ function buildDataFromWorkbook(wb){
       if(tipo==="FT")
         ftsArr.push({...base,MOTIVO:r["DESCIMPLA"]||"—"});
       if(tipo==="COBERTURA"||tipo==="DOBRA"||tipo==="CONVOCACAO"||tipo==="CONVOCAÇÃO")
-        cobArr.push({NOME:base.NOME,DATA:base.DATA,LOCAL:base.LOCAL,AREA:base.AREA,TURNO:base.TURNO,MOTIVO:r["DESCIMPLA"]||"—"});
+        cobArr.push({NOME:base.NOME,DATA:base.DATA,LOCAL:base.LOCAL,AREA:base.AREA,TURNO:base.TURNO,CARGO:base.CARGO,MOTIVO:r["DESCIMPLA"]||"—"});
     }
     data.faltas=faltas;data.fts=ftsArr;data.cobertura=cobArr;
   }else{
@@ -2548,7 +2535,7 @@ function buildDataFromWorkbook(wb){
     },"fts");
     ext("COBERTURA",(r,I)=>({
       NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
-      LOCAL:r[I["NOMELOCAL"]],AREA:r[I["AREASUPERVISAO"]],
+      LOCAL:r[I["NOMELOCAL"]],AREA:r[I["AREASUPERVISAO"]],CARGO:r[I["DESC_CARGO"]],
       TURNO:turnoFromEscala(r[I["DESCESCALA"]],r[I["HRENTRADA"]]),MOTIVO:r[I["DESCIMPLA"]]
     }),"cobertura");
   }
@@ -3814,21 +3801,6 @@ function relDet(k){
   const d=RELDIA_DET[k];if(!d)return;
   _rdModal(d.title,d.headers,d.rows);
 }
-function _relGroup(rows,f1,f2){
-  const m={};
-  rows.forEach(r=>{
-    const g1=String(r[f1]||"(vazio)").trim()||"(vazio)";
-    const g2=String(r[f2]||"(vazio)").trim()||"(vazio)";
-    if(!m[g1])m[g1]={n:0,subs:{}};
-    m[g1].n++;
-    if(!m[g1].subs[g2])m[g1].subs[g2]={n:0,rows:[]};
-    m[g1].subs[g2].n++;m[g1].subs[g2].rows.push(r);
-  });
-  return Object.entries(m).sort((a,b)=>b[1].n-a[1].n).map(([g,v])=>({
-    label:g,n:v.n,
-    subs:Object.entries(v.subs).sort((a,b)=>b[1].n-a[1].n).map(([s,sv])=>({label:s,n:sv.n,rows:sv.rows}))
-  }));
-}
 function renderRelDia(){
   const D=DASHBOARD_DATA||{};
   const ds=_relDates();
@@ -3846,68 +3818,124 @@ function renderRelDia(){
   const day=k=>(D[k]||[]).filter(r=>String(r.DATA||"").slice(0,10)===RELDIA_DATE);
   RELDIA_DET={};let detN=0;
   const reg=(title,headers,rows)=>{const k="k"+(detN++);RELDIA_DET[k]={title,headers,rows};return k;};
-  const BLOCKS=[
-    {t:"🔴 Sem Alocação",hd:"#dc2626",bg:"#fee2e2",rows:day("dispo"),g1:"TURNO",g2:"RESERVA",
-     det:r=>[r.NOME,r.CARGO,r.AREA,r.SITUACAO],dh:["Funcionário","Cargo","Área","Situação"]},
-    {t:"🛡️ Coberturas",hd:"#1e4d8c",bg:"#dbeafe",rows:day("cobertura"),g1:"TURNO",g2:"MOTIVO",
-     det:r=>[r.NOME,r.LOCAL,r.AREA,r.MOTIVO],dh:["Funcionário","Posto","Área","Motivo"]},
-    {t:"🔄 FTS",hd:"#0369a1",bg:"#e0f2fe",rows:day("fts"),g1:"TURNO",g2:"LOCAL",
-     det:r=>[r.NOME,r.CARGO,r.LOCAL,r.MOTIVO],dh:["Funcionário","Cargo","Posto","Motivo"]},
-    {t:"🚫 Faltas",hd:"#b45309",bg:"#fef3c7",rows:day("faltas"),g1:"TIPO",g2:"LOCAL",
-     det:r=>[r.NOME,r.CARGO,r.LOCAL,r.ABONO,r.TURNO],dh:["Funcionário","Cargo","Posto","Abono","Turno"]},
-    {t:"📋 OS Avulsos",hd:"#7c3aed",bg:"#ede9fe",rows:day("os"),g1:"TURNO",g2:"TIPO",
-     det:r=>[r.LOCAL,r.CARGO,r.TIPO,r.STATUS],dh:["Posto","Cargo","Tipo","Status"]},
-    {t:"⚠️ Postos Descobertos",hd:"#ca8a04",bg:"#fef9c3",rows:day("justif"),g1:"TURNO",g2:"LOCAL",
-     det:r=>[r.LOCAL,r.CARGO,r.AREA,r.MOTIVO],dh:["Posto","Cargo","Área","Motivo"]},
-  ];
+  // cargo por nome (para coberturas antigas sem CARGO no registro)
+  const _cargoNome={};
+  (D.ativos||[]).forEach(a=>{const k=String(a.NOME||"").trim().toUpperCase();if(k&&!_cargoNome[k])_cargoNome[k]=a.CARGO||"—";});
+  const cargoDe=r=>r.CARGO||_cargoNome[String(r.NOME||"").trim().toUpperCase()]||"—";
+  // helpers visuais
+  const rowSec=(label,val,k,red)=>`<div onclick="relDet('${k}')" style="display:flex;justify-content:space-between;padding:5px 12px;background:${red?"#fee2e2":"#f1f5f9"};font-size:.68rem;font-weight:800;color:${red?"#b91c1c":"#334155"};cursor:pointer">${label}<span>${val}</span></div>`;
+  const rowMid=(label,val,k,color)=>`<div onclick="relDet('${k}')" style="display:flex;justify-content:space-between;padding:4px 12px 4px 18px;font-size:.7rem;font-weight:800;color:${color||"#1e4d8c"};cursor:pointer;border-bottom:1px solid #f8fafc"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%">${label}</span><span>${val}</span></div>`;
+  const rowLeaf=(label,val,k,red)=>`<div onclick="relDet('${k}')" style="display:flex;justify-content:space-between;padding:3px 12px 3px 26px;font-size:.68rem;${red?"color:#dc2626;font-weight:800;":"color:#334155;"}cursor:pointer;border-bottom:1px solid #fbfcfe"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:78%">${label}</span><b>${val}</b></div>`;
+  const emptyMsg='<div style="padding:12px;font-size:.72rem;color:#94a3b8;text-align:center">Sem registros ✅</div>';
+  const card=(titulo,cor,bg,total,body)=>`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:12px;overflow:hidden"><div style="background:${bg};padding:9px 12px;display:flex;justify-content:space-between;font-size:.75rem;font-weight:900;color:${cor}"><span>${titulo}</span><span>${total}</span></div>${body||emptyMsg}</div>`;
+  const grp=(rows,f)=>{const m={};rows.forEach(r=>{const v=typeof f==="function"?f(r):r[f];const k=String(v||"(vazio)").trim()||"(vazio)";(m[k]=m[k]||[]).push(r);});return Object.entries(m).sort((a,b)=>b[1].length-a[1].length);};
   let html="";
-  BLOCKS.forEach((B,bi)=>{
-    const groups=_relGroup(B.rows,B.g1,B.g2);
-    const total=B.rows.length;
+
+  // 1. SEM ALOCAÇÃO — quantidade TOTAL atual (não filtra por dia)
+  {
+    const rows=D.dispo||[];
+    const dh=["Funcionário","Cargo","Área","Situação"],det=r=>[r.NOME,r.CARGO,r.AREA,r.SITUACAO];
     let body="";
-    if(!total){body='<div style="padding:12px;font-size:.72rem;color:#94a3b8;text-align:center">Sem registros no dia ✅</div>';}
-    else{
-      groups.forEach((g,gi)=>{
-        const gk=bi+"_"+gi;
-        const kAll=reg(B.t+" — "+g.label+" ("+RELDIA_DATE.split("-").reverse().join("/")+")",B.dh,g.subs.flatMap(s=>s.rows).map(B.det));
-        body+=`<div onclick="relDet('${kAll}')" style="display:flex;justify-content:space-between;padding:5px 12px;background:#f1f5f9;font-size:.68rem;font-weight:800;color:#334155;cursor:pointer">${g.label}<span>${g.n}</span></div>`;
-        const exp=RELDIA_EXP[gk];
-        const shown=exp?g.subs:g.subs.slice(0,5);
-        shown.forEach(s=>{
-          const k=reg(B.t+" — "+s.label+" ("+RELDIA_DATE.split("-").reverse().join("/")+")",B.dh,s.rows.map(B.det));
-          body+=`<div onclick="relDet('${k}')" style="display:flex;justify-content:space-between;padding:4px 12px 4px 22px;font-size:.7rem;color:#0d1f35;cursor:pointer;border-bottom:1px solid #f8fafc" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%">${s.label}</span><b>${s.n}</b></div>`;
-        });
-        if(g.subs.length>5&&!exp)body+=`<div onclick="relToggle('${gk}')" style="padding:4px 22px;font-size:.66rem;color:#2e8fef;cursor:pointer;font-weight:700">+ ${g.subs.length-5} mais…</div>`;
-        if(exp&&g.subs.length>5)body+=`<div onclick="relToggle('${gk}')" style="padding:4px 22px;font-size:.66rem;color:#94a3b8;cursor:pointer;font-weight:700">− recolher</div>`;
-      });
-    }
-    html+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:12px;overflow:hidden">
-      <div style="background:${B.bg};padding:9px 12px;display:flex;justify-content:space-between;font-size:.75rem;font-weight:900;color:${B.hd}"><span>${B.t}</span><span>${total}</span></div>${body}</div>`;
-  });
-  // Horas Extras (soma de tempo por supervisor → cliente)
-  const he=day("hrextra");
-  const heTotal=he.reduce((s,r)=>s+(r.MINUTOS||0),0);
-  let heBody="";
-  if(!he.length){heBody='<div style="padding:12px;font-size:.72rem;color:#94a3b8;text-align:center">Sem registros no dia ✅</div>';}
-  else{
-    const m={};
-    he.forEach(r=>{const a=String(r.AREA||"(vazio)");const c=String(r.CLIENTE||"(vazio)");if(!m[a])m[a]={s:0,subs:{}};m[a].s+=r.MINUTOS||0;if(!m[a].subs[c])m[a].subs[c]={s:0,rows:[]};m[a].subs[c].s+=r.MINUTOS||0;m[a].subs[c].rows.push(r);});
-    Object.entries(m).sort((a,b)=>b[1].s-a[1].s).forEach(([a,v],gi)=>{
-      const gk="he_"+gi;
-      const kAll=reg("⏰ Horas Extras — "+a,["Funcionário","Tipo","Cliente","Tempo"],Object.values(v.subs).flatMap(s=>s.rows).map(r=>[r.NOME,r.TIPO,r.CLIENTE,_heMinToStr(r.MINUTOS||0)]));
-      heBody+=`<div onclick="relDet('${kAll}')" style="display:flex;justify-content:space-between;padding:5px 12px;background:#fef3c7;font-size:.68rem;font-weight:800;color:#92400e;cursor:pointer">${a}<span>${_heMinToStr(v.s)}</span></div>`;
-      const subs=Object.entries(v.subs).sort((x,y)=>y[1].s-x[1].s);
-      const exp=RELDIA_EXP[gk];
-      (exp?subs:subs.slice(0,5)).forEach(([c,sv])=>{
-        const k=reg("⏰ Horas Extras — "+c,["Funcionário","Tipo","Cliente","Tempo"],sv.rows.map(r=>[r.NOME,r.TIPO,r.CLIENTE,_heMinToStr(r.MINUTOS||0)]));
-        heBody+=`<div onclick="relDet('${k}')" style="display:flex;justify-content:space-between;padding:4px 12px 4px 22px;font-size:.7rem;color:#0d1f35;cursor:pointer;border-bottom:1px solid #f8fafc"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%">${c}</span><b>${_heMinToStr(sv.s)}</b></div>`;
-      });
-      if(subs.length>5&&!exp)heBody+=`<div onclick="relToggle('${gk}')" style="padding:4px 22px;font-size:.66rem;color:#2e8fef;cursor:pointer;font-weight:700">+ ${subs.length-5} mais…</div>`;
-      if(exp&&subs.length>5)heBody+=`<div onclick="relToggle('${gk}')" style="padding:4px 22px;font-size:.66rem;color:#94a3b8;cursor:pointer;font-weight:700">− recolher</div>`;
+    grp(rows,"TURNO").forEach(([t,rs])=>{
+      body+=rowSec(t,rs.length,reg("🔴 Sem Alocação — "+t,dh,rs.map(det)));
+      grp(rs,r=>r.RESERVA||r.SITUACAO).forEach(([s,rs2])=>{body+=rowLeaf(s,rs2.length,reg("🔴 Sem Alocação — "+s,dh,rs2.map(det)));});
     });
+    html+=card("🔴 Sem Alocação — Total","#dc2626","#fee2e2",rows.length,rows.length?body:"");
   }
-  html+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:12px;overflow:hidden">
-    <div style="background:#fbbf24;padding:9px 12px;display:flex;justify-content:space-between;font-size:.75rem;font-weight:900;color:#78350f"><span>⏰ Horas Extras</span><span>${_heMinToStr(heTotal)}</span></div>${heBody}</div>`;
+  // 2. COBERTURAS — turno → motivo → cargo (tudo aberto, sem "+ mais")
+  {
+    const rows=day("cobertura");
+    const dh=["Funcionário","Cargo","Posto","Motivo"],det=r=>[r.NOME,cargoDe(r),r.LOCAL,r.MOTIVO];
+    let body="";
+    grp(rows,"TURNO").forEach(([t,rs])=>{
+      body+=rowSec(t,rs.length,reg("🛡️ Coberturas — "+t,dh,rs.map(det)));
+      grp(rs,"MOTIVO").forEach(([m,rs2])=>{
+        body+=rowMid(m,rs2.length,reg("🛡️ "+m,dh,rs2.map(det)));
+        grp(rs2,cargoDe).forEach(([c,rs3])=>{body+=rowLeaf(c,rs3.length,reg("🛡️ "+m+" — "+c,dh,rs3.map(det)));});
+      });
+    });
+    html+=card("🛡️ Coberturas","#1e4d8c","#dbeafe",rows.length,rows.length?body:"");
+  }
+  // 3. FTS — turno → cliente → cargo · motivo
+  {
+    const rows=day("fts");
+    const dh=["Funcionário","Cargo","Cliente","Motivo"],det=r=>[r.NOME,r.CARGO,r.LOCAL,r.MOTIVO];
+    let body="";
+    grp(rows,"TURNO").forEach(([t,rs])=>{
+      body+=rowSec(t,rs.length,reg("🔄 FTS — "+t,dh,rs.map(det)));
+      grp(rs,"LOCAL").forEach(([l,rs2])=>{
+        body+=rowMid(l,rs2.length,reg("🔄 FTS — "+l,dh,rs2.map(det)),"#0369a1");
+        grp(rs2,r=>(r.CARGO||"—")+" · "+(r.MOTIVO||"—")).forEach(([cm,rs3])=>{body+=rowLeaf(cm,rs3.length,reg("🔄 FTS — "+l,dh,rs3.map(det)));});
+      });
+    });
+    html+=card("🔄 FTS","#0369a1","#e0f2fe",rows.length,rows.length?body:"");
+  }
+  // 4. FALTAS — CONTRATO primeiro, depois RESERVA; ABANDONO contado separado
+  {
+    const all=day("faltas");
+    const isAband=r=>String(r.LOCAL||"").toUpperCase().includes("ABANDONO");
+    const aband=all.filter(isAband);
+    const rows=all.filter(r=>!isAband(r));
+    const dh=["Funcionário","Cargo","Posto","Abono","Turno"],det=r=>[r.NOME,r.CARGO,r.LOCAL,r.ABONO,r.TURNO];
+    const gm={};grp(rows,"TIPO").forEach(([t,rs])=>{gm[t]=rs;});
+    const ordem=["CONTRATO","RESERVA",...Object.keys(gm).filter(k=>k!=="CONTRATO"&&k!=="RESERVA")];
+    let body="";
+    ordem.forEach(t=>{
+      const rs=gm[t];if(!rs)return;
+      body+=rowSec(t,rs.length,reg("🚫 Faltas — "+t,dh,rs.map(det)));
+      grp(rs,"LOCAL").forEach(([l,rs2])=>{body+=rowLeaf(l,rs2.length,reg("🚫 Faltas — "+l,dh,rs2.map(det)));});
+    });
+    if(aband.length){
+      body+=rowSec("🚷 ABANDONO (separado)",aband.length,reg("🚷 Abandono",dh,aband.map(det)),true);
+      grp(aband,"NOME").forEach(([n,rs2])=>{body+=rowLeaf(n,rs2.length,reg("🚷 Abandono — "+n,dh,rs2.map(det)),true);});
+    }
+    html+=card("🚫 Faltas","#b45309","#fef3c7",rows.length+(aband.length?` <span style="font-size:.62rem;font-weight:700">(+${aband.length} abandono)</span>`:""),(rows.length||aband.length)?body:"");
+  }
+  // 5. OS AVULSOS — turno → motivo → cliente
+  {
+    const rows=day("os");
+    const dh=["Cliente","Cargo","Motivo","Status"],det=r=>[r.LOCAL,r.CARGO,r.TIPO,r.STATUS];
+    let body="";
+    grp(rows,"TURNO").forEach(([t,rs])=>{
+      body+=rowSec(t,rs.length,reg("📋 OS Avulsos — "+t,dh,rs.map(det)));
+      grp(rs,"TIPO").forEach(([m,rs2])=>{
+        body+=rowMid(m,rs2.length,reg("📋 OS — "+m,dh,rs2.map(det)),"#7c3aed");
+        grp(rs2,"LOCAL").forEach(([l,rs3])=>{body+=rowLeaf(l,rs3.length,reg("📋 OS — "+l,dh,rs3.map(det)));});
+      });
+    });
+    html+=card("📋 OS Avulsos","#7c3aed","#ede9fe",rows.length,rows.length?body:"");
+  }
+  // 6. JUSTIFICATIVA DE POSTOS — turno → cliente + motivo (vermelho se POSTO DESCOBERTO)
+  {
+    const rows=day("justif");
+    const dh=["Cliente","Cargo","Área","Motivo"],det=r=>[r.LOCAL,r.CARGO,r.AREA,r.MOTIVO];
+    let body="";
+    grp(rows,"TURNO").forEach(([t,rs])=>{
+      body+=rowSec(t,rs.length,reg("⚠️ Justificativa de Postos — "+t,dh,rs.map(det)));
+      grp(rs,r=>(r.LOCAL||"—")+"┃"+(r.MOTIVO||"—")).forEach(([lm,rs2])=>{
+        const p=lm.split("┃");
+        const _mu=String(p[1]).toUpperCase();
+        const red=_mu.includes("DESCOBERTO")||(_mu.includes("VAGO")&&_mu.includes("SEM"));
+        body+=rowLeaf(p[0]+" — "+p[1],rs2.length,reg("⚠️ "+p[0],dh,rs2.map(det)),red);
+      });
+    });
+    html+=card("⚠️ Justificativa de Postos","#ca8a04","#fef9c3",rows.length,rows.length?body:"");
+  }
+  // 7. HORAS EXTRAS — Extra Entrada / Extra Saída / FT → supervisor → cliente
+  {
+    const rows=day("hrextra");
+    const sum=rs=>rs.reduce((s,r)=>s+(r.MINUTOS||0),0);
+    const dh=["Funcionário","Tipo","Cliente","Supervisor","Tempo"],det=r=>[r.NOME,r.TIPO,r.CLIENTE,r.AREA,_heMinToStr(r.MINUTOS||0)];
+    let body="";
+    grp(rows,"TIPO").forEach(([tp,rs])=>{
+      body+=rowSec(tp,_heMinToStr(sum(rs)),reg("⏰ "+tp,dh,rs.map(det)));
+      grp(rs,"AREA").forEach(([a,rs2])=>{
+        body+=rowMid(a,_heMinToStr(sum(rs2)),reg("⏰ "+tp+" — "+a,dh,rs2.map(det)),"#92400e");
+        grp(rs2,"CLIENTE").forEach(([c,rs3])=>{body+=rowLeaf(c,_heMinToStr(sum(rs3)),reg("⏰ "+tp+" — "+c,dh,rs3.map(det)));});
+      });
+    });
+    html+=card("⏰ Horas Extras","#78350f","#fbbf24",_heMinToStr(sum(rows)),rows.length?body:"");
+  }
   if(blocksEl)blocksEl.innerHTML=html;
 }
 function init(){
