@@ -3856,16 +3856,16 @@ function renderRelDia(){
     });
     html+=card("🛡️ Coberturas","#1e4d8c","#dbeafe",rows.length,rows.length?body:"");
   }
-  // 3. FTS — turno → cliente → cargo · motivo
+  // 3. FTS — motivo como principal → cargo (qtd) → posto coberto
   {
     const rows=day("fts");
     const dh=["Funcionário","Cargo","Cliente","Motivo"],det=r=>[r.NOME,r.CARGO,r.LOCAL,r.MOTIVO];
     let body="";
-    grp(rows,"TURNO").forEach(([t,rs])=>{
-      body+=rowSec(t,rs.length,reg("🔄 FTS — "+t,dh,rs.map(det)));
-      grp(rs,"LOCAL").forEach(([l,rs2])=>{
-        body+=rowMid(l,rs2.length,reg("🔄 FTS — "+l,dh,rs2.map(det)),"#0369a1");
-        grp(rs2,r=>(r.CARGO||"—")+" · "+(r.MOTIVO||"—")).forEach(([cm,rs3])=>{body+=rowLeaf(cm,rs3.length,reg("🔄 FTS — "+l,dh,rs3.map(det)));});
+    grp(rows,"MOTIVO").forEach(([m,rs])=>{
+      body+=rowSec(m,rs.length,reg("🔄 FTS — "+m,dh,rs.map(det)));
+      grp(rs,"CARGO").forEach(([c,rs2])=>{
+        body+=rowMid(c,rs2.length,reg("🔄 FTS — "+m+" · "+c,dh,rs2.map(det)),"#0369a1");
+        grp(rs2,"LOCAL").forEach(([l,rs3])=>{body+=rowLeaf(l,rs3.length,reg("🔄 FTS — "+l,dh,rs3.map(det)));});
       });
     });
     html+=card("🔄 FTS","#0369a1","#e0f2fe",rows.length,rows.length?body:"");
@@ -3900,17 +3900,18 @@ function renderRelDia(){
       body+=rowSec(t,rs.length,reg("📋 OS Avulsos — "+t,dh,rs.map(det)));
       grp(rs,"TIPO").forEach(([m,rs2])=>{
         body+=rowMid(m,rs2.length,reg("📋 OS — "+m,dh,rs2.map(det)),"#7c3aed");
-        grp(rs2,"LOCAL").forEach(([l,rs3])=>{body+=rowLeaf(l,rs3.length,reg("📋 OS — "+l,dh,rs3.map(det)));});
+        grp(rs2,r=>(r.LOCAL||"—")+" · "+(r.CARGO||"—")).forEach(([lc,rs3])=>{body+=rowLeaf(lc,rs3.length,reg("📋 OS — "+lc,dh,rs3.map(det)));});
       });
     });
     html+=card("📋 OS Avulsos","#7c3aed","#ede9fe",rows.length,rows.length?body:"");
   }
-  // 6. JUSTIFICATIVA DE POSTOS — turno → cliente + motivo (vermelho se POSTO DESCOBERTO)
+  // 6. JUSTIFICATIVA DE POSTOS — DIURNO primeiro → cliente + motivo (vermelho se POSTO DESCOBERTO)
   {
     const rows=day("justif");
     const dh=["Cliente","Cargo","Área","Motivo"],det=r=>[r.LOCAL,r.CARGO,r.AREA,r.MOTIVO];
     let body="";
-    grp(rows,"TURNO").forEach(([t,rs])=>{
+    const _ordT=["DIURNO","NOTURNO"];
+    grp(rows,"TURNO").sort((a,b)=>{const ia=_ordT.indexOf(a[0]),ib=_ordT.indexOf(b[0]);return(ia<0?99:ia)-(ib<0?99:ib);}).forEach(([t,rs])=>{
       body+=rowSec(t,rs.length,reg("⚠️ Justificativa de Postos — "+t,dh,rs.map(det)));
       grp(rs,r=>(r.LOCAL||"—")+"┃"+(r.MOTIVO||"—")).forEach(([lm,rs2])=>{
         const p=lm.split("┃");
