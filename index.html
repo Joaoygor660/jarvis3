@@ -452,6 +452,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ni" onclick="navTo('restec',this)"><span class="ni-ic">🔧</span><span>Reservas Técnicas</span></div>
     <div class="ni" onclick="navTo('hrextra',this)"><span class="ni-ic">⏰</span><span>Horas Extras</span></div>
     <div class="ni" onclick="navTo('checklist',this)"><span class="ni-ic">📝</span><span>Check List</span></div>
+    <div class="ni" onclick="navTo('reldia',this)" style="position:relative"><span class="ni-ic">📄</span><span>Relatório Diário</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
     <div class="ni" onclick="navTo('painelacomp',this)" style="position:relative"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
   </div>
   <div class="nav-sec" id="navSecRH" style="display:none">
@@ -1081,6 +1082,16 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       </div>
     </div>
   </div>
+  <div class="page" id="pg-reldia">
+    <div class="sec-hdr"><span class="sec-hdr-ic">📄</span><div><div class="sec-hdr-t">Relatório Diário</div><div class="sec-hdr-sub">Todas as operações do dia numa tela só — clique em qualquer linha para ver os nomes</div></div></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="rh-btn rh-btn-sec" onclick="relNav(-1)" style="padding:8px 16px">◀ Dia anterior</button>
+      <select id="reldia-sel" class="rhf-i" style="width:auto;padding:8px 14px;font-weight:800" onchange="relSetDate(this.value)"></select>
+      <button class="rh-btn rh-btn-sec" onclick="relNav(1)" style="padding:8px 16px">Dia seguinte ▶</button>
+      <span id="reldia-info" style="font-size:.72rem;color:#94a3b8"></span>
+    </div>
+    <div id="reldia-blocks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-items:start"></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1361,7 +1372,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",reldia:"Relatório Diário"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1383,6 +1394,7 @@ function navTo(p,btn){
   else if(p==="rhres"){rhResLoad();}
   else if(p==="rhtrein"){rhTreLoad();}
   else if(p==="rhdash"){rhDashLoad();}
+  else if(p==="reldia"){renderRelDia();}
   else{updVGCharts();}
 }
 
@@ -3777,6 +3789,126 @@ function rhDashDet(kind){
   else if(kind==="tre:visitas"){title="📍 Visitas ao Posto";headers=["Data","Funcionário","Cargo","Posto","Tema","Treinador"];rows=C.trein.filter(x=>x.tipo==="VISITA AO POSTO").map(x=>[f(x.data_treinamento),x.funcionario,x.cargo,x.posto,x.tema,x.treinador]);}
   else if(kind==="tre:pessoas"){title="👥 Pessoas Treinadas";headers=["Data","Funcionário","Cargo","Tipo","Tema"];rows=C.trein.map(x=>[f(x.data_treinamento),x.funcionario,x.cargo,x.tipo,x.tema]);}
   _rdModal(title,headers,rows);
+}
+/* ===== RELATÓRIO DIÁRIO (consolidado do dia, estilo dinâmica Excel) ===== */
+let RELDIA_DATE=null;
+let RELDIA_EXP={};
+let RELDIA_DET={};
+function _relDates(){
+  const D=DASHBOARD_DATA||{};
+  const set=new Set();
+  ["faltas","cobertura","fts","dispo","os","justif","hrextra"].forEach(k=>{
+    (D[k]||[]).forEach(r=>{const d=String(r.DATA||"").slice(0,10);if(d&&d.length===10)set.add(d);});
+  });
+  return [...set].sort();
+}
+function relSetDate(d){RELDIA_DATE=d;RELDIA_EXP={};renderRelDia();}
+function relNav(dir){
+  const ds=_relDates();if(!ds.length)return;
+  let i=ds.indexOf(RELDIA_DATE);if(i<0)i=ds.length-1;
+  i=Math.min(ds.length-1,Math.max(0,i+dir));
+  RELDIA_DATE=ds[i];RELDIA_EXP={};renderRelDia();
+}
+function relToggle(gk){RELDIA_EXP[gk]=!RELDIA_EXP[gk];renderRelDia();}
+function relDet(k){
+  const d=RELDIA_DET[k];if(!d)return;
+  _rdModal(d.title,d.headers,d.rows);
+}
+function _relGroup(rows,f1,f2){
+  const m={};
+  rows.forEach(r=>{
+    const g1=String(r[f1]||"(vazio)").trim()||"(vazio)";
+    const g2=String(r[f2]||"(vazio)").trim()||"(vazio)";
+    if(!m[g1])m[g1]={n:0,subs:{}};
+    m[g1].n++;
+    if(!m[g1].subs[g2])m[g1].subs[g2]={n:0,rows:[]};
+    m[g1].subs[g2].n++;m[g1].subs[g2].rows.push(r);
+  });
+  return Object.entries(m).sort((a,b)=>b[1].n-a[1].n).map(([g,v])=>({
+    label:g,n:v.n,
+    subs:Object.entries(v.subs).sort((a,b)=>b[1].n-a[1].n).map(([s,sv])=>({label:s,n:sv.n,rows:sv.rows}))
+  }));
+}
+function renderRelDia(){
+  const D=DASHBOARD_DATA||{};
+  const ds=_relDates();
+  const sel=document.getElementById("reldia-sel");
+  const blocksEl=document.getElementById("reldia-blocks");
+  if(!ds.length){
+    if(sel)sel.innerHTML="";
+    if(blocksEl)blocksEl.innerHTML='<div style="grid-column:1/-1;padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Nenhum dado carregado ainda. Carregue a planilha do dia.</div>';
+    return;
+  }
+  if(!RELDIA_DATE||!ds.includes(RELDIA_DATE))RELDIA_DATE=ds[ds.length-1];
+  if(sel)sel.innerHTML=ds.slice().reverse().map(d=>`<option value="${d}"${d===RELDIA_DATE?" selected":""}>${d.split("-").reverse().join("/")}</option>`).join("");
+  const info=document.getElementById("reldia-info");
+  if(info)info.textContent=ds.indexOf(RELDIA_DATE)===ds.length-1?"(dia mais recente)":"";
+  const day=k=>(D[k]||[]).filter(r=>String(r.DATA||"").slice(0,10)===RELDIA_DATE);
+  RELDIA_DET={};let detN=0;
+  const reg=(title,headers,rows)=>{const k="k"+(detN++);RELDIA_DET[k]={title,headers,rows};return k;};
+  const BLOCKS=[
+    {t:"🔴 Sem Alocação",hd:"#dc2626",bg:"#fee2e2",rows:day("dispo"),g1:"TURNO",g2:"RESERVA",
+     det:r=>[r.NOME,r.CARGO,r.AREA,r.SITUACAO],dh:["Funcionário","Cargo","Área","Situação"]},
+    {t:"🛡️ Coberturas",hd:"#1e4d8c",bg:"#dbeafe",rows:day("cobertura"),g1:"TURNO",g2:"MOTIVO",
+     det:r=>[r.NOME,r.LOCAL,r.AREA,r.MOTIVO],dh:["Funcionário","Posto","Área","Motivo"]},
+    {t:"🔄 FTS",hd:"#0369a1",bg:"#e0f2fe",rows:day("fts"),g1:"TURNO",g2:"LOCAL",
+     det:r=>[r.NOME,r.CARGO,r.LOCAL,r.MOTIVO],dh:["Funcionário","Cargo","Posto","Motivo"]},
+    {t:"🚫 Faltas",hd:"#b45309",bg:"#fef3c7",rows:day("faltas"),g1:"TIPO",g2:"LOCAL",
+     det:r=>[r.NOME,r.CARGO,r.LOCAL,r.ABONO,r.TURNO],dh:["Funcionário","Cargo","Posto","Abono","Turno"]},
+    {t:"📋 OS Avulsos",hd:"#7c3aed",bg:"#ede9fe",rows:day("os"),g1:"TURNO",g2:"TIPO",
+     det:r=>[r.LOCAL,r.CARGO,r.TIPO,r.STATUS],dh:["Posto","Cargo","Tipo","Status"]},
+    {t:"⚠️ Postos Descobertos",hd:"#ca8a04",bg:"#fef9c3",rows:day("justif"),g1:"TURNO",g2:"LOCAL",
+     det:r=>[r.LOCAL,r.CARGO,r.AREA,r.MOTIVO],dh:["Posto","Cargo","Área","Motivo"]},
+  ];
+  let html="";
+  BLOCKS.forEach((B,bi)=>{
+    const groups=_relGroup(B.rows,B.g1,B.g2);
+    const total=B.rows.length;
+    let body="";
+    if(!total){body='<div style="padding:12px;font-size:.72rem;color:#94a3b8;text-align:center">Sem registros no dia ✅</div>';}
+    else{
+      groups.forEach((g,gi)=>{
+        const gk=bi+"_"+gi;
+        const kAll=reg(B.t+" — "+g.label+" ("+RELDIA_DATE.split("-").reverse().join("/")+")",B.dh,g.subs.flatMap(s=>s.rows).map(B.det));
+        body+=`<div onclick="relDet('${kAll}')" style="display:flex;justify-content:space-between;padding:5px 12px;background:#f1f5f9;font-size:.68rem;font-weight:800;color:#334155;cursor:pointer">${g.label}<span>${g.n}</span></div>`;
+        const exp=RELDIA_EXP[gk];
+        const shown=exp?g.subs:g.subs.slice(0,5);
+        shown.forEach(s=>{
+          const k=reg(B.t+" — "+s.label+" ("+RELDIA_DATE.split("-").reverse().join("/")+")",B.dh,s.rows.map(B.det));
+          body+=`<div onclick="relDet('${k}')" style="display:flex;justify-content:space-between;padding:4px 12px 4px 22px;font-size:.7rem;color:#0d1f35;cursor:pointer;border-bottom:1px solid #f8fafc" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%">${s.label}</span><b>${s.n}</b></div>`;
+        });
+        if(g.subs.length>5&&!exp)body+=`<div onclick="relToggle('${gk}')" style="padding:4px 22px;font-size:.66rem;color:#2e8fef;cursor:pointer;font-weight:700">+ ${g.subs.length-5} mais…</div>`;
+        if(exp&&g.subs.length>5)body+=`<div onclick="relToggle('${gk}')" style="padding:4px 22px;font-size:.66rem;color:#94a3b8;cursor:pointer;font-weight:700">− recolher</div>`;
+      });
+    }
+    html+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:12px;overflow:hidden">
+      <div style="background:${B.bg};padding:9px 12px;display:flex;justify-content:space-between;font-size:.75rem;font-weight:900;color:${B.hd}"><span>${B.t}</span><span>${total}</span></div>${body}</div>`;
+  });
+  // Horas Extras (soma de tempo por supervisor → cliente)
+  const he=day("hrextra");
+  const heTotal=he.reduce((s,r)=>s+(r.MINUTOS||0),0);
+  let heBody="";
+  if(!he.length){heBody='<div style="padding:12px;font-size:.72rem;color:#94a3b8;text-align:center">Sem registros no dia ✅</div>';}
+  else{
+    const m={};
+    he.forEach(r=>{const a=String(r.AREA||"(vazio)");const c=String(r.CLIENTE||"(vazio)");if(!m[a])m[a]={s:0,subs:{}};m[a].s+=r.MINUTOS||0;if(!m[a].subs[c])m[a].subs[c]={s:0,rows:[]};m[a].subs[c].s+=r.MINUTOS||0;m[a].subs[c].rows.push(r);});
+    Object.entries(m).sort((a,b)=>b[1].s-a[1].s).forEach(([a,v],gi)=>{
+      const gk="he_"+gi;
+      const kAll=reg("⏰ Horas Extras — "+a,["Funcionário","Tipo","Cliente","Tempo"],Object.values(v.subs).flatMap(s=>s.rows).map(r=>[r.NOME,r.TIPO,r.CLIENTE,_heMinToStr(r.MINUTOS||0)]));
+      heBody+=`<div onclick="relDet('${kAll}')" style="display:flex;justify-content:space-between;padding:5px 12px;background:#fef3c7;font-size:.68rem;font-weight:800;color:#92400e;cursor:pointer">${a}<span>${_heMinToStr(v.s)}</span></div>`;
+      const subs=Object.entries(v.subs).sort((x,y)=>y[1].s-x[1].s);
+      const exp=RELDIA_EXP[gk];
+      (exp?subs:subs.slice(0,5)).forEach(([c,sv])=>{
+        const k=reg("⏰ Horas Extras — "+c,["Funcionário","Tipo","Cliente","Tempo"],sv.rows.map(r=>[r.NOME,r.TIPO,r.CLIENTE,_heMinToStr(r.MINUTOS||0)]));
+        heBody+=`<div onclick="relDet('${k}')" style="display:flex;justify-content:space-between;padding:4px 12px 4px 22px;font-size:.7rem;color:#0d1f35;cursor:pointer;border-bottom:1px solid #f8fafc"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:75%">${c}</span><b>${_heMinToStr(sv.s)}</b></div>`;
+      });
+      if(subs.length>5&&!exp)heBody+=`<div onclick="relToggle('${gk}')" style="padding:4px 22px;font-size:.66rem;color:#2e8fef;cursor:pointer;font-weight:700">+ ${subs.length-5} mais…</div>`;
+      if(exp&&subs.length>5)heBody+=`<div onclick="relToggle('${gk}')" style="padding:4px 22px;font-size:.66rem;color:#94a3b8;cursor:pointer;font-weight:700">− recolher</div>`;
+    });
+  }
+  html+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:12px;overflow:hidden">
+    <div style="background:#fbbf24;padding:9px 12px;display:flex;justify-content:space-between;font-size:.75rem;font-weight:900;color:#78350f"><span>⏰ Horas Extras</span><span>${_heMinToStr(heTotal)}</span></div>${heBody}</div>`;
+  if(blocksEl)blocksEl.innerHTML=html;
 }
 function init(){
   loadFromSupabase().then(function(got){
