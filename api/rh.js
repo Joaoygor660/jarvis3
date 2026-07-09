@@ -100,30 +100,33 @@ module.exports = async function handler(req, res) {
 
   const data = await resp.json().catch(() => null);
 
-  // Dispara webhook do n8n (WhatsApp via Evolution) ao cadastrar candidato NOVO com telefone.
-  // Só em POST de entrevistas, só se houver telefone, e só se a URL estiver configurada.
-  // Falha do n8n NÃO bloqueia o cadastro (try/catch).
-  if (req.method === "POST" && tKey === "entrevistas" && process.env.N8N_WEBHOOK_URL) {
+  // WhatsApp automático (Evolution API) ao cadastrar candidato NOVO com telefone.
+  // Só em POST de entrevistas, só se houver telefone e a chave estiver configurada.
+  // Falha do envio NÃO bloqueia o cadastro (try/catch).
+  let whatsapp = null;
+  if (req.method === "POST" && tKey === "entrevistas" && process.env.EVOLUTION_APIKEY) {
     const novo = Array.isArray(data) ? data[0] : null;
     if (novo && novo.telefone) {
+      const url = process.env.EVOLUTION_URL || "https://evolution-api-cizp.srv1815873.hstgr.cloud";
+      const inst = process.env.EVOLUTION_INSTANCE || "servcamp";
+      // normaliza telefone -> 55 + DDD + número
+      let num = String(novo.telefone).replace(/\D/g, "");
+      if (num && !num.startsWith("55")) num = "55" + num;
+      const nome = (novo.candidato || "").split(" ")[0] || "candidato(a)";
+      const vaga = novo.cargo ? ` para a vaga de ${novo.cargo}` : "";
+      const texto = `Olá, ${nome}! 👋\n\nVocê agora faz parte do processo seletivo do *Grupo ServCamp*${vaga}. Em breve entraremos em contato com os próximos passos.\n\nBoa sorte! 🍀`;
       try {
-        await fetch(process.env.N8N_WEBHOOK_URL, {
+        const wr = await fetch(`${url}/message/sendText/${inst}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            evento: "novo_candidato",
-            nome: novo.candidato || "",
-            telefone: novo.telefone || "",
-            cargo: novo.cargo || "",
-            vaga: novo.vaga_numero || "",
-            data: novo.data_entrevista || ""
-          })
+          headers: { apikey: process.env.EVOLUTION_APIKEY, "Content-Type": "application/json" },
+          body: JSON.stringify({ number: num, text: texto })
         });
+        whatsapp = wr.ok ? "enviado" : "falhou";
       } catch (e) {
-        // n8n indisponível — segue sem quebrar o cadastro
+        whatsapp = "falhou";
       }
     }
   }
 
-  return res.status(200).json({ ok: true, rows: data });
+  return res.status(200).json({ ok: true, rows: data, whatsapp: whatsapp });
 };
