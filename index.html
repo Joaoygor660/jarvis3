@@ -1095,6 +1095,28 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     .rd-per-on{background:#fff;color:#0d1f35;box-shadow:0 1px 3px rgba(0,0,0,.08)}
     .rd-bar-row{display:flex;justify-content:space-between;margin-bottom:3px}
     .rd-bar{height:7px;border-radius:4px;margin-bottom:10px}
+    /* ===== MOBILE — módulos RH e Painel RH (sobrepõe os grids inline) ===== */
+    @media(max-width:768px){
+      #re-funil{grid-template-columns:repeat(2,1fr)!important}
+      #pg-rhdash div[style*="repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
+      #pg-rhentrev div[style*="grid-template-columns:1fr 1fr"],
+      #pg-rhdesl div[style*="grid-template-columns:1fr 1fr"],
+      #pg-rhres div[style*="grid-template-columns:1fr 1fr"],
+      #pg-rhdash div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+      #pg-rhvagas form div[style*="grid-template-columns"],
+      #pg-rhentrev form div[style*="grid-template-columns"],
+      #pg-rhdesl form div[style*="grid-template-columns"],
+      #pg-rhres form div[style*="grid-template-columns"],
+      #pg-rhtrein form div[style*="grid-template-columns"]{grid-template-columns:1fr 1fr!important}
+      .rh-btn{padding:10px 16px;font-size:.72rem}
+    }
+    @media(max-width:420px){
+      #pg-rhvagas form div[style*="grid-template-columns"],
+      #pg-rhentrev form div[style*="grid-template-columns"],
+      #pg-rhdesl form div[style*="grid-template-columns"],
+      #pg-rhres form div[style*="grid-template-columns"],
+      #pg-rhtrein form div[style*="grid-template-columns"]{grid-template-columns:1fr!important}
+    }
   </style>
 
   </div></div>
