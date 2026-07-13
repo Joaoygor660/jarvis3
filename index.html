@@ -847,7 +847,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div><label class="rhf-l">Substituição de</label><input class="rhf-i" id="rhf-subst" type="text" placeholder="Quem saiu (se houver)"></div>
           <div><label class="rhf-l">Status</label><select class="rhf-i" id="rhf-status"><option>ABERTA</option><option>EM ENTREVISTA</option><option>EXAME</option><option>INTEGRAÇÃO</option><option>PREENCHIDA</option><option>CANCELADA</option></select></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Tipo</label><select class="rhf-i" id="rhf-tipocliente"><option>CONTRATO</option><option>RESERVA</option></select></div>
           <div><label class="rhf-l">Empresa</label><select class="rhf-i" id="rhf-empresa"><option value="">—</option><option>SERV CAMP TERCEIRIZAÇÃO</option><option>SERV CAMP FACILITES</option><option>SERV CAMP PJ</option></select></div>
           <div><label class="rhf-l">Turno</label><select class="rhf-i" id="rhf-turno"><option value="">—</option><option>DIURNO</option><option>NOTURNO</option></select></div>
           <div><label class="rhf-l">Sexo Exigido</label><select class="rhf-i" id="rhf-sexo"><option value="">—</option><option>MASC/FEM</option><option>MASCULINO</option><option>FEMININO</option></select></div>
@@ -1091,6 +1092,30 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔄 Reservas — Aproveitamento</div><div id="rd-c-reservas" style="font-size:.76rem;color:#334155">—</div></div>
         <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🎓 Treinamentos</div><div id="rd-c-treino" style="font-size:.76rem;color:#334155">—</div></div>
+      </div>
+
+      <div style="margin:26px 0 12px;padding-top:18px;border-top:2px solid #e5e9f0;display:flex;align-items:center;gap:10px">
+        <span style="font-size:.98rem;font-weight:900;color:#0d1f35">📊 Análise de Vagas — Histórico Completo</span>
+        <span style="font-size:.68rem;color:#94a3b8">base de 2 anos · independe do filtro de período acima</span>
+      </div>
+      <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+        <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">⏱️</span></div><div class="sk-lbl">Tempo Médio de Fechamento</div><div class="sk-v" id="rv-tempo">—</div><div class="sk-sub" id="rv-tempos">—</div></div>
+        <div class="sk sk-re"><div class="sk-top"><span class="sk-ic">🚫</span></div><div class="sk-lbl">Taxa de Cancelamento</div><div class="sk-v" id="rv-cancel">—</div><div class="sk-sub" id="rv-cancels">—</div></div>
+        <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">🚀</span></div><div class="sk-lbl">Crescimento do Quadro</div><div class="sk-v" id="rv-cresc">—</div><div class="sk-sub">posições novas (aumento de quadro)</div></div>
+        <div class="sk sk-pu"><div class="sk-top"><span class="sk-ic">📋</span></div><div class="sk-lbl">Total de Vagas</div><div class="sk-v" id="rv-total">—</div><div class="sk-sub" id="rv-totals">—</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🏷️ Contrato × Reserva</div><div id="rv-tipo" style="font-size:.76rem;color:#334155">—</div></div>
+        <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🚀 Crescimento × Reposição</div><div id="rv-motivo" style="font-size:.76rem;color:#334155">—</div></div>
+      </div>
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px;margin-bottom:14px">
+        <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:6px">📈 Evolução mês a mês — Abertas × Preenchidas</div>
+        <div style="display:flex;gap:14px;font-size:.68rem;color:#64748b;margin-bottom:10px"><span>🔵 Abertas</span><span>🟢 Preenchidas</span></div>
+        <div style="height:230px"><canvas id="rvMesChart"></canvas></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🏢 Vagas por Empresa</div><div id="rv-empresa" style="font-size:.76rem;color:#334155">—</div></div>
+        <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🏆 Top Clientes / Postos (mais vagas)</div><div id="rv-cliente" style="font-size:.76rem;color:#334155">—</div></div>
       </div>
     </div>
   </div>
@@ -3006,6 +3031,7 @@ function rhSalvar(e){
     preenchida_por:document.getElementById("rhf-preenchida").value.trim().toUpperCase(),
     data_abertura:document.getElementById("rhf-dtabertura").value||ymd(new Date()),
     data_fechamento:document.getElementById("rhf-dtfech").value||null,
+    tipo_cliente:document.getElementById("rhf-tipocliente").value,
     empresa:document.getElementById("rhf-empresa").value,
     turno:document.getElementById("rhf-turno").value,
     sexo:document.getElementById("rhf-sexo").value,
@@ -3057,6 +3083,7 @@ function rhEditar(id){
   document.getElementById("rhf-preenchida").value=x.preenchida_por||"";
   document.getElementById("rhf-dtabertura").value=x.data_abertura?String(x.data_abertura).slice(0,10):"";
   document.getElementById("rhf-dtfech").value=x.data_fechamento?String(x.data_fechamento).slice(0,10):"";
+  document.getElementById("rhf-tipocliente").value=x.tipo_cliente||"CONTRATO";
   document.getElementById("rhf-empresa").value=x.empresa||"";
   document.getElementById("rhf-turno").value=x.turno||"";
   document.getElementById("rhf-sexo").value=x.sexo||"";
@@ -3792,6 +3819,70 @@ function rhDashRender(){
   // Treino
   const vids=trein.reduce((s,x)=>s+(parseInt(x.qtd_videos)||0),0),visitas=trein.filter(x=>x.tipo==="VISITA AO POSTO").length;
   document.getElementById("rd-c-treino").innerHTML=trein.length?`<div style="display:flex;gap:10px;text-align:center"><div onclick="rhDashDet('tre:videos')" style="flex:1;background:#eef2ff;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#4f46e5">${vids}</div><div style="font-size:.65rem;font-weight:700;color:#4f46e5">🎬 VÍDEOS</div></div><div onclick="rhDashDet('tre:visitas')" style="flex:1;background:#e0f2fe;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#0369a1">${visitas}</div><div style="font-size:.65rem;font-weight:700;color:#0369a1">📍 VISITAS</div></div><div onclick="rhDashDet('tre:pessoas')" style="flex:1;background:#dcfce7;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#15803d">${treinados}</div><div style="font-size:.65rem;font-weight:700;color:#15803d">👥 PESSOAS</div></div></div><div style="margin-top:10px;font-size:.72rem;color:#64748b">${trein.length} treinamentos registrados no período</div>`:'<span style="color:#94a3b8">Sem treinamentos no período.</span>';
+
+  rhDashVagas();
+}
+function _rvBars(el,arr,color,total){
+  const max=arr.length?arr[0][1]:1;
+  el.innerHTML=arr.length?arr.map(([k,n])=>`<div class="rd-bar-row"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%">${k}</span><b>${n}${total?` <span style="color:#94a3b8;font-weight:600">(${(n/total*100).toFixed(0)}%)</span>`:""}</b></div><div class="rd-bar" style="background:${color};width:${(n/max*100).toFixed(0)}%"></div>`).join(""):'<span style="color:#94a3b8">Sem dados.</span>';
+}
+function rhDashVagas(){
+  const V=(RDASH&&RDASH.vagas)||[];
+  if(!V.length)return;
+  const dias=(a,b)=>{if(!a||!b)return null;const d=(new Date(String(b).slice(0,10))-new Date(String(a).slice(0,10)))/86400000;return d>=0?d:null;};
+  // Tempo médio de fechamento (preenchidas com as 2 datas)
+  const fech=V.filter(v=>v.status==="PREENCHIDA"&&v.data_abertura&&v.data_fechamento).map(v=>({d:dias(v.data_abertura,v.data_fechamento),f:v.data_fechamento})).filter(x=>x.d!=null);
+  const media=arr=>arr.length?arr.reduce((s,x)=>s+x,0)/arr.length:null;
+  const tMed=media(fech.map(x=>x.d));
+  document.getElementById("rv-tempo").textContent=tMed!=null?tMed.toFixed(1):"—";
+  // tendência: últimos 6 meses vs 6 anteriores
+  const fs=fech.slice().sort((a,b)=>String(a.f).localeCompare(String(b.f)));
+  let tendHtml="dias por vaga";
+  if(fs.length>=8){
+    const meio=Math.floor(fs.length/2);
+    const ant=media(fs.slice(0,meio).map(x=>x.d)),rec=media(fs.slice(meio).map(x=>x.d));
+    if(ant&&rec){const dif=rec-ant;const pct=(dif/ant*100);const melhor=dif<0;
+      tendHtml=`<b style="color:${melhor?"#16a34a":"#dc2626"}">${melhor?"▼":"▲"} ${Math.abs(pct).toFixed(0)}%</b> vs período anterior`;}
+  }
+  document.getElementById("rv-tempos").innerHTML=tendHtml;
+  // Taxa de cancelamento
+  const canc=V.filter(v=>v.status==="CANCELADA").length;
+  document.getElementById("rv-cancel").textContent=(canc/V.length*100).toFixed(0)+"%";
+  document.getElementById("rv-cancels").innerHTML=`<b>${canc}</b> de ${V.length} vagas`;
+  // Crescimento do quadro (aumento de quadro preenchidas = posições novas)
+  const isAumento=v=>String(v.motivo_abertura||"").toUpperCase().includes("AUMENTO");
+  const cresc=V.filter(v=>isAumento(v)&&v.status==="PREENCHIDA").length;
+  document.getElementById("rv-cresc").textContent="+"+cresc;
+  document.getElementById("rv-total").textContent=V.length;
+  const ab=V.filter(v=>v.status==="ABERTA").length,pr=V.filter(v=>v.status==="PREENCHIDA").length;
+  document.getElementById("rv-totals").innerHTML=`<b>${ab}</b> abertas · <b>${pr}</b> preenchidas`;
+  // Contrato x Reserva
+  const cont=V.filter(v=>v.tipo_cliente!=="RESERVA"),res=V.filter(v=>v.tipo_cliente==="RESERVA");
+  const st=arr=>({ab:arr.filter(v=>v.status==="ABERTA").length,pr:arr.filter(v=>v.status==="PREENCHIDA").length,ca:arr.filter(v=>v.status==="CANCELADA").length});
+  const sc=st(cont),sr=st(res);
+  const box=(lb,cor,bg,o)=>`<div style="flex:1;background:${bg};border-radius:8px;padding:12px"><div style="font-size:.68rem;font-weight:800;color:${cor}">${lb}</div><div style="font-size:1.5rem;font-weight:900;color:${cor}">${o.ab+o.pr+o.ca}</div><div style="font-size:.62rem;color:${cor}">🔴 ${o.ab} · ✅ ${o.pr} · ⚫ ${o.ca}</div></div>`;
+  document.getElementById("rv-tipo").innerHTML=`<div style="display:flex;gap:10px;text-align:center">${box("CONTRATO","#1e40af","#dbeafe",sc)}${box("RESERVA","#92400e","#fef3c7",sr)}</div><div style="margin-top:9px;font-size:.66rem;color:#94a3b8">🔴 abertas · ✅ preenchidas · ⚫ canceladas</div>`;
+  // Crescimento x Reposição
+  const aum=V.filter(isAumento).length,sub=V.filter(v=>String(v.motivo_abertura||"").toUpperCase().includes("SUBST")).length;
+  _rvBars(document.getElementById("rv-motivo"),[["🚀 Aumento de Quadro (crescimento)",aum],["🔄 Substituição (reposição)",sub]],"#7c3aed",aum+sub);
+  // Empresa
+  const emp={};V.forEach(v=>{const e=v.empresa||"(vazio)";emp[e]=(emp[e]||0)+1;});
+  _rvBars(document.getElementById("rv-empresa"),Object.entries(emp).sort((a,b)=>b[1]-a[1]),"#2e8fef",V.length);
+  // Top clientes/postos
+  const cli={};V.forEach(v=>{const p=v.posto||"(vazio)";cli[p]=(cli[p]||0)+1;});
+  _rvBars(document.getElementById("rv-cliente"),Object.entries(cli).sort((a,b)=>b[1]-a[1]).slice(0,8),"#16a34a");
+  // Evolução mês a mês
+  const mAb={},mPr={};
+  V.forEach(v=>{const m=String(v.data_abertura||"").slice(0,7);if(m.length===7)mAb[m]=(mAb[m]||0)+1;});
+  V.forEach(v=>{if(v.status==="PREENCHIDA"){const m=String(v.data_fechamento||"").slice(0,7);if(m.length===7)mPr[m]=(mPr[m]||0)+1;}});
+  const meses=[...new Set([...Object.keys(mAb),...Object.keys(mPr)])].sort();
+  if(typeof Chart!=="undefined"&&document.getElementById("rvMesChart")){
+    if(window._rvChart)window._rvChart.destroy();
+    window._rvChart=new Chart(document.getElementById("rvMesChart"),{type:"bar",data:{labels:meses.map(m=>m.slice(5)+"/"+m.slice(2,4)),datasets:[
+      {label:"Abertas",data:meses.map(m=>mAb[m]||0),backgroundColor:"#2e8fef"},
+      {label:"Preenchidas",data:meses.map(m=>mPr[m]||0),backgroundColor:"#16a34a"}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:8},color:"#9aabc2",maxRotation:60}},y:{grid:{color:"#edf0f5"},ticks:{font:{size:9},color:"#9aabc2",precision:0},beginAtZero:true}}}});
+  }
 }
 function _rdModal(title,headers,rows){
   const ex=document.getElementById("rdModal");if(ex)ex.remove();

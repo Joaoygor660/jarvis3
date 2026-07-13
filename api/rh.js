@@ -8,7 +8,7 @@ const TABLES = {
   vagas: {
     table: "rh_vagas",
     required: ["numero_vaga", "cargo"],
-    fields: ["numero_vaga","cargo","escala","posto","area","motivo_abertura","substituicao_de","criterios","status","preenchida_por","data_abertura","data_fechamento","criado_por","jornada","empresa","turno","sexo","perfil","requisitos","fase","usuario_cadastro"]
+    fields: ["numero_vaga","cargo","escala","posto","area","motivo_abertura","substituicao_de","criterios","status","preenchida_por","data_abertura","data_fechamento","criado_por","jornada","empresa","turno","sexo","perfil","requisitos","fase","usuario_cadastro","tipo_cliente"]
   },
   entrevistas: {
     table: "rh_entrevistas",
