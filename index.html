@@ -826,10 +826,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="page" id="pg-rhvagas">
     <div class="sec-hdr"><span class="sec-hdr-ic">📋</span><div><div class="sec-hdr-t">RH — Controle de Vagas</div><div class="sec-hdr-sub">Abertura, acompanhamento e fechamento de vagas — preenchimento manual do RH</div></div></div>
     <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
-      <div class="sk sk-re"><div class="sk-top"><span class="sk-ic">🔴</span></div><div class="sk-lbl">Vagas Abertas</div><div class="sk-v" id="rh-abertas">—</div><div class="sk-sub" id="rh-abertass">—</div></div>
-      <div class="sk sk-or"><div class="sk-top"><span class="sk-ic">🔁</span></div><div class="sk-lbl">Em Processo</div><div class="sk-v" id="rh-proc">—</div><div class="sk-sub">entrevista · exame · integração</div></div>
-      <div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Preenchidas</div><div class="sk-v" id="rh-preench">—</div><div class="sk-sub" id="rh-preenchs">—</div></div>
-      <div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">⏱️</span></div><div class="sk-lbl">Tempo Médio</div><div class="sk-v" id="rh-tempo">—</div><div class="sk-sub">dias p/ fechar vaga</div></div>
+      <div class="sk sk-re clickable" onclick="rhVagasDet('abertas')"><div class="sk-top"><span class="sk-ic">🔴</span></div><div class="sk-lbl">Vagas Abertas</div><div class="sk-v" id="rh-abertas">—</div><div class="sk-sub" id="rh-abertass">—</div></div>
+      <div class="sk sk-or clickable" onclick="rhVagasDet('proc')"><div class="sk-top"><span class="sk-ic">🔁</span></div><div class="sk-lbl">Em Processo</div><div class="sk-v" id="rh-proc">—</div><div class="sk-sub">entrevista · exame · integração</div></div>
+      <div class="sk sk-gr clickable" onclick="rhVagasDet('preench')"><div class="sk-top"><span class="sk-ic">✅</span></div><div class="sk-lbl">Preenchidas</div><div class="sk-v" id="rh-preench">—</div><div class="sk-sub" id="rh-preenchs">—</div></div>
+      <div class="sk sk-bl clickable" onclick="rhVagasDet('tempo')"><div class="sk-top"><span class="sk-ic">⏱️</span></div><div class="sk-lbl">Tempo Médio</div><div class="sk-v" id="rh-tempo">—</div><div class="sk-sub">dias p/ fechar vaga</div></div>
     </div>
     <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 22px;margin-bottom:18px">
       <div style="font-size:.82rem;font-weight:800;color:#0d1f35;margin-bottom:14px" id="rh-form-title">➕ Nova Vaga</div>
@@ -2978,6 +2978,32 @@ function rhRender(){
   document.getElementById("rh-tempo").textContent=tempo;
   rhRenderTbl();
 }
+function rhVagasDet(kind){
+  const V=RH_VAGAS||[];
+  const tipo=x=>x.tipo_cliente==="RESERVA"?"RESERVA":"CONTRATO";
+  const headers=["Nº","Cargo","Tipo","Posto / Cliente","Área","Empresa","Status","Abertura","Dias"];
+  const det=x=>[x.numero_vaga,x.cargo,tipo(x),x.posto,x.area,x.empresa,x.status,rhFmt(x.data_abertura),rhDias(x)];
+  let title="",rows=[];
+  if(kind==="abertas"){
+    const arr=V.filter(x=>x.status==="ABERTA");
+    const c=arr.filter(x=>tipo(x)==="CONTRATO").length,r=arr.filter(x=>tipo(x)==="RESERVA").length;
+    title=`🔴 Vagas Abertas — Contrato: ${c} · Reserva: ${r}`;
+    rows=arr.sort((a,b)=>tipo(a).localeCompare(tipo(b))).map(det);
+  }else if(kind==="proc"){
+    title="🔁 Vagas em Processo";
+    rows=V.filter(x=>["EM ENTREVISTA","EXAME","INTEGRAÇÃO"].includes(x.status)).map(det);
+  }else if(kind==="preench"){
+    title="✅ Vagas Preenchidas";
+    rows=V.filter(x=>x.status==="PREENCHIDA").map(x=>[x.numero_vaga,x.cargo,tipo(x),x.posto,x.area,x.empresa,x.preenchida_por||"—",rhFmt(x.data_fechamento),rhDias(x)]);
+  }else if(kind==="tempo"){
+    title="⏱️ Tempo de Fechamento (vagas preenchidas)";
+    rows=V.filter(x=>x.status==="PREENCHIDA"&&x.data_abertura&&x.data_fechamento)
+      .map(x=>({x,d:rhDias(x)})).sort((a,b)=>b.d-a.d)
+      .map(o=>[o.x.numero_vaga,o.x.cargo,tipo(o.x),o.x.posto,o.x.area,o.x.empresa,o.x.status,rhFmt(o.x.data_abertura),o.d]);
+  }
+  const hd=kind==="preench"?["Nº","Cargo","Tipo","Posto / Cliente","Área","Empresa","Preenchida por","Fechamento","Dias"]:headers;
+  _rdModal(title,hd,rows);
+}
 function rhDias(x){
   if(!x.data_abertura)return"—";
   const ini=new Date(x.data_abertura+"T00:00:00");
@@ -3789,8 +3815,10 @@ function rhDashRender(){
   const vagasAb=vagasAbArr.length;
   RDASH_CUR={vagasAb:vagasAbArr,entrev:entrev,desl:desl,res:res,trein:trein};
   const vagasAtras=vagas.filter(v=>{if(v.status==="PREENCHIDA"||v.status==="CANCELADA"||!v.data_abertura)return false;const d=(new Date()-new Date(v.data_abertura+"T00:00:00"))/86400000;return d>=15;}).length;
+  const vagasAbCont=vagasAbArr.filter(v=>v.tipo_cliente!=="RESERVA").length;
+  const vagasAbRes=vagasAbArr.filter(v=>v.tipo_cliente==="RESERVA").length;
   document.getElementById("rd-k-vagas").textContent=vagasAb;
-  document.getElementById("rd-k-vagass").innerHTML=vagasAtras?`<b style="color:#dc2626">${vagasAtras}</b> há +15 dias`:"em dia";
+  document.getElementById("rd-k-vagass").innerHTML=`<b style="color:#1e40af">Contrato: ${vagasAbCont}</b> · <b style="color:#92400e">Reserva: ${vagasAbRes}</b>${vagasAtras?` · <b style="color:#dc2626">⚠️${vagasAtras}</b>`:""}`;
   const pedidos=desl.filter(x=>x.tipo==="PEDIDO DE DEMISSÃO").length;
   document.getElementById("rd-k-desl").textContent=desl.length;
   document.getElementById("rd-k-desls").innerHTML=`<b>${pedidos}</b> pediram demissão`;

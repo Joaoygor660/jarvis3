@@ -68,7 +68,24 @@ module.exports = async function handler(req, res) {
   let resp;
   try {
     if (req.method === "GET") {
-      resp = await fetch(`${base}?select=*&order=criado_em.desc&limit=5000`, { headers });
+      // Pagina em blocos de 1000 (o PostgREST do Supabase limita a resposta a 1000 linhas),
+      // concatenando tudo — necessário porque a base de vagas do SAR tem >1000 registros.
+      const PAGE = 1000;
+      let all = [];
+      let offset = 0;
+      while (true) {
+        const r = await fetch(`${base}?select=*&order=criado_em.desc&limit=${PAGE}&offset=${offset}`, { headers });
+        if (!r.ok) { resp = r; break; }
+        const chunk = await r.json();
+        all = all.concat(chunk);
+        if (!Array.isArray(chunk) || chunk.length < PAGE) { resp = null; break; }
+        offset += PAGE;
+        if (offset > 20000) { resp = null; break; }
+      }
+      if (resp === null || resp === undefined) {
+        return res.status(200).json({ ok: true, rows: all });
+      }
+      // se resp foi setado, houve erro numa página -> cai no tratamento de erro abaixo
     } else if (req.method === "POST") {
       const row = pick(body);
       for (const k of cfg.required) {
