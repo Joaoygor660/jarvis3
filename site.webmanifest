@@ -1,0 +1,11 @@
+{
+  "name": "Dashboard Grupo ServCamp",
+  "short_name": "ServCamp",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "theme_color": "#0d1f35",
+  "background_color": "#0d1f35",
+  "display": "standalone"
+}
