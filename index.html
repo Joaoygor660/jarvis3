@@ -847,11 +847,27 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div><label class="rhf-l">Substituição de</label><input class="rhf-i" id="rhf-subst" type="text" placeholder="Quem saiu (se houver)"></div>
           <div><label class="rhf-l">Status</label><select class="rhf-i" id="rhf-status"><option>ABERTA</option><option>EM ENTREVISTA</option><option>EXAME</option><option>INTEGRAÇÃO</option><option>PREENCHIDA</option><option>CANCELADA</option></select></div>
         </div>
-        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px">
-          <div><label class="rhf-l">Critérios da Vaga</label><input class="rhf-i" id="rhf-criterios" type="text" placeholder="Ex: experiência com limpeza, disponibilidade fim de semana"></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Empresa</label><select class="rhf-i" id="rhf-empresa"><option value="">—</option><option>SERV CAMP TERCEIRIZAÇÃO</option><option>SERV CAMP FACILITES</option><option>SERV CAMP PJ</option></select></div>
+          <div><label class="rhf-l">Turno</label><select class="rhf-i" id="rhf-turno"><option value="">—</option><option>DIURNO</option><option>NOTURNO</option></select></div>
+          <div><label class="rhf-l">Sexo Exigido</label><select class="rhf-i" id="rhf-sexo"><option value="">—</option><option>MASC/FEM</option><option>MASCULINO</option><option>FEMININO</option></select></div>
+          <div><label class="rhf-l">Fase do Processo</label><input class="rhf-i" id="rhf-fase" type="text" list="dl-rh-fase" placeholder="Ex: SELEÇÃO"><datalist id="dl-rh-fase"><option>SELEÇÃO</option><option>APROVAÇÃO</option><option>REAVALIAÇÃO</option><option>CONCLUÍDO</option><option>CANCELADO</option></datalist></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Jornada</label><input class="rhf-i" id="rhf-jornada" type="text" placeholder="Ex: 12H 06:00 - 18:00 C/ 01H INT"></div>
+          <div><label class="rhf-l">Perfil sugerido</label><input class="rhf-i" id="rhf-perfil" type="text" placeholder="Perfil sugerido pelo solicitante"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Requisitos</label><input class="rhf-i" id="rhf-requisitos" type="text" placeholder="Requisitos da vaga"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px">
           <div><label class="rhf-l">Data de Abertura</label><input class="rhf-i" id="rhf-dtabertura" type="date"></div>
           <div><label class="rhf-l">Preenchida por</label><input class="rhf-i" id="rhf-preenchida" type="text" placeholder="Quem assumiu a vaga"></div>
           <div><label class="rhf-l">Data Fechamento</label><input class="rhf-i" id="rhf-dtfech" type="date"></div>
+          <div><label class="rhf-l">Aberta por (usuário)</label><input class="rhf-i" id="rhf-usuario" type="text" placeholder="Usuário que cadastrou"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Critérios da Vaga</label><input class="rhf-i" id="rhf-criterios" type="text" placeholder="Observações adicionais"></div>
         </div>
         <div style="display:flex;gap:10px">
           <button type="submit" class="rh-btn" id="rhBtnSalvar">💾 Salvar Vaga</button>
@@ -2948,7 +2964,7 @@ function rhRenderTbl(){
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma vaga registrada ainda. Use o formulário acima para abrir a primeira. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
-  ["Nº","Cargo","Escala","Posto","Área","Motivo","Substituição","Status","Abertura","Dias","Preenchida por",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  ["Nº","Cargo","Escala","Turno","Posto / Cliente","Área","Empresa","Motivo","Status","Fase","Abertura","Dias","Preenchida por",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
   h+='</tr></thead><tbody>';
   rows.forEach(x=>{
     const cor=RH_ST_COLORS[x.status]||"#64748b";
@@ -2958,11 +2974,13 @@ function rhRenderTbl(){
       <td style="padding:8px 10px;font-weight:800;color:#0d1f35">${x.numero_vaga||"—"}</td>
       <td style="padding:8px 10px">${x.cargo||"—"}</td>
       <td style="padding:8px 10px">${x.escala||"—"}</td>
+      <td style="padding:8px 10px">${x.turno||"—"}</td>
       <td style="padding:8px 10px">${x.posto||"—"}</td>
       <td style="padding:8px 10px">${x.area||"—"}</td>
+      <td style="padding:8px 10px;font-size:.68rem">${x.empresa||"—"}</td>
       <td style="padding:8px 10px">${x.motivo_abertura||"—"}</td>
-      <td style="padding:8px 10px">${x.substituicao_de||"—"}</td>
       <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cor}18;color:${cor};border:1px solid ${cor}40">${x.status||"—"}</span></td>
+      <td style="padding:8px 10px;font-size:.68rem">${x.fase||"—"}</td>
       <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_abertura)}</td>
       <td style="padding:8px 10px;font-weight:700">${dias}${alerta}</td>
       <td style="padding:8px 10px">${x.preenchida_por||"—"}</td>
@@ -2988,6 +3006,14 @@ function rhSalvar(e){
     preenchida_por:document.getElementById("rhf-preenchida").value.trim().toUpperCase(),
     data_abertura:document.getElementById("rhf-dtabertura").value||ymd(new Date()),
     data_fechamento:document.getElementById("rhf-dtfech").value||null,
+    empresa:document.getElementById("rhf-empresa").value,
+    turno:document.getElementById("rhf-turno").value,
+    sexo:document.getElementById("rhf-sexo").value,
+    fase:document.getElementById("rhf-fase").value.trim().toUpperCase(),
+    jornada:document.getElementById("rhf-jornada").value.trim(),
+    perfil:document.getElementById("rhf-perfil").value.trim(),
+    requisitos:document.getElementById("rhf-requisitos").value.trim(),
+    usuario_cadastro:document.getElementById("rhf-usuario").value.trim(),
     criado_por:sessionStorage.getItem("userNome")||null
   };
   if((body.status==="PREENCHIDA"||body.status==="CANCELADA")&&!body.data_fechamento)body.data_fechamento=ymd(new Date());
@@ -3031,6 +3057,14 @@ function rhEditar(id){
   document.getElementById("rhf-preenchida").value=x.preenchida_por||"";
   document.getElementById("rhf-dtabertura").value=x.data_abertura?String(x.data_abertura).slice(0,10):"";
   document.getElementById("rhf-dtfech").value=x.data_fechamento?String(x.data_fechamento).slice(0,10):"";
+  document.getElementById("rhf-empresa").value=x.empresa||"";
+  document.getElementById("rhf-turno").value=x.turno||"";
+  document.getElementById("rhf-sexo").value=x.sexo||"";
+  document.getElementById("rhf-fase").value=x.fase||"";
+  document.getElementById("rhf-jornada").value=x.jornada||"";
+  document.getElementById("rhf-perfil").value=x.perfil||"";
+  document.getElementById("rhf-requisitos").value=x.requisitos||"";
+  document.getElementById("rhf-usuario").value=x.usuario_cadastro||"";
   document.getElementById("rh-form-title").textContent="✏️ Editando Vaga "+(x.numero_vaga||"");
   document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
 }
