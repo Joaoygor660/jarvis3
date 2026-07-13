@@ -2957,12 +2957,15 @@ function rhLoad(){
 }
 function rhRender(){
   const v=RH_VAGAS;
-  const abertas=v.filter(x=>x.status==="ABERTA").length;
+  const abertasArr=v.filter(x=>x.status==="ABERTA");
+  const abertas=abertasArr.length;
+  const abCont=abertasArr.filter(x=>x.tipo_cliente!=="RESERVA").length;
+  const abRes=abertasArr.filter(x=>x.tipo_cliente==="RESERVA").length;
   const proc=v.filter(x=>["EM ENTREVISTA","EXAME","INTEGRAÇÃO"].includes(x.status)).length;
   const pre=v.filter(x=>x.status==="PREENCHIDA").length;
   const canc=v.filter(x=>x.status==="CANCELADA").length;
   document.getElementById("rh-abertas").textContent=abertas;
-  document.getElementById("rh-abertass").innerHTML=`<b>${canc}</b> canceladas no total`;
+  document.getElementById("rh-abertass").innerHTML=`<b style="color:#1e40af">Contrato: ${abCont}</b> · <b style="color:#92400e">Reserva: ${abRes}</b>`;
   document.getElementById("rh-proc").textContent=proc;
   document.getElementById("rh-preench").textContent=pre;
   document.getElementById("rh-preenchs").innerHTML=v.length?`<b>${(pre/v.length*100).toFixed(0)}%</b> das vagas`:"—";
