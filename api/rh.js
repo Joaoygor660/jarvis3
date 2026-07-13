@@ -68,7 +68,7 @@ module.exports = async function handler(req, res) {
   let resp;
   try {
     if (req.method === "GET") {
-      resp = await fetch(`${base}?select=*&order=criado_em.desc&limit=1000`, { headers });
+      resp = await fetch(`${base}?select=*&order=criado_em.desc&limit=5000`, { headers });
     } else if (req.method === "POST") {
       const row = pick(body);
       for (const k of cfg.required) {
