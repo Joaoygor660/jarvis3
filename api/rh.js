@@ -133,7 +133,7 @@ module.exports = async function handler(req, res) {
       let cargoLabel = novo.cargo || "";
       if (cargoLabel.toUpperCase().trim() === "ASG") cargoLabel = "Auxiliar de Serviços Gerais";
       const vaga = cargoLabel ? ` para a vaga de ${cargoLabel}` : "";
-      const texto = `Olá, ${nome}! 👋\n\nVocê agora faz parte do processo seletivo do *Grupo Serv Camp*${vaga}. Em breve entraremos em contato com os próximos passos.\n\nDeus abençoe, Boa sorte! 🍀`;
+      const texto = `Olá, ${nome}! 👋\n\nVocê agora faz parte do processo seletivo do *Grupo Serv Camp*${vaga}. Em breve, entraremos em contato com os próximos passos.\n\nDeus abençoe! Boa sorte! 🍀`;
       try {
         const wr = await fetch(`${url}/message/sendText/${inst}`, {
           method: "POST",
