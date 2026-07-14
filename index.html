@@ -2581,10 +2581,11 @@ function buildDataFromWorkbook(wb){
       };
       if(sit.includes("FALT")||sit.includes("AUSENCIA")||sit.includes("AUSÊNCIA"))
         faltas.push({...base,ABONO:r["DESCTPABONO"]||"—"});
+      const cargoVaga=r["CARGO_VAGA"]||r["DESC_CARGO"]||"—"; // cargo do POSTO coberto (não o do colaborador)
       if(tipo==="FT")
-        ftsArr.push({...base,MOTIVO:r["DESCIMPLA"]||"—"});
+        ftsArr.push({...base,CARGO:cargoVaga,MOTIVO:r["DESCIMPLA"]||"—"});
       if(tipo==="COBERTURA"||tipo==="DOBRA"||tipo==="CONVOCACAO"||tipo==="CONVOCAÇÃO")
-        cobArr.push({NOME:base.NOME,DATA:base.DATA,LOCAL:base.LOCAL,AREA:base.AREA,TURNO:base.TURNO,CARGO:base.CARGO,MOTIVO:r["DESCIMPLA"]||"—"});
+        cobArr.push({NOME:base.NOME,DATA:base.DATA,LOCAL:base.LOCAL,AREA:base.AREA,TURNO:base.TURNO,CARGO:cargoVaga,MOTIVO:r["DESCIMPLA"]||"—"});
     }
     data.faltas=faltas;data.fts=ftsArr;data.cobertura=cobArr;
   }else{

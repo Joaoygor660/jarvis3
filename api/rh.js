@@ -130,8 +130,10 @@ module.exports = async function handler(req, res) {
       let num = String(novo.telefone).replace(/\D/g, "");
       if (num && !num.startsWith("55")) num = "55" + num;
       const nome = (novo.candidato || "").split(" ")[0] || "candidato(a)";
-      const vaga = novo.cargo ? ` para a vaga de ${novo.cargo}` : "";
-      const texto = `Olá, ${nome}! 👋\n\nVocê agora faz parte do processo seletivo do *Grupo ServCamp*${vaga}. Em breve entraremos em contato com os próximos passos.\n\nBoa sorte! 🍀`;
+      let cargoLabel = novo.cargo || "";
+      if (cargoLabel.toUpperCase().trim() === "ASG") cargoLabel = "Auxiliar de Serviços Gerais";
+      const vaga = cargoLabel ? ` para a vaga de ${cargoLabel}` : "";
+      const texto = `Olá, ${nome}! 👋\n\nVocê agora faz parte do processo seletivo do *Grupo Serv Camp*${vaga}. Em breve entraremos em contato com os próximos passos.\n\nDeus abençoe, Boa sorte! 🍀`;
       try {
         const wr = await fetch(`${url}/message/sendText/${inst}`, {
           method: "POST",
