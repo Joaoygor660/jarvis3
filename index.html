@@ -474,6 +474,11 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-lbl">Diretoria</div>
     <div class="ni" onclick="navTo('rhdash',this)" style="position:relative"><span class="ni-ic">📈</span><span>Painel RH</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">EXEC</span></div>
   </div>
+  <div class="nav-sec" id="navSecCOM" style="display:none">
+    <div class="nav-lbl">Comercial</div>
+    <div class="ni" onclick="navTo('compro',this)" style="position:relative"><span class="ni-ic">💼</span><span>Propostas &amp; Cadência</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
+    <div class="ni" onclick="navTo('comdash',this)" style="position:relative"><span class="ni-ic">📊</span><span>Painel Comercial</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">EXEC</span></div>
+  </div>
   <div class="sb-foot upload-btn" id="btnNovoExcel">
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
     <input type="file" id="fu" accept=".xlsx,.xls" onchange="handleUp(event)">
@@ -1129,6 +1134,48 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       </div>
     </div>
   </div>
+  <div class="page" id="pg-compro">
+    <div class="sec-hdr"><span class="sec-hdr-ic">💼</span><div><div class="sec-hdr-t">Comercial — Propostas &amp; Cadência</div><div class="sec-hdr-sub">CRM do Grupo ServCamp: cadastro de propostas e follow-up automático (WhatsApp + E-mail)</div></div></div>
+    <div style="background:linear-gradient(135deg,#eef6ff,#f5f0ff);border:1px solid #dbe7fb;border-radius:12px;padding:12px 18px;margin-bottom:14px;font-size:.72rem;color:#334155">
+      <b style="color:#1e4d8c">🤖 Cadência automática:</b> ao registrar o envio da proposta → <b>Msg 1 no WhatsApp</b> (imediata) · <b>Msg 2</b> e-mail +2 dias · <b>Msg 3</b> +5d · <b>Msg 4</b> +10d · <b>Msg 5</b> +20d (pausa a negociação). Para <b>interromper</b>: clique em ✅ quando o cliente responder, ou feche/perca a proposta.
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 24px;margin-bottom:14px">
+      <div id="cp-form-title" style="font-size:.85rem;font-weight:800;color:#0d1f35;margin-bottom:14px">➕ Nova Proposta</div>
+      <form onsubmit="return comSalvar(event)" id="cpForm">
+        <input type="hidden" id="cpf-id">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Tipo *</label><select class="rhf-i" id="cpf-tipo"><option>EMPRESA</option><option>CONDOMINIO</option></select></div>
+          <div style="grid-column:span 2"><label class="rhf-l">Nome da Empresa / Condomínio *</label><input class="rhf-i" id="cpf-nome" type="text" placeholder="Ex: COND VILLA FLORA" required></div>
+          <div><label class="rhf-l">Contato (pessoa)</label><input class="rhf-i" id="cpf-contato" type="text" placeholder="Ex: Maria Silva"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Telefone (WhatsApp)</label><input class="rhf-i" id="cpf-tel" type="tel" placeholder="Ex: (19) 99999-9999"></div>
+          <div><label class="rhf-l">E-mail</label><input class="rhf-i" id="cpf-email" type="email" placeholder="contato@cliente.com.br"></div>
+          <div><label class="rhf-l">Cidade</label><input class="rhf-i" id="cpf-cidade" type="text" placeholder="Ex: Campinas"></div>
+          <div><label class="rhf-l">Serviço</label><input class="rhf-i" id="cpf-servico" type="text" list="dl-com-serv" placeholder="Ex: Portaria + Limpeza"><datalist id="dl-com-serv"><option>PORTARIA</option><option>LIMPEZA</option><option>PORTARIA + LIMPEZA</option><option>ZELADORIA</option><option>JARDINAGEM</option><option>FACILITIES</option></datalist></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Origem do Lead</label><input class="rhf-i" id="cpf-origem" type="text" list="dl-com-origem" placeholder="Ex: Indicação"><datalist id="dl-com-origem"><option>INDICAÇÃO</option><option>SITE</option><option>INSTAGRAM</option><option>GOOGLE</option><option>LINKEDIN</option><option>TELEFONE</option><option>VISITA</option><option>SÍNDICO PROFISSIONAL</option><option>OUTRO</option></datalist></div>
+          <div><label class="rhf-l">Data do Envio da Proposta</label><input class="rhf-i" id="cpf-dtenvio" type="date"></div>
+          <div><label class="rhf-l">Valor da Proposta (R$)</label><input class="rhf-i" id="cpf-valor" type="number" step="0.01" min="0" placeholder="Ex: 15800.00"></div>
+          <div><label class="rhf-l">Status</label><select class="rhf-i" id="cpf-status"><option>PROSPECÇÃO</option><option>PROPOSTA ENVIADA</option><option>EM NEGOCIAÇÃO</option><option>FECHADO</option><option>PERDIDO</option><option>PAUSADO</option></select></div>
+        </div>
+        <div style="margin-bottom:14px"><label class="rhf-l">Observações</label><input class="rhf-i" id="cpf-obs" type="text" placeholder="O que foi conversado, necessidades do cliente..."></div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button type="submit" class="rh-btn" id="cpBtnSalvar">💾 Salvar Proposta</button>
+          <button type="button" class="rh-btn rh-btn-sec" onclick="comLimpar()">✖ Limpar</button>
+          <span id="cp-form-msg" style="font-size:.74rem;font-weight:700"></span>
+        </div>
+      </form>
+    </div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Propostas Registradas <span id="cp-tbl-cnt" style="font-weight:600;color:#94a3b8;font-size:.72rem"></span></span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, cidade, serviço..." id="s-compro" oninput="comRenderTbl()"></div></div>
+      <div id="cp-tbl-filtros" style="display:flex;flex-wrap:wrap;gap:6px;padding:0 2px 10px"></div>
+      <div id="cp-tbl" style="overflow-x:auto"></div></div>
+  </div>
+  <div class="page" id="pg-comdash">
+    <div class="sec-hdr"><span class="sec-hdr-ic">📊</span><div><div class="sec-hdr-t">Painel Comercial — Diretoria</div><div class="sec-hdr-sub">Visão executiva do mês: propostas, conversão, pipeline e metas</div></div></div>
+    <div id="cd-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando painel comercial…</div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1265,6 +1312,10 @@ function applyUserUI(){
   // Quando liberar para a diretoria, trocar para: isAdmin || isRh || cargo.indexOf("DIRET")>=0
   const rhDashSec=document.getElementById("navSecRHDash");
   if(rhDashSec)rhDashSec.style.display=(isAdmin||isRh)?"":"none";
+  // Módulo Comercial: por enquanto SÓ admin (liberar depois p/ comercial+diretoria:
+  // isAdmin || cargo==="Comercial" || cargo.indexOf("DIRET")>=0)
+  const comSec=document.getElementById("navSecCOM");
+  if(comSec)comSec.style.display=isAdmin?"":"none";
 }
 function showWelcome(){
   const nome=sessionStorage.getItem("userNome")||"";
@@ -1431,7 +1482,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1453,6 +1504,8 @@ function navTo(p,btn){
   else if(p==="rhres"){rhResLoad();}
   else if(p==="rhtrein"){rhTreLoad();}
   else if(p==="rhdash"){rhDashLoad();}
+  else if(p==="compro"){comLoad();}
+  else if(p==="comdash"){comDashLoad();}
   else{updVGCharts();}
 }
 
@@ -3954,6 +4007,306 @@ function rhDashVagas(){
       {label:"Preenchidas",data:meses.map(m=>mPr[m]||0),backgroundColor:"#16a34a"}
     ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:8},color:"#9aabc2",maxRotation:60}},y:{grid:{color:"#edf0f5"},ticks:{font:{size:9},color:"#9aabc2",precision:0},beginAtZero:true}}}});
   }
+}
+/* ═══════════════ MÓDULO COMERCIAL (CRM) ═══════════════ */
+let COM_P=[],COM_LOG=[],COM_METAS=[],COM_TBL_STATUS="TODAS";
+const COM_ST_COLORS={"PROSPECÇÃO":"#7c3aed","PROPOSTA ENVIADA":"#2e8fef","EM NEGOCIAÇÃO":"#f97316","FECHADO":"#16a34a","PERDIDO":"#dc2626","PAUSADO":"#6b7280"};
+const COM_ETAPA_LBL={1:"Msg 1 · WhatsApp (envio da proposta)",2:"Msg 2 · E-mail (+2 dias)",3:"Msg 3 · E-mail (+5 dias)",4:"Msg 4 · E-mail (+10 dias)",5:"Msg 5 · E-mail (+20 dias — pausa)"};
+function fmtBRL(v){return(v===null||v===undefined||v==="")?"—":Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+function comDias(p){if(!p.data_envio_proposta)return"—";const ini=new Date(String(p.data_envio_proposta).slice(0,10)+"T00:00:00");const fim=p.fechado_em?new Date(String(p.fechado_em).slice(0,10)+"T00:00:00"):new Date();return Math.max(0,Math.round((fim-ini)/86400000));}
+function comFetchAll(){
+  return Promise.all([
+    fetch("/api/comercial?t=propostas").then(r=>r.json()).then(j=>{COM_P=(j&&j.rows)||[];}),
+    fetch("/api/comercial?t=cadencia").then(r=>r.json()).then(j=>{COM_LOG=(j&&j.rows)||[];}),
+    fetch("/api/comercial?t=metas").then(r=>r.json()).then(j=>{COM_METAS=(j&&j.rows)||[];})
+  ]);
+}
+function comLoad(){
+  const tbl=document.getElementById("cp-tbl");
+  if(tbl&&!COM_P.length)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Carregando propostas…</div>';
+  comFetchAll().then(comRenderTbl).catch(err=>{console.error("Erro comercial:",err);if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar. Verifique a conexão.</div>';});
+}
+function comSetStatusFiltro(s){COM_TBL_STATUS=s;comRenderTbl();}
+function comRenderFiltros(){
+  const box=document.getElementById("cp-tbl-filtros");if(!box)return;
+  const cont={};COM_P.forEach(x=>{const s=x.status||"—";cont[s]=(cont[s]||0)+1;});
+  const ordem=["PROSPECÇÃO","PROPOSTA ENVIADA","EM NEGOCIAÇÃO","FECHADO","PERDIDO","PAUSADO"];
+  const chips=[["TODAS","Todas","#0d1f35",COM_P.length]];
+  ordem.forEach(s=>{if(cont[s])chips.push([s,s,COM_ST_COLORS[s]||"#64748b",cont[s]]);});
+  box.innerHTML=chips.map(([val,lbl,cor,n])=>{
+    const on=COM_TBL_STATUS===val;
+    return `<button onclick="comSetStatusFiltro('${val}')" style="cursor:pointer;font-size:.68rem;font-weight:700;padding:5px 11px;border-radius:14px;border:1px solid ${cor}${on?"":"40"};background:${on?cor:cor+"12"};color:${on?"#fff":cor};transition:all .12s">${lbl} <span style="opacity:.8;font-weight:600">${n}</span></button>`;
+  }).join("");
+}
+function comCadCell(p){
+  if(p.respondido_em)return'<span style="color:#16a34a;font-weight:700">✅ Respondeu</span>';
+  if(p.status==="FECHADO")return'<span style="color:#16a34a;font-weight:700">🤝 Fechado</span>';
+  if(p.status==="PERDIDO")return'<span style="color:#94a3b8">—</span>';
+  if(p.cadencia_ativa===false)return'<span style="color:#94a3b8">⏸ desativada</span>';
+  if(!p.data_envio_proposta)return'<span style="color:#94a3b8">aguarda envio</span>';
+  const e=p.cadencia_etapa||0;
+  const dots=[1,2,3,4,5].map(i=>`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px;background:${i<=e?"#2e8fef":"#dbe2ec"}" title="${COM_ETAPA_LBL[i]}"></span>`).join("");
+  return `<span style="white-space:nowrap">${dots} <b style="font-size:.66rem;color:#1e4d8c">${e}/5</b>${p.status==="PAUSADO"?' <span style="color:#94a3b8">⏸</span>':''}</span>`;
+}
+function comRenderTbl(){
+  const el=document.getElementById("cp-tbl");if(!el)return;
+  comRenderFiltros();
+  const q=(document.getElementById("s-compro")?.value||"").toUpperCase();
+  let rows=COM_P;
+  if(COM_TBL_STATUS!=="TODAS")rows=rows.filter(x=>(x.status||"—")===COM_TBL_STATUS);
+  if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
+  const cnt=document.getElementById("cp-tbl-cnt");
+  if(cnt)cnt.textContent=COM_P.length?`— ${rows.length} de ${COM_P.length}`:"";
+  if(!rows.length){
+    const vazio=(!COM_P.length)?'Nenhuma proposta ainda. Cadastre a primeira acima e deixe a cadência trabalhar. 🚀':'Nenhuma proposta com este filtro.';
+    el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">'+vazio+'</div>';return;}
+  let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
+  ["Nome","Contato","Cidade","Serviço","Origem","Envio","Dias","Visitas","Valor","Status","Cadência",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  h+='</tr></thead><tbody>';
+  rows.forEach(x=>{
+    const cor=COM_ST_COLORS[x.status]||"#64748b";
+    const tipoTag=x.tipo_cliente==="CONDOMINIO"?'<span style="background:#ede9fe;color:#7c3aed;font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:8px;margin-left:6px">COND</span>':'<span style="background:#dbeafe;color:#1e4d8c;font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:8px;margin-left:6px">EMP</span>';
+    h+=`<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px;font-weight:800;color:#0d1f35;white-space:nowrap">${x.nome||"—"}${tipoTag}</td>
+      <td style="padding:8px 10px">${x.contato||"—"}</td>
+      <td style="padding:8px 10px">${x.cidade||"—"}</td>
+      <td style="padding:8px 10px;font-size:.68rem">${x.servico||"—"}</td>
+      <td style="padding:8px 10px;font-size:.68rem">${x.origem_lead||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_envio_proposta)}</td>
+      <td style="padding:8px 10px;font-weight:700">${comDias(x)}</td>
+      <td style="padding:8px 10px;text-align:center">${x.visitas||0}</td>
+      <td style="padding:8px 10px;font-weight:700;white-space:nowrap">${fmtBRL(x.valor)}</td>
+      <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cor}18;color:${cor};border:1px solid ${cor}40">${x.status||"—"}</span></td>
+      <td style="padding:8px 10px">${comCadCell(x)}</td>
+      <td style="padding:8px 10px;white-space:nowrap">
+        <span class="rh-act" onclick="comVisita(${x.id})" title="Registrar visita">🏠</span>
+        <span class="rh-act" onclick="comRespondeu(${x.id})" title="Cliente respondeu (para a cadência)">✅</span>
+        <span class="rh-act" onclick="comFechou(${x.id})" title="Fechou contrato">🤝</span>
+        <span class="rh-act" onclick="comPerdido(${x.id})" title="Perdido">❌</span>
+        <span class="rh-act" onclick="comTimeline(${x.id})" title="Histórico da cadência">📜</span>
+        <span class="rh-act" onclick="comEditar(${x.id})" title="Editar">✏️</span>
+        <span class="rh-act" onclick="comExcluir(${x.id})" title="Excluir">🗑️</span>
+      </td>
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+function comSalvar(e){
+  e.preventDefault();
+  const id=document.getElementById("cpf-id").value;
+  const body={
+    tipo_cliente:document.getElementById("cpf-tipo").value,
+    nome:document.getElementById("cpf-nome").value.trim().toUpperCase(),
+    contato:document.getElementById("cpf-contato").value.trim(),
+    telefone:document.getElementById("cpf-tel").value.trim(),
+    email:document.getElementById("cpf-email").value.trim(),
+    cidade:document.getElementById("cpf-cidade").value.trim().toUpperCase(),
+    servico:document.getElementById("cpf-servico").value.trim().toUpperCase(),
+    origem_lead:document.getElementById("cpf-origem").value.trim().toUpperCase(),
+    data_envio_proposta:document.getElementById("cpf-dtenvio").value||null,
+    valor:document.getElementById("cpf-valor").value||null,
+    status:document.getElementById("cpf-status").value,
+    observacao:document.getElementById("cpf-obs").value.trim(),
+    criado_por:sessionStorage.getItem("userNome")||null
+  };
+  if(body.data_envio_proposta&&body.status==="PROSPECÇÃO")body.status="PROPOSTA ENVIADA";
+  const msg=document.getElementById("cp-form-msg");
+  const btn=document.getElementById("cpBtnSalvar");
+  btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
+  const method=id?"PATCH":"POST";
+  if(id)body.id=id;
+  fetch("/api/comercial?t=propostas",{method:method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(!ok)throw new Error((j&&j.error)||"erro desconhecido");
+      let txt,cor="#16a34a",hold=3000;
+      const wa=j&&j.whatsapp;
+      if(wa==="enviado"){txt="✔ Salva! 📲 Msg 1 (WhatsApp) enviada ao cliente.";}
+      else if(wa==="falhou"){txt="✔ Salva — mas o WhatsApp FALHOU. Verifique a Evolution.";cor="#d97706";hold=6000;}
+      else if(id){txt="✔ Proposta atualizada!";}
+      else if(!body.data_envio_proposta){txt="✔ Salva! Cadência inicia quando registrar a data de envio da proposta.";cor="#64748b";hold=5000;}
+      else if(!body.telefone){txt="✔ Salva! Sem telefone — Msg 1 (WhatsApp) não enviada; e-mails seguem normalmente.";cor="#64748b";hold=5000;}
+      else{txt="✔ Proposta salva!";}
+      msg.style.color=cor;msg.textContent=txt;
+      comLimpar(true);
+      comFetchAll().then(comRenderTbl);
+      setTimeout(()=>{msg.textContent="";},hold);
+    })
+    .catch(err=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar: "+err.message;})
+    .finally(()=>{btn.disabled=false;});
+  return false;
+}
+function comLimpar(keepMsg){
+  document.getElementById("cpForm").reset();
+  document.getElementById("cpf-id").value="";
+  document.getElementById("cp-form-title").textContent="➕ Nova Proposta";
+  if(keepMsg!==true)document.getElementById("cp-form-msg").textContent="";
+}
+function comEditar(id){
+  const x=COM_P.find(p=>p.id===id);if(!x)return;
+  document.getElementById("cpf-id").value=x.id;
+  document.getElementById("cpf-tipo").value=x.tipo_cliente||"EMPRESA";
+  document.getElementById("cpf-nome").value=x.nome||"";
+  document.getElementById("cpf-contato").value=x.contato||"";
+  document.getElementById("cpf-tel").value=x.telefone||"";
+  document.getElementById("cpf-email").value=x.email||"";
+  document.getElementById("cpf-cidade").value=x.cidade||"";
+  document.getElementById("cpf-servico").value=x.servico||"";
+  document.getElementById("cpf-origem").value=x.origem_lead||"";
+  document.getElementById("cpf-dtenvio").value=x.data_envio_proposta?String(x.data_envio_proposta).slice(0,10):"";
+  document.getElementById("cpf-valor").value=x.valor||"";
+  document.getElementById("cpf-status").value=x.status||"PROSPECÇÃO";
+  document.getElementById("cpf-obs").value=x.observacao||"";
+  document.getElementById("cp-form-title").textContent="✏️ Editando: "+(x.nome||"");
+  document.getElementById("pg-compro").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function comExcluir(id){
+  const x=COM_P.find(p=>p.id===id);
+  if(!confirm("Excluir a proposta de "+((x&&x.nome)||"este cliente")+"? O histórico de cadência também será apagado."))return;
+  fetch("/api/comercial?t=propostas&id="+encodeURIComponent(id),{method:"DELETE"}).then(r=>{
+    if(r.ok){COM_P=COM_P.filter(p=>p.id!==id);comRenderTbl();}
+    else alert("Erro ao excluir.");
+  });
+}
+function _comPatch(id,patch,depois){
+  patch.id=id;
+  fetch("/api/comercial?t=propostas",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(patch)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok})=>{if(!ok)throw new Error();comFetchAll().then(()=>{comRenderTbl();if(depois)depois();});})
+    .catch(()=>alert("Erro ao atualizar a proposta."));
+}
+function comVisita(id){
+  const x=COM_P.find(p=>p.id===id);if(!x)return;
+  if(!confirm("Registrar 1 visita realizada em "+(x.nome||"")+" hoje?"))return;
+  _comPatch(id,{visitas:(x.visitas||0)+1,ultima_visita:ymd(new Date())});
+}
+function comRespondeu(id){
+  const x=COM_P.find(p=>p.id===id);if(!x)return;
+  if(!confirm("Marcar que "+(x.nome||"o cliente")+" RESPONDEU? A cadência automática será interrompida."))return;
+  const patch={respondido_em:new Date().toISOString()};
+  if(x.status==="PROPOSTA ENVIADA")patch.status="EM NEGOCIAÇÃO";
+  _comPatch(id,patch);
+}
+function comFechou(id){
+  const x=COM_P.find(p=>p.id===id);if(!x)return;
+  if(!confirm("🎉 Confirmar FECHAMENTO do contrato com "+(x.nome||"")+"?"))return;
+  _comPatch(id,{status:"FECHADO",fechado_em:ymd(new Date())});
+}
+function comPerdido(id){
+  const x=COM_P.find(p=>p.id===id);if(!x)return;
+  const motivo=prompt("Motivo da perda de "+(x.nome||"")+":");
+  if(motivo===null)return;
+  _comPatch(id,{status:"PERDIDO",motivo_perda:(motivo||"").toUpperCase()});
+}
+function comTimeline(id){
+  const x=COM_P.find(p=>p.id===id);if(!x)return;
+  const logs=COM_LOG.filter(l=>l.proposta_id===id).sort((a,b)=>new Date(a.enviado_em)-new Date(b.enviado_em));
+  const rows=logs.map(l=>[new Date(l.enviado_em).toLocaleString("pt-BR"),COM_ETAPA_LBL[l.etapa]||("Etapa "+l.etapa),l.canal,l.destinatario||"—",l.status==="enviado"?"✅ enviado":"⚠️ falhou",l.detalhe||"—"]);
+  _rdModal("📜 Cadência — "+(x.nome||""),["Data/Hora","Mensagem","Canal","Destinatário","Status","Detalhe"],rows);
+}
+/* ── Painel Comercial (Diretoria) ── */
+function comDashLoad(){
+  const el=document.getElementById("cd-content");
+  if(el&&!COM_P.length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando painel comercial…</div>';
+  comFetchAll().then(comDashRender).catch(()=>{if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.85rem">Erro ao carregar.</div>';});
+}
+function _cdBarRows(pairs,corFn){
+  if(!pairs.length)return'<div style="color:#94a3b8">Sem dados ainda.</div>';
+  const max=pairs[0][1];
+  return pairs.map(([k,v],i)=>`<div style="margin-bottom:7px"><div class="rd-bar-row"><span style="font-weight:700;color:#334155">${k}</span><b>${v}</b></div><div style="background:#eef2f7;border-radius:6px;height:7px"><div style="width:${Math.max(4,v/max*100)}%;height:7px;border-radius:6px;background:${corFn?corFn(k,i):"#1e4d8c"}"></div></div></div>`).join("");
+}
+function comDashRender(){
+  const el=document.getElementById("cd-content");if(!el)return;
+  const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
+  const P=COM_P;
+  const envMes=P.filter(p=>noMes(p.data_envio_proposta));
+  const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em));
+  const visMes=P.filter(p=>noMes(p.ultima_visita));
+  const emp=envMes.filter(p=>p.tipo_cliente!=="CONDOMINIO").length,cond=envMes.filter(p=>p.tipo_cliente==="CONDOMINIO").length;
+  const taxa=envMes.length?Math.round(fecMes.length/envMes.length*100):null;
+  const fechTodas=P.filter(p=>p.status==="FECHADO"&&p.data_envio_proposta&&p.fechado_em);
+  const tempoMedio=fechTodas.length?(fechTodas.reduce((s,p)=>s+comDias(p),0)/fechTodas.length).toFixed(1):"—";
+  const emNeg=P.filter(p=>["PROPOSTA ENVIADA","EM NEGOCIAÇÃO"].includes(p.status));
+  const pipeR$=emNeg.reduce((s,p)=>s+(Number(p.valor)||0),0);
+  const fecMesR$=fecMes.reduce((s,p)=>s+(Number(p.valor)||0),0);
+  const ticket=fechTodas.length?fechTodas.reduce((s,p)=>s+(Number(p.valor)||0),0)/fechTodas.length:null;
+  const mesKey=ymd(mIni);
+  const meta=COM_METAS.find(m=>String(m.mes).slice(0,10)===mesKey)||{};
+  const ordem=["PROSPECÇÃO","PROPOSTA ENVIADA","EM NEGOCIAÇÃO","FECHADO","PERDIDO","PAUSADO"];
+  const funil=ordem.map(s=>[s,P.filter(p=>p.status===s).length]).filter(([,v])=>v>0);
+  const maxF=Math.max(1,...funil.map(([,v])=>v));
+  const origem=(function(){const m={};envMes.length?envMes.forEach(p=>{m[p.origem_lead||"NÃO INFORMADO"]=(m[p.origem_lead||"NÃO INFORMADO"]||0)+1}):P.forEach(p=>{m[p.origem_lead||"NÃO INFORMADO"]=(m[p.origem_lead||"NÃO INFORMADO"]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
+  const cidades=(function(){const m={};P.forEach(p=>{if(p.cidade)m[p.cidade]=(m[p.cidade]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
+  const parados=P.filter(p=>["PROSPECÇÃO","PROPOSTA ENVIADA","EM NEGOCIAÇÃO"].includes(p.status)).map(p=>{const ref=p.atualizado_em||p.criado_em;const d=Math.floor((new Date()-new Date(ref))/86400000);return{p,d};}).filter(o=>o.d>=7).sort((a,b)=>b.d-a.d);
+  const mesNome=hoje.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  const kpi=(ic,lbl,val,sub,cor)=>`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:16px 20px;border-top:3px solid ${cor}"><div style="font-size:1.1rem">${ic}</div><div style="font-size:.62rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin:6px 0 2px">${lbl}</div><div style="font-size:1.55rem;font-weight:900;color:#0d1f35">${val}</div><div style="font-size:.66rem;color:#94a3b8">${sub}</div></div>`;
+  const metaBar=(lbl,real,alvo,fmt)=>{
+    const pct=alvo?Math.min(100,Math.round(real/alvo*100)):0;
+    const c=pct>=100?"#16a34a":pct>=60?"#2e8fef":"#f97316";
+    return `<div style="margin-bottom:12px"><div class="rd-bar-row"><span style="font-weight:700;color:#334155">${lbl}</span><b>${fmt(real)} / ${alvo?fmt(alvo):"sem meta"}</b></div><div style="background:#eef2f7;border-radius:6px;height:9px"><div style="width:${alvo?Math.max(3,pct):0}%;height:9px;border-radius:6px;background:${c};transition:width .4s"></div></div>${alvo?`<div style="font-size:.62rem;color:${c};font-weight:800;margin-top:2px">${pct}% da meta</div>`:""}</div>`;
+  };
+  let h='';
+  h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px">`;
+  h+=kpi("📨","Propostas no mês",envMes.length,`${emp} empresas · ${cond} condomínios`,"#2e8fef");
+  h+=kpi("🏠","Visitas no mês",visMes.length,"clientes visitados","#7c3aed");
+  h+=kpi("🎯","Taxa de conversão",taxa===null?"—":taxa+"%",`${fecMes.length} fechadas no mês`,"#16a34a");
+  h+=kpi("⏱️","Tempo médio p/ fechar",tempoMedio,"dias (proposta → contrato)","#f97316");
+  h+=kpi("🤝","Fechados no mês",fecMes.length,mesNome,"#16a34a");
+  h+=`</div>`;
+  h+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">`;
+  h+=kpi("💰","Pipeline em negociação",fmtBRL(pipeR$),`${emNeg.length} propostas ativas`,"#1e4d8c");
+  h+=kpi("🏆","Fechado no mês (R$)",fmtBRL(fecMesR$),mesNome,"#16a34a");
+  h+=kpi("📈","Ticket médio",ticket===null?"—":fmtBRL(ticket),"contratos fechados (geral)","#7c3aed");
+  h+=`</div>`;
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔻 Funil de Vendas (geral)</div><div style="font-size:.76rem">${funil.length?funil.map(([s,v])=>`<div style="margin-bottom:7px"><div class="rd-bar-row"><span style="font-weight:700;color:${COM_ST_COLORS[s]}">${s}</span><b>${v}</b></div><div style="background:#eef2f7;border-radius:6px;height:9px"><div style="width:${Math.max(4,v/maxF*100)}%;height:9px;border-radius:6px;background:${COM_ST_COLORS[s]}"></div></div></div>`).join(""):'<div style="color:#94a3b8">Sem propostas ainda.</div>'}</div></div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧲 Origem dos Leads</div><div style="font-size:.76rem">${_cdBarRows(origem,()=>"#7c3aed")}</div></div>`;
+  h+=`</div>`;
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🗺️ Propostas por Cidade</div><div style="font-size:.76rem">${_cdBarRows(cidades,()=>"#0d9488")}</div></div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">⚠️ Paradas há 7+ dias (sem movimento)</div><div style="font-size:.74rem">${parados.length?parados.slice(0,8).map(o=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9"><span style="font-weight:700;color:#334155">${o.p.nome}</span><span style="color:#dc2626;font-weight:800">${o.d} dias</span></div>`).join(""):'<div style="color:#16a34a;font-weight:700">✅ Nenhuma proposta parada. Tudo em movimento!</div>'}</div></div>`;
+  h+=`</div>`;
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🎯 Metas de ${mesNome}</div>
+    ${metaBar("Propostas enviadas",envMes.length,meta.meta_propostas,v=>v)}
+    ${metaBar("Contratos fechados",fecMes.length,meta.meta_fechamentos,v=>v)}
+    ${metaBar("Valor fechado",fecMesR$,meta.meta_valor?Number(meta.meta_valor):null,fmtBRL)}
+    <div style="display:flex;gap:8px;margin-top:14px;align-items:end">
+      <div style="flex:1"><label class="rhf-l">Meta propostas</label><input class="rhf-i" id="cm-mp" type="number" min="0" value="${meta.meta_propostas||""}"></div>
+      <div style="flex:1"><label class="rhf-l">Meta fechamentos</label><input class="rhf-i" id="cm-mf" type="number" min="0" value="${meta.meta_fechamentos||""}"></div>
+      <div style="flex:1"><label class="rhf-l">Meta valor (R$)</label><input class="rhf-i" id="cm-mv" type="number" step="0.01" min="0" value="${meta.meta_valor||""}"></div>
+      <button class="rh-btn" style="padding:9px 16px" onclick="comSalvarMeta('${mesKey}')">💾</button>
+    </div><div id="cm-msg" style="font-size:.7rem;font-weight:700;margin-top:6px"></div></div>`;
+  h+=`<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);border-radius:14px;padding:18px 22px;color:#fff"><div style="font-size:.8rem;font-weight:800;margin-bottom:10px">🤖 Resumo Executivo por IA</div>
+    <div style="font-size:.7rem;color:#c7d6ec;margin-bottom:12px">O JARVIS analisa o mês comercial e gera um resumo com destaques, riscos e recomendações.</div>
+    <button class="rh-btn" style="background:#fff;color:#1e4d8c" onclick="comResumoIA()" id="cd-ia-btn">✨ Gerar resumo do mês</button>
+    <div id="cd-ia-out" style="margin-top:12px;font-size:.76rem;line-height:1.55;white-space:pre-wrap"></div></div>`;
+  h+=`</div>`;
+  el.innerHTML=h;
+}
+function comSalvarMeta(mesKey){
+  const body={mes:mesKey,meta_propostas:document.getElementById("cm-mp").value||null,meta_fechamentos:document.getElementById("cm-mf").value||null,meta_valor:document.getElementById("cm-mv").value||null};
+  const m=document.getElementById("cm-msg");m.style.color="#64748b";m.textContent="Salvando meta…";
+  fetch("/api/comercial?t=metas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{if(!ok)throw new Error((j&&j.error)||"");m.style.color="#16a34a";m.textContent="✔ Meta salva!";comFetchAll().then(comDashRender);})
+    .catch(()=>{m.style.color="#dc2626";m.textContent="Erro ao salvar a meta.";});
+}
+function comResumoIA(){
+  const btn=document.getElementById("cd-ia-btn"),out=document.getElementById("cd-ia-out");
+  btn.disabled=true;btn.textContent="🧠 Analisando…";out.textContent="";
+  const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
+  const envMes=COM_P.filter(p=>noMes(p.data_envio_proposta));
+  const resumoDados=COM_P.map(p=>`${p.nome} (${p.tipo_cliente}, ${p.cidade||"?"}): ${p.servico||"?"} | ${fmtBRL(p.valor)} | status ${p.status} | origem ${p.origem_lead||"?"} | enviada ${p.data_envio_proposta||"não"} | cadência etapa ${p.cadencia_etapa||0}/5${p.respondido_em?" | RESPONDEU":""}${p.motivo_perda?" | perda: "+p.motivo_perda:""}`).join("\n");
+  const ctx=`MÓDULO COMERCIAL — ${hoje.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}\nPropostas enviadas no mês: ${envMes.length}\nTotal de propostas na base: ${COM_P.length}\n\nLISTA DE PROPOSTAS:\n${resumoDados}`;
+  fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:"Você é o analista comercial do Grupo ServCamp. Gere um RESUMO EXECUTIVO do mês comercial em até 10 linhas: 1) panorama geral (números-chave), 2) destaques positivos, 3) riscos/atenções (propostas paradas, perdas e motivos), 4) recomendações práticas para a diretoria. Seja direto, use os dados fornecidos.",context:ctx})})
+    .then(r=>r.json())
+    .then(j=>{out.textContent=j.answer||j.error||"Sem resposta.";})
+    .catch(()=>{out.textContent="Erro ao gerar o resumo. Tente novamente.";})
+    .finally(()=>{btn.disabled=false;btn.textContent="✨ Gerar resumo do mês";});
 }
 function _rdModal(title,headers,rows){
   const ex=document.getElementById("rdModal");if(ex)ex.remove();
