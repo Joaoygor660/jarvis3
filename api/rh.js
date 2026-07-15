@@ -123,7 +123,8 @@ module.exports = async function handler(req, res) {
   let whatsapp = null;
   if (req.method === "POST" && tKey === "entrevistas" && process.env.EVOLUTION_APIKEY) {
     const novo = Array.isArray(data) ? data[0] : null;
-    if (novo && novo.telefone) {
+    // Só envia para candidato AINDA no processo. Reprovado/Contratado/Desistiu/etc. NÃO recebe.
+    if (novo && novo.telefone && novo.situacao === "EM PROCESSO") {
       const url = process.env.EVOLUTION_URL || "https://evolution-api-cizp.srv1815873.hstgr.cloud";
       const inst = process.env.EVOLUTION_INSTANCE || "servcamp";
       // normaliza telefone -> 55 + DDD + número
