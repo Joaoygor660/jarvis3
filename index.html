@@ -885,7 +885,9 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         </div>
       </form>
     </div>
-    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Vagas Registradas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-rhvagas" oninput="rhRenderTbl()"></div></div><div id="rh-tbl" style="overflow-x:auto"></div></div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Vagas Registradas <span id="rh-tbl-cnt" style="font-weight:600;color:#94a3b8;font-size:.72rem"></span></span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-rhvagas" oninput="rhRenderTbl()"></div></div>
+      <div id="rh-tbl-filtros" style="display:flex;flex-wrap:wrap;gap:6px;padding:0 2px 10px"></div>
+      <div id="rh-tbl" style="overflow-x:auto"></div></div>
   </div>
   <div class="page" id="pg-rhentrev">
     <div class="sec-hdr"><span class="sec-hdr-ic">🗣️</span><div><div class="sec-hdr-t">RH — Entrevistas &amp; Funil</div><div class="sec-hdr-sub">Candidatos, resultado das entrevistas e acompanhamento até a contratação</div></div></div>
@@ -3020,12 +3022,31 @@ function rhDias(x){
   return Math.max(0,Math.round((fim-ini)/86400000));
 }
 function rhFmt(d){return d?String(d).slice(0,10).split("-").reverse().join("/"):"—";}
+let RH_TBL_STATUS="TODAS";
+function rhSetStatusFiltro(s){RH_TBL_STATUS=s;rhRenderTbl();}
+function rhRenderFiltros(){
+  const box=document.getElementById("rh-tbl-filtros");if(!box)return;
+  const cont={};RH_VAGAS.forEach(x=>{const s=x.status||"—";cont[s]=(cont[s]||0)+1;});
+  const ordem=["ABERTA","EM ENTREVISTA","EXAME","INTEGRAÇÃO","PREENCHIDA","CANCELADA"];
+  const chips=[["TODAS","Todas","#0d1f35",RH_VAGAS.length]];
+  ordem.forEach(s=>{if(cont[s])chips.push([s,s,RH_ST_COLORS[s]||"#64748b",cont[s]]);});
+  box.innerHTML=chips.map(([val,lbl,cor,n])=>{
+    const on=RH_TBL_STATUS===val;
+    return `<button onclick="rhSetStatusFiltro('${val}')" style="cursor:pointer;font-size:.68rem;font-weight:700;padding:5px 11px;border-radius:14px;border:1px solid ${cor}${on?"":"40"};background:${on?cor:cor+"12"};color:${on?"#fff":cor};transition:all .12s">${lbl} <span style="opacity:.8;font-weight:600">${n}</span></button>`;
+  }).join("");
+}
 function rhRenderTbl(){
   const el=document.getElementById("rh-tbl");if(!el)return;
+  rhRenderFiltros();
   const q=(document.getElementById("s-rhvagas")?.value||"").toUpperCase();
   let rows=RH_VAGAS;
+  if(RH_TBL_STATUS!=="TODAS")rows=rows.filter(x=>(x.status||"—")===RH_TBL_STATUS);
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
-  if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma vaga registrada ainda. Use o formulário acima para abrir a primeira. 🚀</div>';return;}
+  const cnt=document.getElementById("rh-tbl-cnt");
+  if(cnt)cnt.textContent=RH_VAGAS.length?`— ${rows.length} de ${RH_VAGAS.length}`:"";
+  if(!rows.length){
+    const vazio=(!RH_VAGAS.length)?'Nenhuma vaga registrada ainda. Use o formulário acima para abrir a primeira. 🚀':'Nenhuma vaga encontrada com este filtro.';
+    el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">'+vazio+'</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
   ["Nº","Cargo","Escala","Turno","Posto / Cliente","Área","Empresa","Motivo","Status","Fase","Abertura","Dias","Preenchida por",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
   h+='</tr></thead><tbody>';
