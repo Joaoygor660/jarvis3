@@ -1384,8 +1384,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 </script><script>
 const USERS={
   "joaoygor":{nome:"João Ygor",cargo:"Analista Operacional",senha:"Joaoygor1",admin:true},
-  "paulocampana":{nome:"Paulo Campana",cargo:"Diretor",senha:"servcamp2026",admin:false},
-  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false},
+  "paulocampana":{nome:"Paulo Campana",cargo:"Diretor",senha:"servcamp2026",admin:false,rhDash:true},
+  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true},
   "amauriantonio":{nome:"Amauri Antônio",cargo:"Gerente",senha:"servcamp2026",admin:false},
   "eduardocipriano":{nome:"Eduardo Cipriano",cargo:"Diretora RH",senha:"servcamp2026",admin:false},
   "sirleimodesto":{nome:"Sirlei Modesto",cargo:"Diretor RH",senha:"servcamp2026",admin:false},
@@ -1423,6 +1423,7 @@ async function doLogin(e){
   sessionStorage.setItem("userCargo",usr.cargo);
   sessionStorage.setItem("userAdmin",usr.admin?"1":"0");
   sessionStorage.setItem("userRh",usr.rh?"1":"0");
+  sessionStorage.setItem("userRhDash",usr.rhDash?"1":"0");
   applyUserUI();
   const mustChange=override?override.must_change!==false:!usr.admin;
   if(mustChange){showForcePasswordChange(u);}
@@ -1465,15 +1466,16 @@ async function _savePassword(userKey){
 function applyUserUI(){
   const isAdmin=sessionStorage.getItem("userAdmin")==="1";
   const isRh=sessionStorage.getItem("userRh")==="1";
+  const isRhDash=sessionStorage.getItem("userRhDash")==="1";
   // Upload de Excel continua SOMENTE para admin
   document.querySelectorAll(".upload-btn,#btnNovoExcel").forEach(function(el){el.style.display=isAdmin?"":"none";});
   // Módulos de cadastro RH: admin + responsável de RH (Sandra)
   const rhSec=document.getElementById("navSecRH");
   if(rhSec)rhSec.style.display=(isAdmin||isRh)?"":"none";
-  // Painel RH executivo: admin + responsável de RH (ainda NÃO liberado à diretoria).
-  // Quando liberar para a diretoria, trocar para: isAdmin || isRh || cargo.indexOf("DIRET")>=0
+  // Painel RH executivo: admin + responsável de RH + diretoria liberada (rhDash:true —
+  // hoje Paulo Campana e Ingridy Campana). Estes NÃO veem os módulos de cadastro acima.
   const rhDashSec=document.getElementById("navSecRHDash");
-  if(rhDashSec)rhDashSec.style.display=(isAdmin||isRh)?"":"none";
+  if(rhDashSec)rhDashSec.style.display=(isAdmin||isRh||isRhDash)?"":"none";
   // Módulo Comercial: por enquanto SÓ admin (liberar depois p/ comercial+diretoria:
   // isAdmin || cargo==="Comercial" || cargo.indexOf("DIRET")>=0)
   const comSec=document.getElementById("navSecCOM");
