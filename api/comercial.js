@@ -119,7 +119,9 @@ module.exports = async function handler(req, res) {
     const statusFinal = p && ["FECHADO", "PERDIDO", "PAUSADO"].includes(p.status);
     if (p && p.telefone && p.data_envio_proposta && (p.cadencia_etapa || 0) === 0 && p.cadencia_ativa !== false && !p.respondido_em && !statusFinal) {
       const url = process.env.EVOLUTION_URL || "https://evolution-api-cizp.srv1815873.hstgr.cloud";
-      const inst = process.env.EVOLUTION_INSTANCE || "servcamp";
+      // Instância do Comercial: número próprio da comercial (EVOLUTION_INSTANCE_COM).
+      // Sem essa env, cai na instância padrão — mantém o comportamento atual.
+      const inst = process.env.EVOLUTION_INSTANCE_COM || process.env.EVOLUTION_INSTANCE || "servcamp";
       let num = String(p.telefone).replace(/\D/g, "");
       if (num && !num.startsWith("55")) num = "55" + num;
       const nome = ((p.contato || p.nome || "").trim().split(" ")[0]) || "tudo bem";

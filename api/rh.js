@@ -126,7 +126,9 @@ module.exports = async function handler(req, res) {
     // Só envia para candidato AINDA no processo. Reprovado/Contratado/Desistiu/etc. NÃO recebe.
     if (novo && novo.telefone && novo.situacao === "EM PROCESSO") {
       const url = process.env.EVOLUTION_URL || "https://evolution-api-cizp.srv1815873.hstgr.cloud";
-      const inst = process.env.EVOLUTION_INSTANCE || "servcamp";
+      // Instância do RH: número próprio do RH (EVOLUTION_INSTANCE_RH).
+      // Sem essa env, cai na instância padrão — mantém o comportamento atual.
+      const inst = process.env.EVOLUTION_INSTANCE_RH || process.env.EVOLUTION_INSTANCE || "servcamp";
       // normaliza telefone -> 55 + DDD + número
       let num = String(novo.telefone).replace(/\D/g, "");
       if (num && !num.startsWith("55")) num = "55" + num;
