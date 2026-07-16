@@ -10,7 +10,7 @@ const TABLES = {
   propostas: {
     table: "com_propostas",
     required: ["nome"],
-    fields: ["tipo_cliente","nome","contato","telefone","email","cidade","servico","origem_lead","data_envio_proposta","valor","status","respondido_em","fechado_em","motivo_perda","visitas","ultima_visita","cadencia_ativa","cadencia_etapa","observacao","criado_por"]
+    fields: ["tipo_cliente","nome","contato","telefone","email","cidade","servico","origem_lead","data_envio_proposta","valor","status","respondido_em","fechado_em","motivo_perda","visitas","ultima_visita","cadencia_ativa","cadencia_etapa","observacao","criado_por","prioridade","proxima_acao","proxima_acao_tipo","proxima_acao_data","responsavel"]
   },
   cadencia: {
     table: "com_cadencia_log",

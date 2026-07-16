@@ -1139,6 +1139,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div style="background:linear-gradient(135deg,#eef6ff,#f5f0ff);border:1px solid #dbe7fb;border-radius:12px;padding:12px 18px;margin-bottom:14px;font-size:.72rem;color:#334155">
       <b style="color:#1e4d8c">🤖 Cadência automática:</b> ao registrar o envio da proposta → <b>Msg 1 no WhatsApp</b> (imediata) · <b>Msg 2</b> e-mail +2 dias · <b>Msg 3</b> +5d · <b>Msg 4</b> +10d · <b>Msg 5</b> +20d (pausa a negociação). Para <b>interromper</b>: clique em ✅ quando o cliente responder, ou feche/perca a proposta.
     </div>
+    <div id="cp-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+      <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
+      <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
+    </div>
     <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 24px;margin-bottom:14px">
       <div id="cp-form-title" style="font-size:.85rem;font-weight:800;color:#0d1f35;margin-bottom:14px">➕ Nova Proposta</div>
       <form onsubmit="return comSalvar(event)" id="cpForm">
@@ -1158,19 +1162,39 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div><label class="rhf-l">Origem do Lead</label><input class="rhf-i" id="cpf-origem" type="text" list="dl-com-origem" placeholder="Ex: Indicação"><datalist id="dl-com-origem"><option>INDICAÇÃO</option><option>SITE</option><option>INSTAGRAM</option><option>GOOGLE</option><option>LINKEDIN</option><option>TELEFONE</option><option>VISITA</option><option>SÍNDICO PROFISSIONAL</option><option>OUTRO</option></datalist></div>
           <div><label class="rhf-l">Data do Envio da Proposta</label><input class="rhf-i" id="cpf-dtenvio" type="date"></div>
           <div><label class="rhf-l">Valor da Proposta (R$)</label><input class="rhf-i" id="cpf-valor" type="number" step="0.01" min="0" placeholder="Ex: 15800.00"></div>
-          <div><label class="rhf-l">Status</label><select class="rhf-i" id="cpf-status"><option>PROSPECÇÃO</option><option>PROPOSTA ENVIADA</option><option>EM NEGOCIAÇÃO</option><option>FECHADO</option><option>PERDIDO</option><option>PAUSADO</option></select></div>
+          <div><label class="rhf-l">Status</label><select class="rhf-i" id="cpf-status"><option>LEAD</option><option>PROSPECÇÃO</option><option>PROPOSTA</option><option>NEGOCIAÇÃO</option><option>CONTRATO</option><option>FECHADO</option><option>PERDIDO</option><option>PAUSADO</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Prioridade</label><select class="rhf-i" id="cpf-prior"><option>MÉDIA</option><option>ALTA</option><option>BAIXA</option></select></div>
+          <div><label class="rhf-l">Responsável</label><input class="rhf-i" id="cpf-resp" type="text" placeholder="Quem cuida do cliente"></div>
+          <div><label class="rhf-l">Próx. ação (tipo)</label><select class="rhf-i" id="cpf-pactipo"><option value="">—</option><option>LIGAÇÃO</option><option>WHATSAPP</option><option>E-MAIL</option><option>VISITA</option><option>REUNIÃO</option></select></div>
+          <div><label class="rhf-l">Próx. ação (descrição)</label><input class="rhf-i" id="cpf-pac" type="text" placeholder="Ex: ligar p/ síndico"></div>
+          <div><label class="rhf-l">Data da próx. ação</label><input class="rhf-i" id="cpf-pacdata" type="date"></div>
         </div>
         <div style="margin-bottom:14px"><label class="rhf-l">Observações</label><input class="rhf-i" id="cpf-obs" type="text" placeholder="O que foi conversado, necessidades do cliente..."></div>
-        <div style="display:flex;gap:10px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button type="submit" class="rh-btn" id="cpBtnSalvar">💾 Salvar Proposta</button>
           <button type="button" class="rh-btn rh-btn-sec" onclick="comLimpar()">✖ Limpar</button>
+          <span id="cpf-quick" style="display:none;gap:8px">
+            <button type="button" class="rh-btn rh-btn-sec" onclick="comPDF()" title="Gerar ficha da proposta em PDF">📄 Gerar PDF</button>
+            <button type="button" class="rh-btn rh-btn-sec" onclick="comWpp()" title="Abrir conversa no WhatsApp">📱 WhatsApp</button>
+            <button type="button" class="rh-btn rh-btn-sec" onclick="comMail()" title="Escrever e-mail">✉ E-mail</button>
+          </span>
           <span id="cp-form-msg" style="font-size:.74rem;font-weight:700"></span>
         </div>
       </form>
     </div>
-    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Propostas Registradas <span id="cp-tbl-cnt" style="font-weight:600;color:#94a3b8;font-size:.72rem"></span></span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, cidade, serviço..." id="s-compro" oninput="comRenderTbl()"></div></div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:10px"><div class="chb"></div><span class="ct">Propostas <span id="cp-tbl-cnt" style="font-weight:600;color:#94a3b8;font-size:.72rem"></span></span>
+        <span style="background:#eef2f7;border-radius:9px;padding:3px;display:inline-flex;gap:2px">
+          <button class="cv-view cv-view-on" id="cpv-kanban" onclick="comSetView('kanban')">🗂️ Pipeline</button>
+          <button class="cv-view" id="cpv-tabela" onclick="comSetView('tabela')">📋 Tabela</button>
+          <button class="cv-view" id="cpv-agenda" onclick="comSetView('agenda')">📅 Agenda</button>
+        </span></div>
+      <div class="tc2"><input class="sb2" type="text" placeholder="Buscar por nome, cidade, serviço..." id="s-compro" oninput="comRenderView()"></div></div>
       <div id="cp-tbl-filtros" style="display:flex;flex-wrap:wrap;gap:6px;padding:0 2px 10px"></div>
-      <div id="cp-tbl" style="overflow-x:auto"></div></div>
+      <div id="cp-kanban"></div>
+      <div id="cp-tbl" style="overflow-x:auto;display:none"></div>
+      <div id="cp-agenda" style="display:none"></div></div>
   </div>
   <div class="page" id="pg-comdash">
     <div class="sec-hdr"><span class="sec-hdr-ic">📊</span><div><div class="sec-hdr-t">Painel Comercial — Diretoria</div><div class="sec-hdr-sub">Visão executiva do mês: propostas, conversão, pipeline e metas</div></div></div>
@@ -1193,6 +1217,48 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     .rd-per-on{background:#fff;color:#0d1f35;box-shadow:0 1px 3px rgba(0,0,0,.08)}
     .rd-bar-row{display:flex;justify-content:space-between;margin-bottom:3px}
     .rd-bar{height:7px;border-radius:4px;margin-bottom:10px}
+    /* ===== COMERCIAL ENTERPRISE ===== */
+    @keyframes cvFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes cvShimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+    .cvk{background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s,border-color .18s;animation:cvFadeUp .35s ease both;cursor:default}
+    .cvk:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(13,31,53,.10);border-color:#c9d8ef}
+    .cvk .cvk-ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:8px}
+    .cvk .cvk-lb{font-size:.6rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+    .cvk .cvk-v{font-size:1.32rem;font-weight:900;color:#0d1f35;line-height:1.2;margin:2px 0}
+    .cvk .cvk-cmp{font-size:.62rem;font-weight:800}
+    .cvk .cvk-spark{position:absolute;right:10px;bottom:8px;opacity:.85}
+    .cv-skel{border-radius:14px;height:104px;background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 37%,#eef2f7 63%);background-size:400px 100%;animation:cvShimmer 1.2s infinite linear}
+    .cv-view{border:none;background:transparent;color:#64748b;font-size:.72rem;font-weight:800;padding:7px 16px;border-radius:8px;cursor:pointer;transition:all .15s}
+    .cv-view-on{background:#0d1f35;color:#fff;box-shadow:0 2px 8px rgba(13,31,53,.25)}
+    .kb-wrap{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 14px;align-items:flex-start}
+    .kb-col{min-width:225px;max-width:225px;background:#f4f7fb;border:1px solid #e5e9f0;border-radius:12px;flex-shrink:0;transition:background .15s,border-color .15s}
+    .kb-col.kb-over{background:#e8f1fd;border-color:#2e8fef;border-style:dashed}
+    .kb-col-h{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid transparent}
+    .kb-col-t{font-size:.64rem;font-weight:900;letter-spacing:.4px}
+    .kb-col-n{font-size:.62rem;font-weight:800;background:#fff;border-radius:10px;padding:1px 8px;color:#475569}
+    .kb-col-v{font-size:.6rem;font-weight:800;color:#64748b;padding:0 12px 8px}
+    .kb-body{padding:6px 8px 10px;min-height:60px;max-height:560px;overflow-y:auto}
+    .kb-card{background:#fff;border:1px solid #e5e9f0;border-radius:10px;padding:10px 11px;margin-bottom:8px;cursor:grab;transition:transform .15s,box-shadow .15s;animation:cvFadeUp .3s ease both}
+    .kb-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(13,31,53,.12)}
+    .kb-card:active{cursor:grabbing}
+    .kb-card.kb-drag{opacity:.4;transform:rotate(2deg)}
+    .kb-nome{font-size:.72rem;font-weight:800;color:#0d1f35;margin-bottom:2px;display:flex;align-items:center;gap:5px}
+    .kb-sub{font-size:.62rem;color:#64748b;margin-bottom:6px}
+    .kb-meta{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:.6rem}
+    .kb-pill{padding:2px 7px;border-radius:9px;font-weight:800;font-size:.58rem}
+    .cv-chance{display:inline-block;padding:2px 8px;border-radius:10px;font-weight:900;font-size:.62rem}
+    .cv-prior{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .cv-tl{position:relative;padding-left:26px}
+    .cv-tl:before{content:"";position:absolute;left:9px;top:4px;bottom:4px;width:2px;background:#e5e9f0}
+    .cv-tl-item{position:relative;padding:0 0 16px}
+    .cv-tl-dot{position:absolute;left:-26px;top:1px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;background:#fff;border:2px solid #e5e9f0;z-index:1}
+    .cv-ag-card{background:#fff;border:1px solid #e5e9f0;border-left:4px solid #2e8fef;border-radius:10px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:transform .15s,box-shadow .15s;animation:cvFadeUp .3s ease both}
+    .cv-ag-card:hover{transform:translateX(3px);box-shadow:0 4px 14px rgba(13,31,53,.1)}
+    .cv-ins{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;animation:cvFadeUp .35s ease both;transition:transform .15s,box-shadow .15s}
+    .cv-ins:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(13,31,53,.09)}
+    .cv-alert{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:10px;margin-bottom:6px;font-size:.72rem;animation:cvFadeUp .3s ease both}
+    .cv-gauge{position:relative;width:120px;height:120px;margin:0 auto}
+    @media(max-width:768px){.kb-col{min-width:200px;max-width:200px}}
     /* ===== MOBILE — módulos RH e Painel RH (sobrepõe os grids inline) ===== */
     @media(max-width:768px){
       #re-funil{grid-template-columns:repeat(2,1fr)!important}
@@ -4009,8 +4075,61 @@ function rhDashVagas(){
   }
 }
 /* ═══════════════ MÓDULO COMERCIAL (CRM) ═══════════════ */
-let COM_P=[],COM_LOG=[],COM_METAS=[],COM_TBL_STATUS="TODAS";
-const COM_ST_COLORS={"PROSPECÇÃO":"#7c3aed","PROPOSTA ENVIADA":"#2e8fef","EM NEGOCIAÇÃO":"#f97316","FECHADO":"#16a34a","PERDIDO":"#dc2626","PAUSADO":"#6b7280"};
+let COM_P=[],COM_LOG=[],COM_METAS=[],COM_TBL_STATUS="TODAS",COM_VIEW="kanban";
+const COM_ST_COLORS={"LEAD":"#64748b","PROSPECÇÃO":"#7c3aed","PROPOSTA":"#2e8fef","NEGOCIAÇÃO":"#f97316","CONTRATO":"#0d9488","FECHADO":"#16a34a","PERDIDO":"#dc2626","PAUSADO":"#94a3b8"};
+const COM_ST_ORDER=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO","FECHADO","PERDIDO","PAUSADO"];
+const COM_ST_ATIVOS=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO"];
+const COM_PRIOR_COLORS={"ALTA":"#dc2626","MÉDIA":"#f97316","BAIXA":"#94a3b8"};
+const COM_PAC_ICON={"LIGAÇÃO":"📞","WHATSAPP":"📱","E-MAIL":"✉️","VISITA":"🏠","REUNIÃO":"👥"};
+/* último movimento da proposta (para temperatura/dias parado) */
+function comUltMov(p){
+  const c=[p.atualizado_em,p.respondido_em,p.ultima_visita,p.criado_em].filter(Boolean).map(d=>new Date(String(d).length===10?d+"T12:00:00":d));
+  return c.length?new Date(Math.max(...c)):new Date();
+}
+function comDiasParado(p){return Math.max(0,Math.floor((new Date()-comUltMov(p))/86400000));}
+/* 🌡️ temperatura automática */
+function comTemp(p){
+  if(!COM_ST_ATIVOS.includes(p.status))return null;
+  const d=comDiasParado(p);
+  const resp3=p.respondido_em&&(new Date()-new Date(p.respondido_em))/86400000<=3;
+  if(p.status==="CONTRATO"||resp3)return{ic:"🔴",lbl:"Muito quente",cor:"#dc2626"};
+  if((p.status==="NEGOCIAÇÃO"&&d<=7)||(p.respondido_em&&d<=7))return{ic:"🟠",lbl:"Quente",cor:"#f97316"};
+  if(d<=14)return{ic:"🟡",lbl:"Morno",cor:"#eab308"};
+  return{ic:"🔵",lbl:"Frio",cor:"#2e8fef"};
+}
+/* 🎯 probabilidade automática de fechamento */
+function comChance(p){
+  if(p.status==="FECHADO")return 100;
+  if(p.status==="PERDIDO")return 0;
+  if(p.status==="PAUSADO")return 12;
+  let c={LEAD:15,"PROSPECÇÃO":25,"PROPOSTA":45,"NEGOCIAÇÃO":65,"CONTRATO":88}[p.status]||20;
+  const d=comDiasParado(p);
+  if(p.respondido_em)c+=12;
+  if((p.visitas||0)>0)c+=6;
+  if(d>14)c-=20;else if(d>7)c-=10;
+  return Math.min(95,Math.max(5,Math.round(c)));
+}
+function comChanceCor(c){return c>=70?"#16a34a":c>=45?"#2e8fef":c>=25?"#f97316":"#dc2626";}
+/* sparkline SVG (série mensal) */
+function comSpark(vals,cor){
+  if(!vals||vals.length<2||vals.every(v=>!v))return"";
+  const w=64,h=26,max=Math.max(...vals,1);
+  const pts=vals.map((v,i)=>`${(i/(vals.length-1)*w).toFixed(1)},${(h-3-(v/max)*(h-6)).toFixed(1)}`).join(" ");
+  return`<svg class="cvk-spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${cor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/><circle cx="${w}" cy="${pts.split(" ").pop().split(",")[1]}" r="2.4" fill="${cor}"/></svg>`;
+}
+/* série dos últimos n meses via extrator de data */
+function comSerieMensal(arr,getData,getVal,n){
+  const out=[];const hoje=new Date();
+  for(let i=n-1;i>=0;i--){
+    const ini=new Date(hoje.getFullYear(),hoje.getMonth()-i,1),fim=new Date(hoje.getFullYear(),hoje.getMonth()-i+1,0,23,59,59);
+    out.push(arr.reduce((s,p)=>{const d=getData(p);if(!d)return s;const x=new Date(String(d).slice(0,10)+"T12:00:00");return(x>=ini&&x<=fim)?s+getVal(p):s;},0));
+  }
+  return out;
+}
+/* evento de sistema na timeline (não bloqueia o fluxo) */
+function comLogEvento(pid,detalhe,canal){
+  fetch("/api/comercial?t=cadencia",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({proposta_id:pid,etapa:0,canal:canal||"SISTEMA",status:"evento",detalhe:detalhe,destinatario:sessionStorage.getItem("userNome")||null})}).catch(()=>{});
+}
 const COM_ETAPA_LBL={1:"Msg 1 · WhatsApp (envio da proposta)",2:"Msg 2 · E-mail (+2 dias)",3:"Msg 3 · E-mail (+5 dias)",4:"Msg 4 · E-mail (+10 dias)",5:"Msg 5 · E-mail (+20 dias — pausa)"};
 function fmtBRL(v){return(v===null||v===undefined||v==="")?"—":Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function comDias(p){if(!p.data_envio_proposta)return"—";const ini=new Date(String(p.data_envio_proposta).slice(0,10)+"T00:00:00");const fim=p.fechado_em?new Date(String(p.fechado_em).slice(0,10)+"T00:00:00"):new Date();return Math.max(0,Math.round((fim-ini)/86400000));}
@@ -4022,17 +4141,84 @@ function comFetchAll(){
   ]);
 }
 function comLoad(){
-  const tbl=document.getElementById("cp-tbl");
-  if(tbl&&!COM_P.length)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Carregando propostas…</div>';
-  comFetchAll().then(comRenderTbl).catch(err=>{console.error("Erro comercial:",err);if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar. Verifique a conexão.</div>';});
+  const kb=document.getElementById("cp-kanban");
+  if(kb&&!COM_P.length)kb.innerHTML='<div class="kb-wrap">'+COM_ST_ORDER.slice(0,5).map(()=>'<div class="cv-skel" style="min-width:225px;height:180px"></div>').join("")+'</div>';
+  const resp=document.getElementById("cpf-resp");
+  if(resp&&!resp.value)resp.value=sessionStorage.getItem("userNome")||"";
+  comFetchAll().then(comRenderAll).catch(err=>{console.error("Erro comercial:",err);if(kb)kb.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar. Verifique a conexão.</div>';});
 }
-function comSetStatusFiltro(s){COM_TBL_STATUS=s;comRenderTbl();}
+function comRenderAll(){comRenderCards();comRenderView();}
+function comSetStatusFiltro(s){COM_TBL_STATUS=s;comRenderView();}
+function comSetView(v){
+  COM_VIEW=v;
+  ["kanban","tabela","agenda"].forEach(x=>{const b=document.getElementById("cpv-"+x);if(b)b.classList.toggle("cv-view-on",x===v);});
+  comRenderView();
+}
+function comRenderView(){
+  const show={kanban:"cp-kanban",tabela:"cp-tbl",agenda:"cp-agenda"};
+  Object.values(show).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});
+  const cur=document.getElementById(show[COM_VIEW]);if(cur)cur.style.display="";
+  comRenderFiltros();
+  if(COM_VIEW==="kanban")comRenderKanban();
+  else if(COM_VIEW==="agenda")comRenderAgenda();
+  else comRenderTbl();
+}
+function comFiltrados(){
+  const q=(document.getElementById("s-compro")?.value||"").toUpperCase();
+  let rows=COM_P;
+  if(COM_TBL_STATUS!=="TODAS")rows=rows.filter(x=>(x.status||"—")===COM_TBL_STATUS);
+  if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
+  return rows;
+}
+/* ── Dashboard superior: cards com sparkline + comparativo ── */
+function comRenderCards(){
+  const el=document.getElementById("cp-kpis");if(!el)return;
+  const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1),mAntIni=new Date(hoje.getFullYear(),hoje.getMonth()-1,1),mAntFim=new Date(hoje.getFullYear(),hoje.getMonth(),0,23,59,59);
+  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
+  const noMesAnt=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mAntIni&&x<=mAntFim;};
+  const P=COM_P;
+  const abertas=P.filter(p=>COM_ST_ATIVOS.includes(p.status));
+  const negoc=P.filter(p=>["PROPOSTA","NEGOCIAÇÃO","CONTRATO"].includes(p.status));
+  const negR=negoc.reduce((s,p)=>s+(Number(p.valor)||0),0);
+  const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em)),fecMesR=fecMes.reduce((s,p)=>s+(Number(p.valor)||0),0);
+  const fecAnt=P.filter(p=>p.status==="FECHADO"&&noMesAnt(p.fechado_em)),fecAntR=fecAnt.reduce((s,p)=>s+(Number(p.valor)||0),0);
+  const perMes=P.filter(p=>p.status==="PERDIDO"&&noMes(p.atualizado_em||p.criado_em)),perMesR=perMes.reduce((s,p)=>s+(Number(p.valor)||0),0);
+  const envMes=P.filter(p=>noMes(p.data_envio_proposta)),envAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
+  const taxa=envMes.length?Math.round(fecMes.length/envMes.length*100):null;
+  const taxaAnt=envAnt.length?Math.round(fecAnt.length/envAnt.length*100):null;
+  const fechTodas=P.filter(p=>p.status==="FECHADO");
+  const ticket=fechTodas.length?fechTodas.reduce((s,p)=>s+(Number(p.valor)||0),0)/fechTodas.length:null;
+  const semResp=P.filter(p=>p.data_envio_proposta&&!p.respondido_em&&COM_ST_ATIVOS.includes(p.status));
+  const criticas=P.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status)&&comDiasParado(p)>=5||COM_ST_ATIVOS.includes(p.status)&&comDiasParado(p)>=10&&(Number(p.valor)||0)>0);
+  const visMes=P.filter(p=>noMes(p.ultima_visita)).length,visAnt=P.filter(p=>noMesAnt(p.ultima_visita)).length;
+  const acoesPend=P.filter(p=>p.proxima_acao_data&&COM_ST_ATIVOS.includes(p.status)&&String(p.proxima_acao_data).slice(0,10)<=ymd(hoje)).length;
+  const sEnv=comSerieMensal(P,p=>p.data_envio_proposta,()=>1,6);
+  const sFec=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
+  const sPer=comSerieMensal(P.filter(p=>p.status==="PERDIDO"),p=>p.atualizado_em||p.criado_em,p=>Number(p.valor)||0,6);
+  const sVis=comSerieMensal(P,p=>p.ultima_visita,()=>1,6);
+  const cmp=(atual,ant,inv)=>{
+    if(ant===null||ant===undefined||(!atual&&!ant))return'<span style="color:#94a3b8">— vs mês ant.</span>';
+    if(!ant)return`<span style="color:#16a34a">▲ novo</span>`;
+    const d=Math.round((atual-ant)/ant*100);
+    const up=d>=0;const bom=inv?!up:up;
+    return`<span style="color:${bom?"#16a34a":"#dc2626"}">${up?"▲":"▼"} ${Math.abs(d)}% vs mês ant.</span>`;
+  };
+  const card=(ic,icBg,lbl,val,cmpHtml,spark,tip)=>`<div class="cvk" title="${tip||""}"><div class="cvk-ic" style="background:${icBg}">${ic}</div><div class="cvk-lb">${lbl}</div><div class="cvk-v">${val}</div><div class="cvk-cmp">${cmpHtml}</div>${spark}</div>`;
+  el.innerHTML=
+    card("📂","#eef6ff","Propostas abertas",abertas.length,cmp(envMes.length,envAnt.length),comSpark(sEnv,"#2e8fef"),"Leads a contratos em andamento")+
+    card("💰","#e6fffb","Receita em negociação",fmtBRL(negR),`<span style="color:#64748b">${negoc.length} propostas ativas</span>`,"","Proposta + Negociação + Contrato")+
+    card("🏆","#ecfdf5","Receita fechada (mês)",fmtBRL(fecMesR),cmp(fecMesR,fecAntR),comSpark(sFec,"#16a34a"),"Contratos fechados no mês")+
+    card("📉","#fef2f2","Receita perdida (mês)",fmtBRL(perMesR),cmp(perMesR,perMesR&&fecAntR?fecAntR:null,true),comSpark(sPer,"#dc2626"),"Propostas perdidas no mês")+
+    card("🎯","#f5f3ff","Taxa de conversão",taxa===null?"—":taxa+"%",taxaAnt===null?'<span style="color:#94a3b8">— vs mês ant.</span>':cmp(taxa,taxaAnt),"","Fechadas ÷ enviadas no mês")+
+    card("📈","#fff7ed","Ticket médio",ticket===null?"—":fmtBRL(ticket),`<span style="color:#64748b">${fechTodas.length} contratos</span>`,"","Média dos contratos fechados")+
+    card("⏳","#fefce8","Sem resposta",semResp.length,`<span style="color:${semResp.length?"#d97706":"#16a34a"}">${semResp.length?"aguardando retorno":"tudo respondido"}</span>`,"","Propostas enviadas aguardando retorno do cliente")+
+    card("🚨","#fef2f2","Críticas / Ações hoje",`${criticas.length} <span style="font-size:.85rem;color:#64748b">/ ${acoesPend}</span>`,`<span style="color:${criticas.length?"#dc2626":"#16a34a"}">${criticas.length?"exigem contato":"sob controle"} · ${acoesPend} ações pendentes</span>`,comSpark(sVis,"#7c3aed"),"Negociações paradas + próximas ações vencidas");
+}
 function comRenderFiltros(){
   const box=document.getElementById("cp-tbl-filtros");if(!box)return;
   const cont={};COM_P.forEach(x=>{const s=x.status||"—";cont[s]=(cont[s]||0)+1;});
-  const ordem=["PROSPECÇÃO","PROPOSTA ENVIADA","EM NEGOCIAÇÃO","FECHADO","PERDIDO","PAUSADO"];
   const chips=[["TODAS","Todas","#0d1f35",COM_P.length]];
-  ordem.forEach(s=>{if(cont[s])chips.push([s,s,COM_ST_COLORS[s]||"#64748b",cont[s]]);});
+  COM_ST_ORDER.forEach(s=>{if(cont[s])chips.push([s,s,COM_ST_COLORS[s]||"#64748b",cont[s]]);});
   box.innerHTML=chips.map(([val,lbl,cor,n])=>{
     const on=COM_TBL_STATUS===val;
     return `<button onclick="comSetStatusFiltro('${val}')" style="cursor:pointer;font-size:.68rem;font-weight:700;padding:5px 11px;border-radius:14px;border:1px solid ${cor}${on?"":"40"};background:${on?cor:cor+"12"};color:${on?"#fff":cor};transition:all .12s">${lbl} <span style="opacity:.8;font-weight:600">${n}</span></button>`;
@@ -4048,35 +4234,127 @@ function comCadCell(p){
   const dots=[1,2,3,4,5].map(i=>`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px;background:${i<=e?"#2e8fef":"#dbe2ec"}" title="${COM_ETAPA_LBL[i]}"></span>`).join("");
   return `<span style="white-space:nowrap">${dots} <b style="font-size:.66rem;color:#1e4d8c">${e}/5</b>${p.status==="PAUSADO"?' <span style="color:#94a3b8">⏸</span>':''}</span>`;
 }
+/* ── KANBAN (pipeline drag-and-drop) ── */
+let _kbDragId=null;
+function comRenderKanban(){
+  const el=document.getElementById("cp-kanban");if(!el)return;
+  const rows=comFiltrados();
+  const cnt=document.getElementById("cp-tbl-cnt");
+  if(cnt)cnt.textContent=COM_P.length?`— ${rows.length} de ${COM_P.length}`:"";
+  if(!COM_P.length){el.innerHTML='<div style="padding:36px;text-align:center;color:#94a3b8;font-size:.8rem"><div style="font-size:2rem;margin-bottom:8px">🗂️</div>Nenhuma proposta ainda. Cadastre a primeira acima e arraste-a pelo funil. 🚀</div>';return;}
+  let h='<div class="kb-wrap">';
+  COM_ST_ORDER.forEach(st=>{
+    const cor=COM_ST_COLORS[st];
+    const cards=rows.filter(p=>p.status===st).sort((a,b)=>({ALTA:0,"MÉDIA":1,BAIXA:2}[a.prioridade||"MÉDIA"]-{ALTA:0,"MÉDIA":1,BAIXA:2}[b.prioridade||"MÉDIA"])||comChance(b)-comChance(a));
+    const valTot=cards.reduce((s,p)=>s+(Number(p.valor)||0),0);
+    h+=`<div class="kb-col" data-st="${st}" ondragover="kbOver(event,this)" ondragleave="kbLeave(this)" ondrop="kbDrop(event,this)">
+      <div class="kb-col-h" style="border-bottom-color:${cor}"><span class="kb-col-t" style="color:${cor}">${st}</span><span class="kb-col-n">${cards.length}</span></div>
+      ${valTot?`<div class="kb-col-v">${fmtBRL(valTot)}</div>`:""}
+      <div class="kb-body">`;
+    if(!cards.length)h+=`<div style="padding:14px 6px;text-align:center;color:#b6c2d4;font-size:.62rem">solte aqui</div>`;
+    cards.forEach(p=>{
+      const t=comTemp(p),ch=comChance(p),d=comDiasParado(p);
+      const pac=p.proxima_acao_data?`<span class="kb-pill" style="background:${String(p.proxima_acao_data).slice(0,10)<ymd(new Date())?"#fee2e2":"#eef6ff"};color:${String(p.proxima_acao_data).slice(0,10)<ymd(new Date())?"#dc2626":"#1e4d8c"}">${COM_PAC_ICON[p.proxima_acao_tipo]||"⚡"} ${rhFmt(p.proxima_acao_data).slice(0,5)}</span>`:"";
+      h+=`<div class="kb-card" draggable="true" ondragstart="kbStart(event,${p.id})" ondragend="kbEnd(this)" onclick="comEditar(${p.id})" title="Clique para editar · arraste para mudar de etapa">
+        <div class="kb-nome"><span class="cv-prior" style="background:${COM_PRIOR_COLORS[p.prioridade||"MÉDIA"]}" title="Prioridade ${p.prioridade||"MÉDIA"}"></span>${p.nome||"—"}</div>
+        <div class="kb-sub">${p.contato||p.cidade||"—"}${p.servico?" · "+p.servico:""}</div>
+        <div class="kb-meta">
+          ${p.valor?`<span class="kb-pill" style="background:#ecfdf5;color:#16a34a">${fmtBRL(p.valor)}</span>`:""}
+          ${t?`<span title="${t.lbl}">${t.ic}</span>`:""}
+          <span class="cv-chance" style="background:${comChanceCor(ch)}18;color:${comChanceCor(ch)}" title="Probabilidade de fechamento">${ch}%</span>
+          <span class="kb-pill" style="background:#f1f5f9;color:#64748b" title="Dias sem movimento">${d}d</span>
+          ${pac}
+        </div>
+      </div>`;
+    });
+    h+=`</div></div>`;
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+function kbStart(ev,id){_kbDragId=id;ev.dataTransfer.effectAllowed="move";setTimeout(()=>{ev.target.classList.add("kb-drag");},0);}
+function kbEnd(elc){elc.classList.remove("kb-drag");}
+function kbOver(ev,col){ev.preventDefault();col.classList.add("kb-over");}
+function kbLeave(col){col.classList.remove("kb-over");}
+function kbDrop(ev,col){
+  ev.preventDefault();col.classList.remove("kb-over");
+  const st=col.getAttribute("data-st"),p=COM_P.find(x=>x.id===_kbDragId);
+  if(!p||p.status===st)return;
+  const antigo=p.status;
+  const patch={status:st};
+  if(st==="FECHADO")patch.fechado_em=ymd(new Date());
+  if(st==="PERDIDO"){const m=prompt("Motivo da perda de "+(p.nome||"")+":");if(m===null)return;patch.motivo_perda=(m||"").toUpperCase();}
+  p.status=st;comRenderKanban();comRenderCards();
+  comLogEvento(p.id,`Status: ${antigo} → ${st}`);
+  _comPatch(p.id,patch);
+}
+/* ── AGENDA (próximas ações) ── */
+function comRenderAgenda(){
+  const el=document.getElementById("cp-agenda");if(!el)return;
+  const rows=comFiltrados().filter(p=>COM_ST_ATIVOS.includes(p.status));
+  const cnt=document.getElementById("cp-tbl-cnt");
+  if(cnt)cnt.textContent=COM_P.length?`— ${rows.length} ativas`:"";
+  const hj=ymd(new Date());
+  const amn=ymd(new Date(Date.now()+86400000));
+  const semFim=ymd(new Date(Date.now()+7*86400000));
+  const g={atras:[],hoje:[],amanha:[],semana:[],sem:[]};
+  rows.forEach(p=>{
+    const d=p.proxima_acao_data?String(p.proxima_acao_data).slice(0,10):null;
+    if(!d)g.sem.push(p);
+    else if(d<hj)g.atras.push(p);
+    else if(d===hj)g.hoje.push(p);
+    else if(d===amn)g.amanha.push(p);
+    else if(d<=semFim)g.semana.push(p);
+  });
+  const card=p=>{
+    const t=comTemp(p);
+    return`<div class="cv-ag-card" style="border-left-color:${COM_ST_COLORS[p.status]}" onclick="comEditar(${p.id})">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div><span style="font-weight:800;color:#0d1f35;font-size:.76rem">${COM_PAC_ICON[p.proxima_acao_tipo]||"⚡"} ${p.nome}</span>
+        <div style="font-size:.66rem;color:#64748b;margin-top:2px">${p.proxima_acao||p.proxima_acao_tipo||"Definir próxima ação"} ${p.contato?"· "+p.contato:""}</div></div>
+        <div style="text-align:right;white-space:nowrap"><span class="rh-badge" style="background:${COM_ST_COLORS[p.status]}18;color:${COM_ST_COLORS[p.status]}">${p.status}</span>
+        <div style="font-size:.64rem;color:#94a3b8;margin-top:3px">${p.proxima_acao_data?rhFmt(p.proxima_acao_data):"sem data"} ${t?t.ic:""}</div></div>
+      </div></div>`;
+  };
+  const bloco=(t,ic,arr,cor)=>`<div style="margin-bottom:16px"><div style="font-size:.72rem;font-weight:900;color:${cor};margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">${ic} ${t} <span style="color:#94a3b8;font-weight:700">(${arr.length})</span></div>${arr.length?arr.map(card).join(""):'<div style="font-size:.68rem;color:#b6c2d4;padding:4px 0 2px">nada por aqui</div>'}</div>`;
+  el.innerHTML='<div style="padding:6px 2px">'+
+    bloco("Atrasadas","🔥",g.atras,"#dc2626")+
+    bloco("Hoje","📌",g.hoje,"#1e4d8c")+
+    bloco("Amanhã","➡️",g.amanha,"#7c3aed")+
+    bloco("Esta semana","📅",g.semana,"#0d9488")+
+    bloco("Sem ação definida","💤",g.sem,"#94a3b8")+
+  '</div>';
+}
+/* ── TABELA ── */
 function comRenderTbl(){
   const el=document.getElementById("cp-tbl");if(!el)return;
-  comRenderFiltros();
-  const q=(document.getElementById("s-compro")?.value||"").toUpperCase();
-  let rows=COM_P;
-  if(COM_TBL_STATUS!=="TODAS")rows=rows.filter(x=>(x.status||"—")===COM_TBL_STATUS);
-  if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
+  const rows=comFiltrados();
   const cnt=document.getElementById("cp-tbl-cnt");
   if(cnt)cnt.textContent=COM_P.length?`— ${rows.length} de ${COM_P.length}`:"";
   if(!rows.length){
     const vazio=(!COM_P.length)?'Nenhuma proposta ainda. Cadastre a primeira acima e deixe a cadência trabalhar. 🚀':'Nenhuma proposta com este filtro.';
     el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">'+vazio+'</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
-  ["Nome","Contato","Cidade","Serviço","Origem","Envio","Dias","Visitas","Valor","Status","Cadência",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  ["Nome","Contato","Cidade","Envio","Valor","Status","🌡️","Chance","Prior.","Próx. ação","Resp.","Parado","Cadência",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
   h+='</tr></thead><tbody>';
   rows.forEach(x=>{
     const cor=COM_ST_COLORS[x.status]||"#64748b";
     const tipoTag=x.tipo_cliente==="CONDOMINIO"?'<span style="background:#ede9fe;color:#7c3aed;font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:8px;margin-left:6px">COND</span>':'<span style="background:#dbeafe;color:#1e4d8c;font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:8px;margin-left:6px">EMP</span>';
+    const t=comTemp(x),ch=comChance(x),dp=comDiasParado(x);
+    const pacAtras=x.proxima_acao_data&&String(x.proxima_acao_data).slice(0,10)<ymd(new Date());
     h+=`<tr style="border-bottom:1px solid #f1f5f9">
-      <td style="padding:8px 10px;font-weight:800;color:#0d1f35;white-space:nowrap">${x.nome||"—"}${tipoTag}</td>
+      <td style="padding:8px 10px;font-weight:800;color:#0d1f35;white-space:nowrap" title="${x.servico||""} · Origem: ${x.origem_lead||"?"} · ${x.visitas||0} visita(s)">${x.nome||"—"}${tipoTag}</td>
       <td style="padding:8px 10px">${x.contato||"—"}</td>
       <td style="padding:8px 10px">${x.cidade||"—"}</td>
-      <td style="padding:8px 10px;font-size:.68rem">${x.servico||"—"}</td>
-      <td style="padding:8px 10px;font-size:.68rem">${x.origem_lead||"—"}</td>
       <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_envio_proposta)}</td>
-      <td style="padding:8px 10px;font-weight:700">${comDias(x)}</td>
-      <td style="padding:8px 10px;text-align:center">${x.visitas||0}</td>
       <td style="padding:8px 10px;font-weight:700;white-space:nowrap">${fmtBRL(x.valor)}</td>
       <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cor}18;color:${cor};border:1px solid ${cor}40">${x.status||"—"}</span></td>
+      <td style="padding:8px 10px" title="${t?t.lbl:""}">${t?t.ic:"—"}</td>
+      <td style="padding:8px 10px"><span class="cv-chance" style="background:${comChanceCor(ch)}18;color:${comChanceCor(ch)}">${ch}%</span></td>
+      <td style="padding:8px 10px"><span class="cv-prior" style="background:${COM_PRIOR_COLORS[x.prioridade||"MÉDIA"]}" title="${x.prioridade||"MÉDIA"}"></span></td>
+      <td style="padding:8px 10px;font-size:.68rem;white-space:nowrap;color:${pacAtras?"#dc2626":"#334155"};font-weight:${pacAtras?"800":"400"}">${x.proxima_acao_data?(COM_PAC_ICON[x.proxima_acao_tipo]||"⚡")+" "+rhFmt(x.proxima_acao_data)+(pacAtras?" ⚠️":""):"—"}</td>
+      <td style="padding:8px 10px;font-size:.68rem">${(x.responsavel||"—").split(" ")[0]}</td>
+      <td style="padding:8px 10px;font-weight:700;color:${dp>=7?"#dc2626":"#334155"}">${dp}d</td>
       <td style="padding:8px 10px">${comCadCell(x)}</td>
       <td style="padding:8px 10px;white-space:nowrap">
         <span class="rh-act" onclick="comVisita(${x.id})" title="Registrar visita">🏠</span>
@@ -4107,10 +4385,16 @@ function comSalvar(e){
     data_envio_proposta:document.getElementById("cpf-dtenvio").value||null,
     valor:document.getElementById("cpf-valor").value||null,
     status:document.getElementById("cpf-status").value,
+    prioridade:document.getElementById("cpf-prior").value,
+    responsavel:document.getElementById("cpf-resp").value.trim(),
+    proxima_acao_tipo:document.getElementById("cpf-pactipo").value||null,
+    proxima_acao:document.getElementById("cpf-pac").value.trim(),
+    proxima_acao_data:document.getElementById("cpf-pacdata").value||null,
     observacao:document.getElementById("cpf-obs").value.trim(),
     criado_por:sessionStorage.getItem("userNome")||null
   };
-  if(body.data_envio_proposta&&body.status==="PROSPECÇÃO")body.status="PROPOSTA ENVIADA";
+  if(body.data_envio_proposta&&["LEAD","PROSPECÇÃO"].includes(body.status))body.status="PROPOSTA";
+  if(id){const orig=COM_P.find(p=>String(p.id)===String(id));if(orig&&orig.status!==body.status)comLogEvento(Number(id),`Status: ${orig.status} → ${body.status}`);}
   const msg=document.getElementById("cp-form-msg");
   const btn=document.getElementById("cpBtnSalvar");
   btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
@@ -4129,8 +4413,10 @@ function comSalvar(e){
       else if(!body.telefone){txt="✔ Salva! Sem telefone — Msg 1 (WhatsApp) não enviada; e-mails seguem normalmente.";cor="#64748b";hold=5000;}
       else{txt="✔ Proposta salva!";}
       msg.style.color=cor;msg.textContent=txt;
+      const novoId=j&&j.rows&&j.rows[0]&&j.rows[0].id;
+      if(!id&&novoId)comLogEvento(novoId,"Proposta criada por "+(sessionStorage.getItem("userNome")||"—"));
       comLimpar(true);
-      comFetchAll().then(comRenderTbl);
+      comFetchAll().then(comRenderAll);
       setTimeout(()=>{msg.textContent="";},hold);
     })
     .catch(err=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar: "+err.message;})
@@ -4140,6 +4426,8 @@ function comSalvar(e){
 function comLimpar(keepMsg){
   document.getElementById("cpForm").reset();
   document.getElementById("cpf-id").value="";
+  document.getElementById("cpf-resp").value=sessionStorage.getItem("userNome")||"";
+  document.getElementById("cpf-quick").style.display="none";
   document.getElementById("cp-form-title").textContent="➕ Nova Proposta";
   if(keepMsg!==true)document.getElementById("cp-form-msg").textContent="";
 }
@@ -4156,10 +4444,54 @@ function comEditar(id){
   document.getElementById("cpf-origem").value=x.origem_lead||"";
   document.getElementById("cpf-dtenvio").value=x.data_envio_proposta?String(x.data_envio_proposta).slice(0,10):"";
   document.getElementById("cpf-valor").value=x.valor||"";
-  document.getElementById("cpf-status").value=x.status||"PROSPECÇÃO";
+  document.getElementById("cpf-status").value=x.status||"LEAD";
+  document.getElementById("cpf-prior").value=x.prioridade||"MÉDIA";
+  document.getElementById("cpf-resp").value=x.responsavel||sessionStorage.getItem("userNome")||"";
+  document.getElementById("cpf-pactipo").value=x.proxima_acao_tipo||"";
+  document.getElementById("cpf-pac").value=x.proxima_acao||"";
+  document.getElementById("cpf-pacdata").value=x.proxima_acao_data?String(x.proxima_acao_data).slice(0,10):"";
   document.getElementById("cpf-obs").value=x.observacao||"";
+  document.getElementById("cpf-quick").style.display="inline-flex";
   document.getElementById("cp-form-title").textContent="✏️ Editando: "+(x.nome||"");
   document.getElementById("pg-compro").scrollIntoView({behavior:"smooth",block:"start"});
+}
+/* ── ações rápidas: PDF / WhatsApp / E-mail ── */
+function _comAtual(){const id=document.getElementById("cpf-id").value;return COM_P.find(p=>String(p.id)===String(id));}
+function comWpp(){
+  const p=_comAtual();if(!p||!p.telefone)return alert("Proposta sem telefone.");
+  let n=String(p.telefone).replace(/\D/g,"");if(n&&!n.startsWith("55"))n="55"+n;
+  const nome=((p.contato||p.nome||"").trim().split(" ")[0])||"";
+  window.open("https://wa.me/"+n+"?text="+encodeURIComponent("Olá, "+nome+"! Tudo bem? Sobre a proposta do Grupo Serv Camp..."),"_blank");
+  comLogEvento(p.id,"WhatsApp manual aberto para "+p.telefone,"WHATSAPP");
+}
+function comMail(){
+  const p=_comAtual();if(!p||!p.email)return alert("Proposta sem e-mail.");
+  window.open("mailto:"+p.email+"?subject="+encodeURIComponent("Proposta — Grupo Serv Camp")+"&body="+encodeURIComponent("Olá, "+((p.contato||"").split(" ")[0]||"")+"!\n\n"),"_blank");
+  comLogEvento(p.id,"E-mail manual aberto para "+p.email,"EMAIL");
+}
+function comPDF(){
+  const p=_comAtual();if(!p)return;
+  const t=comTemp(p),ch=comChance(p);
+  const w=window.open("","_blank");
+  const li=(l,v)=>`<tr><td style="padding:7px 12px;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #eef2f7;white-space:nowrap">${l}</td><td style="padding:7px 12px;font-weight:700;color:#0d1f35;border-bottom:1px solid #eef2f7">${v||"—"}</td></tr>`;
+  w.document.write(`<!DOCTYPE html><html><head><title>Proposta ${p.nome}</title></head><body style="font-family:Segoe UI,Arial,sans-serif;margin:36px;color:#0d1f35">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #1e4d8c;padding-bottom:14px;margin-bottom:22px">
+      <div><div style="font-size:22px;font-weight:900;color:#1e4d8c">GRUPO SERV CAMP</div><div style="font-size:12px;color:#64748b">Ficha Comercial da Proposta · gerada em ${new Date().toLocaleString("pt-BR")}</div></div>
+      <div style="text-align:right"><div style="font-size:13px;font-weight:800;color:${COM_ST_COLORS[p.status]||"#333"}">● ${p.status}</div><div style="font-size:11px;color:#64748b">Chance: ${ch}% ${t?"· "+t.ic+" "+t.lbl:""}</div></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:14px">
+      ${li("Cliente",p.nome+" ("+(p.tipo_cliente||"EMPRESA")+")")}${li("Contato",p.contato)}${li("Telefone",p.telefone)}${li("E-mail",p.email)}
+      ${li("Cidade",p.cidade)}${li("Serviço",p.servico)}${li("Origem do lead",p.origem_lead)}
+      ${li("Proposta enviada em",p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—")}${li("Valor",fmtBRL(p.valor))}
+      ${li("Prioridade",p.prioridade)}${li("Responsável",p.responsavel)}
+      ${li("Próxima ação",(p.proxima_acao_tipo?p.proxima_acao_tipo+" — ":"")+(p.proxima_acao||"")+(p.proxima_acao_data?" em "+rhFmt(p.proxima_acao_data):""))}
+      ${li("Visitas realizadas",p.visitas||0)}${li("Cadência automática",(p.cadencia_etapa||0)+"/5 mensagens enviadas"+(p.respondido_em?" · cliente respondeu":""))}
+      ${li("Observações",p.observacao)}
+    </table>
+    <div style="margin-top:26px;font-size:11px;color:#94a3b8">JARVIS · Módulo Comercial · Grupo ServCamp — documento interno</div>
+    <script>window.print();<\/script></body></html>`);
+  w.document.close();
+  comLogEvento(p.id,"Ficha PDF gerada");
 }
 function comExcluir(id){
   const x=COM_P.find(p=>p.id===id);
@@ -4173,37 +4505,73 @@ function _comPatch(id,patch,depois){
   patch.id=id;
   fetch("/api/comercial?t=propostas",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(patch)})
     .then(r=>r.json().then(j=>({ok:r.ok,j})))
-    .then(({ok})=>{if(!ok)throw new Error();comFetchAll().then(()=>{comRenderTbl();if(depois)depois();});})
+    .then(({ok})=>{if(!ok)throw new Error();comFetchAll().then(()=>{comRenderAll();if(depois)depois();});})
     .catch(()=>alert("Erro ao atualizar a proposta."));
 }
 function comVisita(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
   if(!confirm("Registrar 1 visita realizada em "+(x.nome||"")+" hoje?"))return;
+  comLogEvento(id,"Visita realizada ("+((x.visitas||0)+1)+"ª)","VISITA");
   _comPatch(id,{visitas:(x.visitas||0)+1,ultima_visita:ymd(new Date())});
 }
 function comRespondeu(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
   if(!confirm("Marcar que "+(x.nome||"o cliente")+" RESPONDEU? A cadência automática será interrompida."))return;
   const patch={respondido_em:new Date().toISOString()};
-  if(x.status==="PROPOSTA ENVIADA")patch.status="EM NEGOCIAÇÃO";
+  if(x.status==="PROPOSTA")patch.status="NEGOCIAÇÃO";
+  comLogEvento(id,"Cliente respondeu — cadência interrompida"+(patch.status?" · movido para NEGOCIAÇÃO":""));
   _comPatch(id,patch);
 }
 function comFechou(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
   if(!confirm("🎉 Confirmar FECHAMENTO do contrato com "+(x.nome||"")+"?"))return;
+  comLogEvento(id,"Contrato FECHADO 🎉"+(x.valor?" · "+fmtBRL(x.valor):""));
   _comPatch(id,{status:"FECHADO",fechado_em:ymd(new Date())});
 }
 function comPerdido(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
   const motivo=prompt("Motivo da perda de "+(x.nome||"")+":");
   if(motivo===null)return;
+  comLogEvento(id,"Proposta PERDIDA · motivo: "+((motivo||"—").toUpperCase()));
   _comPatch(id,{status:"PERDIDO",motivo_perda:(motivo||"").toUpperCase()});
 }
+/* ── Timeline 360º da proposta ── */
 function comTimeline(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
-  const logs=COM_LOG.filter(l=>l.proposta_id===id).sort((a,b)=>new Date(a.enviado_em)-new Date(b.enviado_em));
-  const rows=logs.map(l=>[new Date(l.enviado_em).toLocaleString("pt-BR"),COM_ETAPA_LBL[l.etapa]||("Etapa "+l.etapa),l.canal,l.destinatario||"—",l.status==="enviado"?"✅ enviado":"⚠️ falhou",l.detalhe||"—"]);
-  _rdModal("📜 Cadência — "+(x.nome||""),["Data/Hora","Mensagem","Canal","Destinatário","Status","Detalhe"],rows);
+  const ev=[];
+  ev.push({dt:new Date(x.criado_em),ic:"🆕",cor:"#64748b",t:"Proposta criada",d:(x.criado_por?"por "+x.criado_por:"")});
+  if(x.data_envio_proposta)ev.push({dt:new Date(String(x.data_envio_proposta).slice(0,10)+"T08:00:00"),ic:"📨",cor:"#2e8fef",t:"Proposta enviada ao cliente",d:fmtBRL(x.valor)});
+  COM_LOG.filter(l=>l.proposta_id===id).forEach(l=>{
+    if(l.etapa>0){
+      const ok=l.status==="enviado";
+      ev.push({dt:new Date(l.enviado_em),ic:l.canal==="WHATSAPP"?"📱":"✉️",cor:ok?(l.canal==="WHATSAPP"?"#16a34a":"#2e8fef"):"#dc2626",t:(COM_ETAPA_LBL[l.etapa]||"Etapa "+l.etapa)+(ok?"":" — FALHOU"),d:"para "+(l.destinatario||"—")+(l.detalhe?" · "+l.detalhe:"")});
+    }else{
+      const icons={"VISITA":"🏠","WHATSAPP":"📱","EMAIL":"✉️","SISTEMA":"⚙️"};
+      ev.push({dt:new Date(l.enviado_em),ic:icons[l.canal]||"⚙️",cor:"#7c3aed",t:l.detalhe||"Evento",d:l.destinatario?"por "+l.destinatario:""});
+    }
+  });
+  if(x.respondido_em)ev.push({dt:new Date(x.respondido_em),ic:"✅",cor:"#16a34a",t:"Cliente respondeu",d:"cadência interrompida"});
+  if(x.fechado_em)ev.push({dt:new Date(String(x.fechado_em).slice(0,10)+"T18:00:00"),ic:"🤝",cor:"#16a34a",t:"Contrato fechado",d:fmtBRL(x.valor)});
+  if(x.status==="PERDIDO")ev.push({dt:new Date(x.atualizado_em||x.criado_em),ic:"❌",cor:"#dc2626",t:"Proposta perdida",d:x.motivo_perda||""});
+  ev.sort((a,b)=>a.dt-b.dt);
+  const ex=document.getElementById("rdModal");if(ex)ex.remove();
+  const ov=document.createElement("div");
+  ov.id="rdModal";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:30px";
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  const t=comTemp(x),ch=comChance(x);
+  ov.innerHTML=`<div style="background:#fff;border-radius:16px;max-width:620px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid #e5e9f0;position:sticky;top:0;background:#fff;z-index:2">
+      <div><div style="font-size:.92rem;font-weight:800;color:#0d1f35">📜 ${x.nome}</div>
+      <div style="font-size:.66rem;color:#64748b;margin-top:2px"><span class="rh-badge" style="background:${COM_ST_COLORS[x.status]}18;color:${COM_ST_COLORS[x.status]}">${x.status}</span> ${t?t.ic+" "+t.lbl:""} · Chance ${ch}% · ${fmtBRL(x.valor)}</div></div>
+      <span onclick="document.getElementById('rdModal').remove()" style="cursor:pointer;font-size:1rem;color:#64748b;padding:4px 10px;border-radius:8px">✖</span></div>
+    <div style="padding:20px 26px"><div class="cv-tl">
+      ${ev.map(e=>`<div class="cv-tl-item"><div class="cv-tl-dot" style="border-color:${e.cor}">${e.ic}</div>
+        <div style="font-size:.62rem;color:#94a3b8;font-weight:700">${e.dt.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
+        <div style="font-size:.76rem;font-weight:800;color:#0d1f35">${e.t}</div>
+        ${e.d?`<div style="font-size:.68rem;color:#64748b">${e.d}</div>`:""}</div>`).join("")}
+    </div></div></div>`;
+  document.body.appendChild(ov);
 }
 /* ── Painel Comercial (Diretoria) ── */
 function comDashLoad(){
@@ -4219,60 +4587,171 @@ function _cdBarRows(pairs,corFn){
 function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
   const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const mAntIni=new Date(hoje.getFullYear(),hoje.getMonth()-1,1),mAntFim=new Date(hoje.getFullYear(),hoje.getMonth(),0,23,59,59);
   const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
+  const noMesAnt=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mAntIni&&x<=mAntFim;};
   const P=COM_P;
-  const envMes=P.filter(p=>noMes(p.data_envio_proposta));
-  const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em));
+  const envMes=P.filter(p=>noMes(p.data_envio_proposta)),envAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
+  const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em)),fecAnt=P.filter(p=>p.status==="FECHADO"&&noMesAnt(p.fechado_em));
   const visMes=P.filter(p=>noMes(p.ultima_visita));
   const emp=envMes.filter(p=>p.tipo_cliente!=="CONDOMINIO").length,cond=envMes.filter(p=>p.tipo_cliente==="CONDOMINIO").length;
   const taxa=envMes.length?Math.round(fecMes.length/envMes.length*100):null;
+  const taxaAnt=envAnt.length?Math.round(fecAnt.length/envAnt.length*100):null;
   const fechTodas=P.filter(p=>p.status==="FECHADO"&&p.data_envio_proposta&&p.fechado_em);
   const tempoMedio=fechTodas.length?(fechTodas.reduce((s,p)=>s+comDias(p),0)/fechTodas.length).toFixed(1):"—";
-  const emNeg=P.filter(p=>["PROPOSTA ENVIADA","EM NEGOCIAÇÃO"].includes(p.status));
+  const ativas=P.filter(p=>COM_ST_ATIVOS.includes(p.status));
+  const emNeg=P.filter(p=>["PROPOSTA","NEGOCIAÇÃO","CONTRATO"].includes(p.status));
   const pipeR$=emNeg.reduce((s,p)=>s+(Number(p.valor)||0),0);
   const fecMesR$=fecMes.reduce((s,p)=>s+(Number(p.valor)||0),0);
+  const fecAntR$=fecAnt.reduce((s,p)=>s+(Number(p.valor)||0),0);
+  const perMes=P.filter(p=>p.status==="PERDIDO"&&noMes(p.atualizado_em||p.criado_em));
+  const perMesR$=perMes.reduce((s,p)=>s+(Number(p.valor)||0),0);
   const ticket=fechTodas.length?fechTodas.reduce((s,p)=>s+(Number(p.valor)||0),0)/fechTodas.length:null;
   const mesKey=ymd(mIni);
   const meta=COM_METAS.find(m=>String(m.mes).slice(0,10)===mesKey)||{};
-  const ordem=["PROSPECÇÃO","PROPOSTA ENVIADA","EM NEGOCIAÇÃO","FECHADO","PERDIDO","PAUSADO"];
-  const funil=ordem.map(s=>[s,P.filter(p=>p.status===s).length]).filter(([,v])=>v>0);
+  const funil=COM_ST_ORDER.map(s=>[s,P.filter(p=>p.status===s).length,P.filter(p=>p.status===s).reduce((t,p)=>t+(Number(p.valor)||0),0)]).filter(([,v])=>v>0);
   const maxF=Math.max(1,...funil.map(([,v])=>v));
-  const origem=(function(){const m={};envMes.length?envMes.forEach(p=>{m[p.origem_lead||"NÃO INFORMADO"]=(m[p.origem_lead||"NÃO INFORMADO"]||0)+1}):P.forEach(p=>{m[p.origem_lead||"NÃO INFORMADO"]=(m[p.origem_lead||"NÃO INFORMADO"]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
+  const origem=(function(){const m={};(envMes.length?envMes:P).forEach(p=>{m[p.origem_lead||"NÃO INFORMADO"]=(m[p.origem_lead||"NÃO INFORMADO"]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
   const cidades=(function(){const m={};P.forEach(p=>{if(p.cidade)m[p.cidade]=(m[p.cidade]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
-  const parados=P.filter(p=>["PROSPECÇÃO","PROPOSTA ENVIADA","EM NEGOCIAÇÃO"].includes(p.status)).map(p=>{const ref=p.atualizado_em||p.criado_em;const d=Math.floor((new Date()-new Date(ref))/86400000);return{p,d};}).filter(o=>o.d>=7).sort((a,b)=>b.d-a.d);
+  const cidadeR$=(function(){const m={};P.filter(p=>p.status==="FECHADO").forEach(p=>{if(p.cidade)m[p.cidade]=(m[p.cidade]||0)+(Number(p.valor)||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})();
+  const origemR$=(function(){const m={};P.filter(p=>p.status==="FECHADO").forEach(p=>{m[p.origem_lead||"NÃO INFORMADO"]=(m[p.origem_lead||"NÃO INFORMADO"]||0)+(Number(p.valor)||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})();
+  const servicoR$=(function(){const m={};P.filter(p=>p.status==="FECHADO").forEach(p=>{m[p.servico||"NÃO INFORMADO"]=(m[p.servico||"NÃO INFORMADO"]||0)+(Number(p.valor)||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
+  const parados=ativas.map(p=>({p,d:comDiasParado(p)})).filter(o=>o.d>=7).sort((a,b)=>b.d-a.d);
+  const criticas=ativas.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status)&&comDiasParado(p)>=5);
+  const vips=ticket?ativas.filter(p=>(Number(p.valor)||0)>=ticket*1.5&&comDiasParado(p)>=5):[];
   const mesNome=hoje.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
-  const kpi=(ic,lbl,val,sub,cor)=>`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:16px 20px;border-top:3px solid ${cor}"><div style="font-size:1.1rem">${ic}</div><div style="font-size:.62rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin:6px 0 2px">${lbl}</div><div style="font-size:1.55rem;font-weight:900;color:#0d1f35">${val}</div><div style="font-size:.66rem;color:#94a3b8">${sub}</div></div>`;
+  /* receita prevista (pipeline ponderado) e previsão de meta */
+  const previstaR$=fecMesR$+ativas.reduce((s,p)=>s+(Number(p.valor)||0)*comChance(p)/100,0);
+  const diasMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
+  const runRate=hoje.getDate()>0?fecMesR$/hoje.getDate()*diasMes:0;
+  const metaV=Number(meta.meta_valor)||0;
+  const probMeta=metaV?Math.min(99,Math.max(1,Math.round((Math.max(runRate,previstaR$)/metaV)*100*0.9))):null;
+  /* saúde comercial (0-100) */
+  let saude=0;
+  saude+=ativas.length?Math.round((1-Math.min(1,parados.length/ativas.length))*25):12;
+  saude+=taxa===null?12:Math.min(25,Math.round(taxa/40*25));
+  saude+=metaV?Math.min(25,Math.round(fecMesR$/metaV*25)):(pipeR$>0?15:5);
+  const respondidas=P.filter(p=>p.data_envio_proposta).length?Math.round(P.filter(p=>p.respondido_em).length/P.filter(p=>p.data_envio_proposta).length*100):null;
+  saude+=respondidas===null?12:Math.min(25,Math.round(respondidas/60*25));
+  saude=Math.min(100,saude);
+  const saudeInfo=saude>=80?{lbl:"Excelente",cor:"#16a34a",ic:"🟢"}:saude>=60?{lbl:"Boa",cor:"#2e8fef",ic:"🔵"}:saude>=40?{lbl:"Atenção",cor:"#f97316",ic:"🟠"}:{lbl:"Crítica",cor:"#dc2626",ic:"🔴"};
+  /* insights automáticos */
+  const insights=[];
+  if(taxa!==null&&taxaAnt!==null&&taxaAnt>0)insights.push({ic:taxa>=taxaAnt?"📈":"📉",cor:taxa>=taxaAnt?"#16a34a":"#dc2626",t:`Conversão ${taxa>=taxaAnt?"subiu":"caiu"} de <b>${taxaAnt}%</b> para <b>${taxa}%</b> vs mês anterior.`});
+  if(cidadeR$.length)insights.push({ic:"🏙️",cor:"#0d9488",t:`<b>${cidadeR$[0][0]}</b> é a cidade líder em receita: <b>${fmtBRL(cidadeR$[0][1])}</b> em contratos fechados.`});
+  if(origemR$.length)insights.push({ic:"🧲",cor:"#7c3aed",t:`A origem mais lucrativa é <b>${origemR$[0][0]}</b> (${fmtBRL(origemR$[0][1])} fechados) — vale investir mais neste canal.`});
+  if(parados.length)insights.push({ic:"⏸️",cor:"#f97316",t:`<b>${parados.length} proposta(s)</b> paradas há 7+ dias somando <b>${fmtBRL(parados.reduce((s,o)=>s+(Number(o.p.valor)||0),0))}</b> — priorizar contato.`});
+  if(ticket)insights.push({ic:"💎",cor:"#2e8fef",t:`Ticket médio de <b>${fmtBRL(ticket)}</b> por contrato fechado.`});
+  if(probMeta!==null)insights.push({ic:"🎯",cor:probMeta>=70?"#16a34a":probMeta>=40?"#f97316":"#dc2626",t:`Mantendo o ritmo atual, a probabilidade de bater a meta do mês é de <b>${probMeta}%</b> (previsão: ${fmtBRL(Math.max(runRate,previstaR$))}).`});
+  if(!insights.length)insights.push({ic:"🚀",cor:"#2e8fef",t:"Cadastre propostas com valor e cidade para o JARVIS gerar insights automáticos."});
+  /* alertas */
+  const alertas=[];
+  criticas.forEach(p=>alertas.push({cor:"#dc2626",bg:"#fef2f2",t:`🚨 <b>${p.nome}</b> — negociação crítica: ${comDiasParado(p)}d sem movimento (${fmtBRL(p.valor)})`}));
+  vips.filter(p=>!criticas.includes(p)).forEach(p=>alertas.push({cor:"#7c3aed",bg:"#f5f3ff",t:`👑 <b>${p.nome}</b> — cliente VIP (${fmtBRL(p.valor)}) parado há ${comDiasParado(p)}d`}));
+  if(metaV){const esperado=metaV*(hoje.getDate()/diasMes);if(fecMesR$<esperado*0.75)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`📉 Receita fechada (${fmtBRL(fecMesR$)}) está <b>abaixo do ritmo da meta</b> — esperado ${fmtBRL(esperado)} até hoje.`});}
+  if(taxa!==null&&taxaAnt!==null&&taxa<taxaAnt)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`🎯 Conversão caiu vs mês anterior (${taxaAnt}% → ${taxa}%).`});
+  if(envMes.length<envAnt.length)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`🗂️ Pipeline desacelerou: ${envMes.length} propostas enviadas vs ${envAnt.length} no mês anterior.`});
+  parados.slice(0,3).forEach(o=>{if(!criticas.includes(o.p)&&!vips.includes(o.p))alertas.push({cor:"#64748b",bg:"#f8fafc",t:`⏸️ <b>${o.p.nome}</b> — ${o.d}d parado (${o.p.status})`});});
+  /* ranking por responsável */
+  const ranking=(function(){const m={};P.forEach(p=>{const r=(p.responsavel||"—").trim()||"—";if(!m[r])m[r]={env:0,fec:0,rec:0,pipe:0};if(p.data_envio_proposta)m[r].env++;if(p.status==="FECHADO"){m[r].fec++;m[r].rec+=Number(p.valor)||0;}if(COM_ST_ATIVOS.includes(p.status))m[r].pipe+=Number(p.valor)||0;});return Object.entries(m).sort((a,b)=>b[1].rec-a[1].rec);})();
+  /* série 6 meses p/ gráficos */
+  const mesesLbl=[];for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);mesesLbl.push(d.toLocaleDateString("pt-BR",{month:"short"}));}
+  const sFecR=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
+  const sEnvN=comSerieMensal(P,p=>p.data_envio_proposta,()=>1,6);
+  const sFecN=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,()=>1,6);
+  const kpi=(ic,lbl,val,sub,cor,spark)=>`<div class="cvk" style="border-top:3px solid ${cor}"><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:5px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${val}</div><div style="font-size:.64rem;color:#94a3b8">${sub}</div>${spark||""}</div>`;
   const metaBar=(lbl,real,alvo,fmt)=>{
     const pct=alvo?Math.min(100,Math.round(real/alvo*100)):0;
     const c=pct>=100?"#16a34a":pct>=60?"#2e8fef":"#f97316";
     return `<div style="margin-bottom:12px"><div class="rd-bar-row"><span style="font-weight:700;color:#334155">${lbl}</span><b>${fmt(real)} / ${alvo?fmt(alvo):"sem meta"}</b></div><div style="background:#eef2f7;border-radius:6px;height:9px"><div style="width:${alvo?Math.max(3,pct):0}%;height:9px;border-radius:6px;background:${c};transition:width .4s"></div></div>${alvo?`<div style="font-size:.62rem;color:${c};font-weight:800;margin-top:2px">${pct}% da meta</div>`:""}</div>`;
   };
+  const resumoAuto=`O comercial está com saúde <b style="color:${saudeInfo.cor}">${saudeInfo.lbl.toLowerCase()} (${saude}/100)</b>. `+
+    `${envMes.length} proposta(s) enviadas em ${mesNome} (${emp} empresas, ${cond} condomínios), pipeline de <b>${fmtBRL(pipeR$)}</b> em negociação e <b>${fmtBRL(fecMesR$)}</b> já fechados no mês`+
+    `${taxa!==null?`, com conversão de <b>${taxa}%</b>`:""}.`+
+    `${criticas.length?` <b style="color:#dc2626">${criticas.length} negociação(ões) críticas exigem contato imediato.</b>`:""}`+
+    `${probMeta!==null?` Probabilidade de bater a meta: <b>${probMeta}%</b>.`:""}`;
   let h='';
+  /* ── COCKPIT HERO ── */
+  h+=`<div style="background:linear-gradient(135deg,#0d1f35,#173a66);border-radius:16px;padding:22px 26px;margin-bottom:14px;color:#fff;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:center;animation:cvFadeUp .4s ease both">
+    <div style="text-align:center">
+      <div style="position:relative;width:118px;height:118px;margin:0 auto">
+        <svg width="118" height="118" viewBox="0 0 118 118">
+          <circle cx="59" cy="59" r="50" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="10"/>
+          <circle cx="59" cy="59" r="50" fill="none" stroke="${saudeInfo.cor}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(saude/100*314).toFixed(0)} 314" transform="rotate(-90 59 59)" style="transition:stroke-dasharray .8s ease"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:1.7rem;font-weight:900">${saude}</div><div style="font-size:.56rem;color:#9fb3d1;text-transform:uppercase;letter-spacing:.5px">Saúde</div></div>
+      </div>
+      <div style="font-size:.7rem;font-weight:800;color:${saudeInfo.cor};margin-top:6px">${saudeInfo.ic} ${saudeInfo.lbl}</div>
+    </div>
+    <div>
+      <div style="font-size:.66rem;font-weight:800;color:#9fb3d1;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🧭 Cockpit Executivo — ${mesNome}</div>
+      <div style="font-size:.82rem;line-height:1.6;color:#e6eefc">${resumoAuto}</div>
+      <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap">
+        <div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Receita prevista</div><div style="font-size:1.05rem;font-weight:900">${fmtBRL(previstaR$)}</div></div>
+        <div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Confirmada</div><div style="font-size:1.05rem;font-weight:900;color:#4ade80">${fmtBRL(fecMesR$)}</div></div>
+        <div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Perdida (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#f87171">${fmtBRL(perMesR$)}</div></div>
+        <div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Pipeline</div><div style="font-size:1.05rem;font-weight:900;color:#93c5fd">${fmtBRL(pipeR$)}</div></div>
+        ${metaV?`<div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Meta</div><div style="font-size:1.05rem;font-weight:900">${Math.round(fecMesR$/metaV*100)}%</div></div>`:""}
+        ${probMeta!==null?`<div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Prob. de bater meta</div><div style="font-size:1.05rem;font-weight:900;color:${probMeta>=70?"#4ade80":probMeta>=40?"#fbbf24":"#f87171"}">${probMeta}%</div></div>`:""}
+      </div>
+    </div>
+  </div>`;
+  /* ── KPIs ── */
   h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px">`;
-  h+=kpi("📨","Propostas no mês",envMes.length,`${emp} empresas · ${cond} condomínios`,"#2e8fef");
+  h+=kpi("📨","Propostas no mês",envMes.length,`${emp} empresas · ${cond} condomínios`,"#2e8fef",comSpark(sEnvN,"#2e8fef"));
   h+=kpi("🏠","Visitas no mês",visMes.length,"clientes visitados","#7c3aed");
-  h+=kpi("🎯","Taxa de conversão",taxa===null?"—":taxa+"%",`${fecMes.length} fechadas no mês`,"#16a34a");
+  h+=kpi("🎯","Conversão",taxa===null?"—":taxa+"%",taxaAnt!==null?`mês anterior: ${taxaAnt}%`:`${fecMes.length} fechadas no mês`,"#16a34a");
   h+=kpi("⏱️","Tempo médio p/ fechar",tempoMedio,"dias (proposta → contrato)","#f97316");
-  h+=kpi("🤝","Fechados no mês",fecMes.length,mesNome,"#16a34a");
+  h+=kpi("📈","Ticket médio",ticket===null?"—":fmtBRL(ticket),`${fechTodas.length} contratos`,"#0d9488",comSpark(sFecR,"#16a34a"));
   h+=`</div>`;
-  h+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">`;
-  h+=kpi("💰","Pipeline em negociação",fmtBRL(pipeR$),`${emNeg.length} propostas ativas`,"#1e4d8c");
-  h+=kpi("🏆","Fechado no mês (R$)",fmtBRL(fecMesR$),mesNome,"#16a34a");
-  h+=kpi("📈","Ticket médio",ticket===null?"—":fmtBRL(ticket),"contratos fechados (geral)","#7c3aed");
+  /* ── INSIGHTS + ALERTAS ── */
+  h+=`<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">💡 Insights Inteligentes <span style="font-size:.6rem;color:#94a3b8;font-weight:700">gerados automaticamente</span></div>
+    ${insights.map((i,ix)=>`<div class="cv-ins" style="animation-delay:${ix*60}ms"><div style="font-size:1rem">${i.ic}</div><div style="font-size:.74rem;color:#334155;line-height:1.5">${i.t}</div></div>`).join("")}</div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔔 Alertas & Ações</div>
+    ${alertas.length?alertas.slice(0,8).map((a,ix)=>`<div class="cv-alert" style="background:${a.bg};color:#334155;animation-delay:${ix*50}ms"><span>${a.t}</span></div>`).join(""):'<div style="color:#16a34a;font-weight:700;font-size:.76rem">✅ Nenhum alerta. Operação comercial sob controle!</div>'}</div>`;
   h+=`</div>`;
+  /* ── GRÁFICOS: receita mensal + meta×realizado ── */
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔻 Funil de Vendas (geral)</div><div style="font-size:.76rem">${funil.length?funil.map(([s,v])=>`<div style="margin-bottom:7px"><div class="rd-bar-row"><span style="font-weight:700;color:${COM_ST_COLORS[s]}">${s}</span><b>${v}</b></div><div style="background:#eef2f7;border-radius:6px;height:9px"><div style="width:${Math.max(4,v/maxF*100)}%;height:9px;border-radius:6px;background:${COM_ST_COLORS[s]}"></div></div></div>`).join(""):'<div style="color:#94a3b8">Sem propostas ainda.</div>'}</div></div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📈 Receita Fechada — últimos 6 meses</div><div style="height:190px"><canvas id="cdRev"></canvas></div></div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📊 Propostas × Fechamentos — últimos 6 meses</div><div style="height:190px"><canvas id="cdEnvFec"></canvas></div></div>`;
+  h+=`</div>`;
+  /* ── FUNIL com R$ e conversão por etapa ── */
+  const funilAtivo=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO","FECHADO"].map(s=>{const arr=P.filter(p=>p.status===s);return[s,arr.length,arr.reduce((t,p)=>t+(Number(p.valor)||0),0)];});
+  h+=`<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔻 Funil Comercial <span style="font-size:.6rem;color:#94a3b8;font-weight:700">quantidade · valor · conversão etapa a etapa</span></div>
+    <div style="font-size:.76rem">${funilAtivo.map(([s,v,r],i)=>{
+      const prev=i>0?funilAtivo[i-1][1]:null;
+      const convPct=prev?Math.round(v/prev*100):null;
+      const wmax=Math.max(1,...funilAtivo.map(f=>f[1]));
+      return`<div style="margin-bottom:9px"><div class="rd-bar-row"><span style="font-weight:700;color:${COM_ST_COLORS[s]}">${s} <span style="color:#94a3b8;font-weight:600">${r?"· "+fmtBRL(r):""}</span></span><b>${v}${convPct!==null&&prev?` <span style="font-size:.62rem;color:${convPct>=50?"#16a34a":"#f97316"}">(${convPct}%)</span>`:""}</b></div><div style="background:#eef2f7;border-radius:6px;height:10px"><div style="width:${Math.max(3,v/wmax*100)}%;height:10px;border-radius:6px;background:${COM_ST_COLORS[s]};transition:width .5s"></div></div></div>`;}).join("")}
+    ${perMes.length?`<div style="font-size:.66rem;color:#dc2626;margin-top:6px">❌ ${perMes.length} perdida(s) no mês (${fmtBRL(perMesR$)})</div>`:""}</div></div>`;
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧲 Origem dos Leads</div><div style="font-size:.76rem">${_cdBarRows(origem,()=>"#7c3aed")}</div></div>`;
   h+=`</div>`;
+  /* ── CIDADES (heat ranking) + SERVIÇOS ── */
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🗺️ Propostas por Cidade</div><div style="font-size:.76rem">${_cdBarRows(cidades,()=>"#0d9488")}</div></div>`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">⚠️ Paradas há 7+ dias (sem movimento)</div><div style="font-size:.74rem">${parados.length?parados.slice(0,8).map(o=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9"><span style="font-weight:700;color:#334155">${o.p.nome}</span><span style="color:#dc2626;font-weight:800">${o.d} dias</span></div>`).join(""):'<div style="color:#16a34a;font-weight:700">✅ Nenhuma proposta parada. Tudo em movimento!</div>'}</div></div>`;
+  const cidMax=cidadeR$.length?cidadeR$[0][1]:0;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🗺️ Heatmap de Cidades <span style="font-size:.6rem;color:#94a3b8;font-weight:700">receita fechada · propostas</span></div>
+    <div style="font-size:.74rem">${cidadeR$.length?cidadeR$.slice(0,8).map(([c,r])=>{const q=(cidades.find(x=>x[0]===c)||[,0])[1];const heat=cidMax?r/cidMax:0;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;margin-bottom:5px;background:rgba(13,148,136,${(0.06+heat*0.22).toFixed(2)})"><span style="font-weight:800;color:#0d1f35">${c} <span style="font-weight:600;color:#64748b;font-size:.64rem">· ${q} proposta(s)</span></span><b style="color:#0d9488">${fmtBRL(r)}</b></div>`;}).join(""):_cdBarRows(cidades,()=>"#0d9488")}</div></div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Receita por Serviço</div><div style="font-size:.76rem">${servicoR$.length?_cdBarRows(servicoR$.map(([k,v])=>[k+" — "+fmtBRL(v),v]),()=>"#1e4d8c"):'<div style="color:#94a3b8">Sem contratos fechados ainda.</div>'}</div></div>`;
   h+=`</div>`;
+  /* ── RANKING + TIMELINE GERAL ── */
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🏅 Ranking Comercial <span style="font-size:.6rem;color:#94a3b8;font-weight:700">por responsável</span></div>
+    <table style="width:100%;border-collapse:collapse;font-size:.72rem"><thead><tr>${["","Responsável","Receita","Contratos","Conversão","Pipeline"].map(c=>`<th style="text-align:left;padding:6px 8px;color:#64748b;font-size:.6rem;text-transform:uppercase;border-bottom:1px solid #e5e9f0">${c}</th>`).join("")}</tr></thead><tbody>
+    ${ranking.map(([r,d],i)=>`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:7px 8px">${["🥇","🥈","🥉"][i]||(i+1)+"º"}</td><td style="padding:7px 8px;font-weight:800;color:#0d1f35">${r}</td><td style="padding:7px 8px;font-weight:700;color:#16a34a">${fmtBRL(d.rec)}</td><td style="padding:7px 8px">${d.fec}</td><td style="padding:7px 8px">${d.env?Math.round(d.fec/d.env*100)+"%":"—"}</td><td style="padding:7px 8px">${fmtBRL(d.pipe)}</td></tr>`).join("")}</tbody></table></div>`;
+  const tlGeral=COM_LOG.slice(0,10);
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🕐 Últimas Atividades</div>
+    <div style="font-size:.7rem">${tlGeral.length?tlGeral.map(l=>{const p=P.find(x=>x.id===l.proposta_id);const ic=l.etapa>0?(l.canal==="WHATSAPP"?"📱":"✉️"):({VISITA:"🏠",WHATSAPP:"📱",EMAIL:"✉️"}[l.canal]||"⚙️");return`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;align-items:baseline"><span>${ic}</span><div style="flex:1"><b style="color:#0d1f35">${p?p.nome:"#"+l.proposta_id}</b> — ${l.etapa>0?(COM_ETAPA_LBL[l.etapa]||"")+(l.status==="falhou"?" ⚠️":""):l.detalhe||"evento"}</div><span style="color:#94a3b8;white-space:nowrap;font-size:.62rem">${new Date(l.enviado_em).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</span></div>`;}).join(""):'<div style="color:#94a3b8">Sem atividades registradas ainda.</div>'}</div></div>`;
+  h+=`</div>`;
+  /* ── METAS + IA ── */
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
+  const melhorMes=(function(){const s=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,12);const mx=Math.max(...s);if(!mx)return null;const i=s.indexOf(mx);const d=new Date(hoje.getFullYear(),hoje.getMonth()-(11-i),1);return{lbl:d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"}),val:mx};})();
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🎯 Metas de ${mesNome}</div>
     ${metaBar("Propostas enviadas",envMes.length,meta.meta_propostas,v=>v)}
     ${metaBar("Contratos fechados",fecMes.length,meta.meta_fechamentos,v=>v)}
     ${metaBar("Valor fechado",fecMesR$,meta.meta_valor?Number(meta.meta_valor):null,fmtBRL)}
+    ${melhorMes?`<div style="font-size:.64rem;color:#64748b;margin-top:2px">🏆 Melhor mês: <b>${melhorMes.lbl}</b> (${fmtBRL(melhorMes.val)})</div>`:""}
     <div style="display:flex;gap:8px;margin-top:14px;align-items:end">
       <div style="flex:1"><label class="rhf-l">Meta propostas</label><input class="rhf-i" id="cm-mp" type="number" min="0" value="${meta.meta_propostas||""}"></div>
       <div style="flex:1"><label class="rhf-l">Meta fechamentos</label><input class="rhf-i" id="cm-mf" type="number" min="0" value="${meta.meta_fechamentos||""}"></div>
@@ -4285,6 +4764,11 @@ function comDashRender(){
     <div id="cd-ia-out" style="margin-top:12px;font-size:.76rem;line-height:1.55;white-space:pre-wrap"></div></div>`;
   h+=`</div>`;
   el.innerHTML=h;
+  /* gráficos Chart.js */
+  try{
+    dc2("cdRev");CH["cdRev"]=new Chart(document.getElementById("cdRev"),{type:"line",data:{labels:mesesLbl,datasets:[{label:"Receita fechada",data:sFecR,borderColor:"#16a34a",backgroundColor:"rgba(22,163,74,.10)",borderWidth:2.5,pointRadius:4,pointBackgroundColor:"#16a34a",fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL(c.parsed.y)}}},scales:{y:{ticks:{callback:v=>"R$ "+(v>=1000?(v/1000)+"k":v),font:{size:10}}},x:{ticks:{font:{size:10}}}}}});
+    dc2("cdEnvFec");CH["cdEnvFec"]=new Chart(document.getElementById("cdEnvFec"),{type:"bar",data:{labels:mesesLbl,datasets:[{label:"Enviadas",data:sEnvN,backgroundColor:"#2e8fef",borderRadius:4},{label:"Fechadas",data:sFecN,backgroundColor:"#16a34a",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:10}}},scales:{y:{ticks:{stepSize:1,font:{size:10}}},x:{ticks:{font:{size:10}}}}}});
+  }catch(e){console.warn("charts comercial:",e);}
 }
 function comSalvarMeta(mesKey){
   const body={mes:mesKey,meta_propostas:document.getElementById("cm-mp").value||null,meta_fechamentos:document.getElementById("cm-mf").value||null,meta_valor:document.getElementById("cm-mv").value||null};
