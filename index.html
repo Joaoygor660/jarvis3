@@ -4170,6 +4170,77 @@ function comFiltrados(){
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   return rows;
 }
+/* ── Modal de detalhe dos cards (clique para ver os dados) ── */
+function comDet(kind){
+  const P=COM_P||[];
+  const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
+  const hd=["Cliente","Tipo","Contato","Cidade","Valor","Status","Envio","Parado","Chance","Resp."];
+  const det=p=>[p.nome||"—",p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.contato||"—",p.cidade||"—",fmtBRL(p.valor),p.status||"—",p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—",comDiasParado(p)+"d",comChance(p)+"%",(p.responsavel||"—").split(" ")[0]];
+  const soma=arr=>fmtBRL(arr.reduce((s,p)=>s+(Number(p.valor)||0),0));
+  let title="",rows=[],headers=hd;
+  if(kind==="abertas"){
+    const arr=P.filter(p=>COM_ST_ATIVOS.includes(p.status));
+    title="📂 Propostas Abertas — "+soma(arr);rows=arr.sort((a,b)=>comChance(b)-comChance(a)).map(det);
+  }else if(kind==="negociacao"){
+    const arr=P.filter(p=>["PROPOSTA","NEGOCIAÇÃO","CONTRATO"].includes(p.status));
+    title="💰 Receita em Negociação — "+soma(arr);rows=arr.sort((a,b)=>(Number(b.valor)||0)-(Number(a.valor)||0)).map(det);
+  }else if(kind==="fechadaMes"){
+    const arr=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em));
+    title="🏆 Fechadas no Mês — "+soma(arr);
+    headers=["Cliente","Tipo","Cidade","Serviço","Valor","Envio","Fechamento","Dias p/ fechar","Resp."];
+    rows=arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",p.servico||"—",fmtBRL(p.valor),p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—",rhFmt(p.fechado_em),comDias(p),(p.responsavel||"—").split(" ")[0]]);
+  }else if(kind==="perdidaMes"){
+    const arr=P.filter(p=>p.status==="PERDIDO"&&noMes(p.atualizado_em||p.criado_em));
+    title="📉 Perdidas no Mês — "+soma(arr);
+    headers=["Cliente","Tipo","Cidade","Valor","Origem","Motivo da perda","Resp."];
+    rows=arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",fmtBRL(p.valor),p.origem_lead||"—",p.motivo_perda||"—",(p.responsavel||"—").split(" ")[0]]);
+  }else if(kind==="conversao"){
+    const arr=P.filter(p=>noMes(p.data_envio_proposta));
+    const fec=arr.filter(p=>p.status==="FECHADO").length;
+    title=`🎯 Conversão do Mês — ${fec} fechada(s) de ${arr.length} enviada(s)`;
+    rows=arr.sort((a,b)=>(a.status==="FECHADO"?-1:1)-(b.status==="FECHADO"?-1:1)).map(det);
+  }else if(kind==="ticket"){
+    const arr=P.filter(p=>p.status==="FECHADO");
+    const t=arr.length?arr.reduce((s,p)=>s+(Number(p.valor)||0),0)/arr.length:0;
+    title="📈 Contratos Fechados — ticket médio "+fmtBRL(t);
+    headers=["Cliente","Tipo","Cidade","Serviço","Valor","Fechamento","Resp."];
+    rows=arr.sort((a,b)=>(Number(b.valor)||0)-(Number(a.valor)||0)).map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",p.servico||"—",fmtBRL(p.valor),p.fechado_em?rhFmt(p.fechado_em):"—",(p.responsavel||"—").split(" ")[0]]);
+  }else if(kind==="semresp"){
+    const arr=P.filter(p=>p.data_envio_proposta&&!p.respondido_em&&COM_ST_ATIVOS.includes(p.status));
+    title="⏳ Aguardando Retorno do Cliente — "+soma(arr);
+    headers=["Cliente","Contato","Telefone","Valor","Envio","Dias s/ resposta","Cadência","Resp."];
+    rows=arr.sort((a,b)=>comDias(b)-comDias(a)).map(p=>[p.nome,p.contato||"—",p.telefone||"—",fmtBRL(p.valor),rhFmt(p.data_envio_proposta),comDias(p)+"d",(p.cadencia_etapa||0)+"/5",(p.responsavel||"—").split(" ")[0]]);
+  }else if(kind==="criticas"){
+    const crit=P.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status)&&comDiasParado(p)>=5);
+    const acoes=P.filter(p=>p.proxima_acao_data&&COM_ST_ATIVOS.includes(p.status)&&String(p.proxima_acao_data).slice(0,10)<=ymd(hoje));
+    title="🚨 Críticas & Ações Pendentes";
+    headers=["Alerta","Cliente","Valor","Status","Próx. ação","Data","Resp."];
+    rows=[
+      ...crit.map(p=>["🚨 Crítica: "+comDiasParado(p)+"d parado",p.nome,fmtBRL(p.valor),p.status,(COM_PAC_ICON[p.proxima_acao_tipo]||"")+" "+(p.proxima_acao||"—"),p.proxima_acao_data?rhFmt(p.proxima_acao_data):"—",(p.responsavel||"—").split(" ")[0]]),
+      ...acoes.filter(p=>!crit.includes(p)).map(p=>["⏰ Ação vencida",p.nome,fmtBRL(p.valor),p.status,(COM_PAC_ICON[p.proxima_acao_tipo]||"")+" "+(p.proxima_acao||"—"),rhFmt(p.proxima_acao_data),(p.responsavel||"—").split(" ")[0]])
+    ];
+  }else if(kind==="envMes"){
+    const arr=P.filter(p=>noMes(p.data_envio_proposta));
+    title="📨 Propostas Enviadas no Mês — "+soma(arr);rows=arr.map(det);
+  }else if(kind==="visitasMes"){
+    const arr=P.filter(p=>noMes(p.ultima_visita));
+    title="🏠 Clientes Visitados no Mês";
+    headers=["Cliente","Tipo","Cidade","Valor","Status","Últ. visita","Total visitas","Resp."];
+    rows=arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",fmtBRL(p.valor),p.status,rhFmt(p.ultima_visita),p.visitas||0,(p.responsavel||"—").split(" ")[0]]);
+  }else if(kind==="tempo"){
+    const arr=P.filter(p=>p.status==="FECHADO"&&p.data_envio_proposta&&p.fechado_em);
+    title="⏱️ Tempo de Fechamento (proposta → contrato)";
+    headers=["Cliente","Cidade","Valor","Envio","Fechamento","Dias p/ fechar"];
+    rows=arr.map(p=>({p,d:comDias(p)})).sort((a,b)=>b.d-a.d).map(o=>[o.p.nome,o.p.cidade||"—",fmtBRL(o.p.valor),rhFmt(o.p.data_envio_proposta),rhFmt(o.p.fechado_em),o.d]);
+  }else if(kind==="prevista"){
+    const arr=P.filter(p=>COM_ST_ATIVOS.includes(p.status)&&(Number(p.valor)||0)>0);
+    title="🔮 Receita Prevista — pipeline ponderado pela chance";
+    headers=["Cliente","Valor","Chance","R$ ponderado","Status","Parado","Resp."];
+    rows=arr.map(p=>({p,w:(Number(p.valor)||0)*comChance(p)/100})).sort((a,b)=>b.w-a.w).map(o=>[o.p.nome,fmtBRL(o.p.valor),comChance(o.p)+"%",fmtBRL(o.w),o.p.status,comDiasParado(o.p)+"d",(o.p.responsavel||"—").split(" ")[0]]);
+  }else return;
+  _rdModal(title,headers,rows);
+}
 /* ── Dashboard superior: cards com sparkline + comparativo ── */
 function comRenderCards(){
   const el=document.getElementById("cp-kpis");if(!el)return;
@@ -4203,16 +4274,16 @@ function comRenderCards(){
     const up=d>=0;const bom=inv?!up:up;
     return`<span style="color:${bom?"#16a34a":"#dc2626"}">${up?"▲":"▼"} ${Math.abs(d)}% vs mês ant.</span>`;
   };
-  const card=(ic,icBg,lbl,val,cmpHtml,spark,tip)=>`<div class="cvk" title="${tip||""}"><div class="cvk-ic" style="background:${icBg}">${ic}</div><div class="cvk-lb">${lbl}</div><div class="cvk-v">${val}</div><div class="cvk-cmp">${cmpHtml}</div>${spark}</div>`;
+  const card=(kind,ic,icBg,lbl,val,cmpHtml,spark,tip)=>`<div class="cvk" style="cursor:pointer" onclick="comDet('${kind}')" title="${tip||""} — clique para ver os registros"><div class="cvk-ic" style="background:${icBg}">${ic}</div><div class="cvk-lb">${lbl}</div><div class="cvk-v">${val}</div><div class="cvk-cmp">${cmpHtml}</div>${spark}</div>`;
   el.innerHTML=
-    card("📂","#eef6ff","Propostas abertas",abertas.length,cmp(envMes.length,envAnt.length),comSpark(sEnv,"#2e8fef"),"Leads a contratos em andamento")+
-    card("💰","#e6fffb","Receita em negociação",fmtBRL(negR),`<span style="color:#64748b">${negoc.length} propostas ativas</span>`,"","Proposta + Negociação + Contrato")+
-    card("🏆","#ecfdf5","Receita fechada (mês)",fmtBRL(fecMesR),cmp(fecMesR,fecAntR),comSpark(sFec,"#16a34a"),"Contratos fechados no mês")+
-    card("📉","#fef2f2","Receita perdida (mês)",fmtBRL(perMesR),cmp(perMesR,perMesR&&fecAntR?fecAntR:null,true),comSpark(sPer,"#dc2626"),"Propostas perdidas no mês")+
-    card("🎯","#f5f3ff","Taxa de conversão",taxa===null?"—":taxa+"%",taxaAnt===null?'<span style="color:#94a3b8">— vs mês ant.</span>':cmp(taxa,taxaAnt),"","Fechadas ÷ enviadas no mês")+
-    card("📈","#fff7ed","Ticket médio",ticket===null?"—":fmtBRL(ticket),`<span style="color:#64748b">${fechTodas.length} contratos</span>`,"","Média dos contratos fechados")+
-    card("⏳","#fefce8","Sem resposta",semResp.length,`<span style="color:${semResp.length?"#d97706":"#16a34a"}">${semResp.length?"aguardando retorno":"tudo respondido"}</span>`,"","Propostas enviadas aguardando retorno do cliente")+
-    card("🚨","#fef2f2","Críticas / Ações hoje",`${criticas.length} <span style="font-size:.85rem;color:#64748b">/ ${acoesPend}</span>`,`<span style="color:${criticas.length?"#dc2626":"#16a34a"}">${criticas.length?"exigem contato":"sob controle"} · ${acoesPend} ações pendentes</span>`,comSpark(sVis,"#7c3aed"),"Negociações paradas + próximas ações vencidas");
+    card("abertas","📂","#eef6ff","Propostas abertas",abertas.length,cmp(envMes.length,envAnt.length),comSpark(sEnv,"#2e8fef"),"Leads a contratos em andamento")+
+    card("negociacao","💰","#e6fffb","Receita em negociação",fmtBRL(negR),`<span style="color:#64748b">${negoc.length} propostas ativas</span>`,"","Proposta + Negociação + Contrato")+
+    card("fechadaMes","🏆","#ecfdf5","Receita fechada (mês)",fmtBRL(fecMesR),cmp(fecMesR,fecAntR),comSpark(sFec,"#16a34a"),"Contratos fechados no mês")+
+    card("perdidaMes","📉","#fef2f2","Receita perdida (mês)",fmtBRL(perMesR),cmp(perMesR,perMesR&&fecAntR?fecAntR:null,true),comSpark(sPer,"#dc2626"),"Propostas perdidas no mês")+
+    card("conversao","🎯","#f5f3ff","Taxa de conversão",taxa===null?"—":taxa+"%",taxaAnt===null?'<span style="color:#94a3b8">— vs mês ant.</span>':cmp(taxa,taxaAnt),"","Fechadas ÷ enviadas no mês")+
+    card("ticket","📈","#fff7ed","Ticket médio",ticket===null?"—":fmtBRL(ticket),`<span style="color:#64748b">${fechTodas.length} contratos</span>`,"","Média dos contratos fechados")+
+    card("semresp","⏳","#fefce8","Sem resposta",semResp.length,`<span style="color:${semResp.length?"#d97706":"#16a34a"}">${semResp.length?"aguardando retorno":"tudo respondido"}</span>`,"","Propostas enviadas aguardando retorno do cliente")+
+    card("criticas","🚨","#fef2f2","Críticas / Ações hoje",`${criticas.length} <span style="font-size:.85rem;color:#64748b">/ ${acoesPend}</span>`,`<span style="color:${criticas.length?"#dc2626":"#16a34a"}">${criticas.length?"exigem contato":"sob controle"} · ${acoesPend} ações pendentes</span>`,comSpark(sVis,"#7c3aed"),"Negociações paradas + próximas ações vencidas");
 }
 function comRenderFiltros(){
   const box=document.getElementById("cp-tbl-filtros");if(!box)return;
@@ -4659,7 +4730,7 @@ function comDashRender(){
   const sFecR=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
   const sEnvN=comSerieMensal(P,p=>p.data_envio_proposta,()=>1,6);
   const sFecN=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,()=>1,6);
-  const kpi=(ic,lbl,val,sub,cor,spark)=>`<div class="cvk" style="border-top:3px solid ${cor}"><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:5px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${val}</div><div style="font-size:.64rem;color:#94a3b8">${sub}</div>${spark||""}</div>`;
+  const kpi=(kind,ic,lbl,val,sub,cor,spark)=>`<div class="cvk" style="border-top:3px solid ${cor};cursor:pointer" onclick="comDet('${kind}')" title="Clique para ver os registros"><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:5px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${val}</div><div style="font-size:.64rem;color:#94a3b8">${sub}</div>${spark||""}</div>`;
   const metaBar=(lbl,real,alvo,fmt)=>{
     const pct=alvo?Math.min(100,Math.round(real/alvo*100)):0;
     const c=pct>=100?"#16a34a":pct>=60?"#2e8fef":"#f97316";
@@ -4687,22 +4758,22 @@ function comDashRender(){
       <div style="font-size:.66rem;font-weight:800;color:#9fb3d1;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🧭 Cockpit Executivo — ${mesNome}</div>
       <div style="font-size:.82rem;line-height:1.6;color:#e6eefc">${resumoAuto}</div>
       <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap">
-        <div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Receita prevista</div><div style="font-size:1.05rem;font-weight:900">${fmtBRL(previstaR$)}</div></div>
-        <div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Confirmada</div><div style="font-size:1.05rem;font-weight:900;color:#4ade80">${fmtBRL(fecMesR$)}</div></div>
-        <div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Perdida (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#f87171">${fmtBRL(perMesR$)}</div></div>
-        <div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Pipeline</div><div style="font-size:1.05rem;font-weight:900;color:#93c5fd">${fmtBRL(pipeR$)}</div></div>
-        ${metaV?`<div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Meta</div><div style="font-size:1.05rem;font-weight:900">${Math.round(fecMesR$/metaV*100)}%</div></div>`:""}
-        ${probMeta!==null?`<div><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Prob. de bater meta</div><div style="font-size:1.05rem;font-weight:900;color:${probMeta>=70?"#4ade80":probMeta>=40?"#fbbf24":"#f87171"}">${probMeta}%</div></div>`:""}
+        <div onclick="comDet('prevista')" style="cursor:pointer" title="Clique para ver o cálculo por proposta"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Receita prevista</div><div style="font-size:1.05rem;font-weight:900">${fmtBRL(previstaR$)}</div></div>
+        <div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver os contratos"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Confirmada</div><div style="font-size:1.05rem;font-weight:900;color:#4ade80">${fmtBRL(fecMesR$)}</div></div>
+        <div onclick="comDet('perdidaMes')" style="cursor:pointer" title="Clique para ver as perdas"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Perdida (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#f87171">${fmtBRL(perMesR$)}</div></div>
+        <div onclick="comDet('negociacao')" style="cursor:pointer" title="Clique para ver o pipeline"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Pipeline</div><div style="font-size:1.05rem;font-weight:900;color:#93c5fd">${fmtBRL(pipeR$)}</div></div>
+        ${metaV?`<div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver o realizado"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Meta</div><div style="font-size:1.05rem;font-weight:900">${Math.round(fecMesR$/metaV*100)}%</div></div>`:""}
+        ${probMeta!==null?`<div onclick="comDet('prevista')" style="cursor:pointer" title="Clique para ver a base do cálculo"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Prob. de bater meta</div><div style="font-size:1.05rem;font-weight:900;color:${probMeta>=70?"#4ade80":probMeta>=40?"#fbbf24":"#f87171"}">${probMeta}%</div></div>`:""}
       </div>
     </div>
   </div>`;
   /* ── KPIs ── */
   h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px">`;
-  h+=kpi("📨","Propostas no mês",envMes.length,`${emp} empresas · ${cond} condomínios`,"#2e8fef",comSpark(sEnvN,"#2e8fef"));
-  h+=kpi("🏠","Visitas no mês",visMes.length,"clientes visitados","#7c3aed");
-  h+=kpi("🎯","Conversão",taxa===null?"—":taxa+"%",taxaAnt!==null?`mês anterior: ${taxaAnt}%`:`${fecMes.length} fechadas no mês`,"#16a34a");
-  h+=kpi("⏱️","Tempo médio p/ fechar",tempoMedio,"dias (proposta → contrato)","#f97316");
-  h+=kpi("📈","Ticket médio",ticket===null?"—":fmtBRL(ticket),`${fechTodas.length} contratos`,"#0d9488",comSpark(sFecR,"#16a34a"));
+  h+=kpi("envMes","📨","Propostas no mês",envMes.length,`${emp} empresas · ${cond} condomínios`,"#2e8fef",comSpark(sEnvN,"#2e8fef"));
+  h+=kpi("visitasMes","🏠","Visitas no mês",visMes.length,"clientes visitados","#7c3aed");
+  h+=kpi("conversao","🎯","Conversão",taxa===null?"—":taxa+"%",taxaAnt!==null?`mês anterior: ${taxaAnt}%`:`${fecMes.length} fechadas no mês`,"#16a34a");
+  h+=kpi("tempo","⏱️","Tempo médio p/ fechar",tempoMedio,"dias (proposta → contrato)","#f97316");
+  h+=kpi("ticket","📈","Ticket médio",ticket===null?"—":fmtBRL(ticket),`${fechTodas.length} contratos`,"#0d9488",comSpark(sFecR,"#16a34a"));
   h+=`</div>`;
   /* ── INSIGHTS + ALERTAS ── */
   h+=`<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">`;
