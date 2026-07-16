@@ -464,11 +464,11 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   </div>
   <div class="nav-sec" id="navSecRH" style="display:none">
     <div class="nav-lbl">RH</div>
-    <div class="ni" onclick="navTo('rhvagas',this)" style="position:relative"><span class="ni-ic">📋</span><span>Controle de Vagas</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
-    <div class="ni" onclick="navTo('rhentrev',this)" style="position:relative"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
-    <div class="ni" onclick="navTo('rhdesl',this)" style="position:relative"><span class="ni-ic">🚪</span><span>Desligamentos</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
-    <div class="ni" onclick="navTo('rhres',this)" style="position:relative"><span class="ni-ic">🔄</span><span>Reservas → Efetivação</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
-    <div class="ni" onclick="navTo('rhtrein',this)" style="position:relative"><span class="ni-ic">🎓</span><span>Treinamentos</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">BETA</span></div>
+    <div class="ni" onclick="navTo('rhvagas',this)" style="position:relative"><span class="ni-ic">📋</span><span>Controle de Vagas</span></div>
+    <div class="ni" onclick="navTo('rhentrev',this)" style="position:relative"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span></div>
+    <div class="ni" onclick="navTo('rhdesl',this)" style="position:relative"><span class="ni-ic">🚪</span><span>Desligamentos</span></div>
+    <div class="ni" onclick="navTo('rhres',this)" style="position:relative"><span class="ni-ic">🔄</span><span>Reservas → Efetivação</span></div>
+    <div class="ni" onclick="navTo('rhtrein',this)" style="position:relative"><span class="ni-ic">🎓</span><span>Treinamentos</span></div>
   </div>
   <div class="nav-sec" id="navSecRHDash" style="display:none">
     <div class="nav-lbl">Diretoria</div>
@@ -877,7 +877,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px">
           <div><label class="rhf-l">Data de Abertura</label><input class="rhf-i" id="rhf-dtabertura" type="date"></div>
           <div><label class="rhf-l">Preenchida por</label><input class="rhf-i" id="rhf-preenchida" type="text" placeholder="Quem assumiu a vaga"></div>
-          <div><label class="rhf-l">Data Fechamento</label><input class="rhf-i" id="rhf-dtfech" type="date"></div>
+          <div><label class="rhf-l">Data Fechamento *</label><input class="rhf-i" id="rhf-dtfech" type="date" required></div>
           <div><label class="rhf-l">Aberta por (usuário)</label><input class="rhf-i" id="rhf-usuario" type="text" placeholder="Usuário que cadastrou"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
@@ -975,6 +975,11 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:14px">
           <div><label class="rhf-l">Motivo — escolha ou escreva</label><input class="rhf-i" id="rdf-motivo" type="text" list="dl-rh-motsaida" placeholder="Escolha da lista ou digite"><datalist id="dl-rh-motsaida"><option>SALÁRIO</option><option>OUTRO EMPREGO</option><option>DISTÂNCIA / LOCAL</option><option>ESCALA / HORÁRIO</option><option>PROBLEMAS PESSOAIS</option><option>PROBLEMAS DE SAÚDE</option><option>INSATISFAÇÃO COM A GESTÃO</option><option>DESEMPENHO</option><option>FALTAS EXCESSIVAS</option></datalist></div>
           <div><label class="rhf-l">Observação</label><input class="rhf-i" id="rdf-obs" type="text" placeholder="Anotações (opcional)"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
+          <div><label class="rhf-l">Cumpre aviso prévio?</label><select class="rhf-i" id="rdf-aviso" onchange="rhDesAvisoToggle()"><option value="">—</option><option value="sim">Sim, vai cumprir</option><option value="nao">Não</option></select></div>
+          <div id="rdf-aviso-tipo-wrap" style="display:none"><label class="rhf-l">Tipo do aviso</label><select class="rhf-i" id="rdf-aviso-tipo"><option>TRABALHADO</option><option>INDENIZADO</option><option>DISPENSADO</option></select></div>
+          <div id="rdf-aviso-dias-wrap" style="display:none"><label class="rhf-l">Qtd. de dias</label><input class="rhf-i" id="rdf-aviso-dias" type="number" min="0" placeholder="Ex: 30"></div>
         </div>
         <div style="display:flex;gap:10px">
           <button type="submit" class="rh-btn" id="rdBtnSalvar">💾 Salvar Desligamento</button>
@@ -2932,10 +2937,11 @@ function buildDataFromWorkbook(wb){
   }else{data.checklist=[];}
   return data;
 }
-function saveToStorage(data,fname){
+function saveToStorage(data,fname,ts){
   try{
     localStorage.setItem(LS_KEY,JSON.stringify(data));
-    localStorage.setItem(LS_META,JSON.stringify({fname:fname,ts:Date.now()}));
+    // ts = momento REAL do upload (created_at do Supabase). Sem ts = upload local agora.
+    localStorage.setItem(LS_META,JSON.stringify({fname:fname,ts:ts||Date.now()}));
     return true;
   }catch(e){console.error("Erro ao salvar dados",e);return false;}
 }
@@ -2949,29 +2955,41 @@ function loadFromStorage(){
     return true;
   }catch(e){console.error("Erro ao carregar dados salvos",e);return false;}
 }
+function _uploadInfo(){
+  const raw=localStorage.getItem(LS_META);
+  if(!raw)return null;
+  try{const meta=JSON.parse(raw);if(!meta||!meta.ts)return null;return meta;}catch(e){return null;}
+}
+function _fmtDesde(ms){
+  const h=Math.floor(ms/3600000);
+  if(h<1)return"há poucos minutos";
+  if(h<24)return`há ${h}h`;
+  const d=Math.floor(h/24);
+  return`há ${d} dia${d>1?"s":""}`;
+}
 function updateStatusLabel(){
   const el=document.getElementById("dataStatusTxt");
   if(!el)return;
-  const raw=localStorage.getItem(LS_META);
-  if(!raw){el.textContent="Dados carregados";return;}
-  try{
-    const meta=JSON.parse(raw);
-    const d=new Date(meta.ts);
-    const dt=d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-    el.textContent=`Atualizado em ${dt}`+(meta.fname?` • ${meta.fname}`:"");
-  }catch(e){el.textContent="Dados carregados";}
+  const meta=_uploadInfo();
+  if(!meta){el.textContent="Dados carregados";return;}
+  const d=new Date(meta.ts);
+  const dt=d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  const desde=Date.now()-meta.ts;
+  const stale=desde>86400000; // +1 dia desde o upload
+  el.innerHTML=`📄 Última planilha: <b>${dt}</b>`+(meta.fname?` • ${meta.fname}`:"")+
+    ` <span style="opacity:.85">(${_fmtDesde(desde)})</span>`+
+    (stale?` <span style="background:#dc2626;color:#fff;font-weight:800;padding:1px 8px;border-radius:8px;margin-left:4px">⚠️ desatualizado</span>`:"");
 }
-function _checkDataFreshness(max){
-  if(!max)return;
-  const hoje=ymd(new Date());
-  const maxD=ymd(max);
-  if(maxD<hoje){
-    const el=document.createElement("div");
-    el.style.cssText="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:14px 28px;border-radius:12px;font-size:.92rem;font-weight:700;box-shadow:0 6px 24px rgba(220,38,38,.4);display:flex;align-items:center;gap:10px;pointer-events:none";
-    el.innerHTML=`<span style="font-size:1.2rem">⚠️</span> Sistema desatualizado! Último dado: <b>${maxD.split("-").reverse().join("/")}</b> — carregue a planilha de hoje.`;
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(),4000);
-  }
+function _checkDataFreshness(){
+  const meta=_uploadInfo();
+  if(!meta)return;
+  const desde=Date.now()-meta.ts;
+  if(desde<=86400000)return; // atualizado nas últimas 24h → sem aviso
+  const el=document.createElement("div");
+  el.style.cssText="position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;padding:14px 28px;border-radius:12px;font-size:.92rem;font-weight:700;box-shadow:0 6px 24px rgba(220,38,38,.4);display:flex;align-items:center;gap:10px;pointer-events:none;animation:cvFadeUp .3s ease both";
+  el.innerHTML=`<span style="font-size:1.2rem">⚠️</span> Dados ainda não atualizados hoje — última planilha carregada <b>${_fmtDesde(desde)}</b>. Faça um novo upload.`;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.transition="opacity .3s";el.style.opacity="0";setTimeout(()=>el.remove(),300);},2000);
 }
 function refreshAll(){
   populateAreas();
@@ -2982,7 +3000,7 @@ function refreshAll(){
   ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
   refresh();
   updVGCharts();
-  _checkDataFreshness(max);
+  _checkDataFreshness();
   const cur=document.querySelector(".page.active");
   if(cur){
     const key=cur.id.replace("pg-","");
@@ -3040,7 +3058,8 @@ function loadFromSupabase(){
   }).then(function(row){
     if(!row||!row.data)return false;
     DASHBOARD_DATA=row.data;
-    saveToStorage(row.data,row.source_filename||"(Supabase)");
+    const uploadTs=row.created_at?new Date(row.created_at).getTime():Date.now();
+    saveToStorage(row.data,row.source_filename||"(Supabase)",uploadTs);
     return true;
   }).catch(function(err){
     console.error("Erro ao buscar dados mais recentes do Supabase:",err);
@@ -3222,6 +3241,12 @@ function rhSalvar(e){
   };
   if((body.status==="PREENCHIDA"||body.status==="CANCELADA")&&!body.data_fechamento)body.data_fechamento=ymd(new Date());
   const msg=document.getElementById("rh-form-msg");
+  if(!body.data_fechamento){
+    msg.style.color="#dc2626";msg.textContent="⚠️ Data de fechamento é obrigatória para salvar a vaga.";
+    const dtf=document.getElementById("rhf-dtfech");
+    if(dtf){dtf.focus();dtf.style.borderColor="#dc2626";dtf.style.boxShadow="0 0 0 3px rgba(220,38,38,.12)";setTimeout(()=>{dtf.style.borderColor="";dtf.style.boxShadow="";},2500);}
+    return false;
+  }
   const btn=document.getElementById("rhBtnSalvar");
   btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
   const method=id?"PATCH":"POST";
@@ -3513,10 +3538,13 @@ function rhDesRenderTbl(){
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhum desligamento registrado ainda. Use o formulário acima para registrar o primeiro. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
-  ["Data","Funcionário","RE","Cargo","Área","Posto","Tipo","Motivo","Tempo de Casa","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  ["Data","Funcionário","RE","Cargo","Área","Posto","Tipo","Motivo","Aviso Prévio","Tempo de Casa","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
   h+='</tr></thead><tbody>';
   rows.forEach(x=>{
     const ct=RD_TIPO_COLORS[x.tipo]||"#64748b";
+    let avisoCell='<span style="color:#94a3b8">—</span>';
+    if(x.aviso_previo===true)avisoCell=`<span style="color:#16a34a;font-weight:700">✔ Cumpre</span> <span style="color:#64748b;font-size:.66rem">${x.aviso_tipo||""}${x.aviso_dias?" · "+x.aviso_dias+"d":""}</span>`;
+    else if(x.aviso_previo===false)avisoCell='<span style="color:#dc2626;font-weight:700">✖ Não cumpre</span>';
     h+=`<tr style="border-bottom:1px solid #f1f5f9">
       <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_desligamento)}</td>
       <td style="padding:8px 10px;font-weight:700;color:#0d1f35">${x.funcionario||"—"}</td>
@@ -3526,6 +3554,7 @@ function rhDesRenderTbl(){
       <td style="padding:8px 10px">${x.posto||"—"}</td>
       <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${ct}18;color:${ct};border:1px solid ${ct}40">${x.tipo||"—"}</span></td>
       <td style="padding:8px 10px">${x.motivo||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap">${avisoCell}</td>
       <td style="padding:8px 10px;font-weight:700;white-space:nowrap">${rhDesTempoCasa(x)}</td>
       <td style="padding:8px 10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(x.observacao||"").replace(/"/g,"&quot;")}">${x.observacao||"—"}</td>
       <td style="padding:8px 10px;white-space:nowrap"><span class="rh-act" onclick="rhDesEditar(${x.id})" title="Editar">✏️</span><span class="rh-act" onclick="rhDesExcluir(${x.id})" title="Excluir">🗑️</span></td>
@@ -3548,6 +3577,9 @@ function rhDesSalvar(e){
     motivo:document.getElementById("rdf-motivo").value.trim().toUpperCase(),
     data_admissao:document.getElementById("rdf-adm").value||null,
     observacao:document.getElementById("rdf-obs").value.trim(),
+    aviso_previo:(function(){const v=document.getElementById("rdf-aviso").value;return v==="sim"?true:v==="nao"?false:null;})(),
+    aviso_tipo:document.getElementById("rdf-aviso").value==="sim"?document.getElementById("rdf-aviso-tipo").value:null,
+    aviso_dias:document.getElementById("rdf-aviso").value==="sim"?(document.getElementById("rdf-aviso-dias").value||null):null,
     criado_por:sessionStorage.getItem("userNome")||null
   };
   if(body.tipo==="ABANDONO"&&!body.motivo)body.motivo="ABANDONO";
@@ -3569,10 +3601,16 @@ function rhDesSalvar(e){
     .finally(()=>{btn.disabled=false;});
   return false;
 }
+function rhDesAvisoToggle(){
+  const v=document.getElementById("rdf-aviso").value;
+  document.getElementById("rdf-aviso-tipo-wrap").style.display=v==="sim"?"":"none";
+  document.getElementById("rdf-aviso-dias-wrap").style.display=v==="sim"?"":"none";
+}
 function rhDesLimpar(keepMsg){
   document.getElementById("rdForm").reset();
   document.getElementById("rdf-id").value="";
   document.getElementById("rdf-data").value=ymd(new Date());
+  rhDesAvisoToggle();
   document.getElementById("rd-form-title").textContent="➕ Novo Desligamento";
   if(keepMsg!==true)document.getElementById("rd-form-msg").textContent="";
 }
@@ -3589,6 +3627,10 @@ function rhDesEditar(id){
   document.getElementById("rdf-motivo").value=x.motivo||"";
   document.getElementById("rdf-adm").value=x.data_admissao?String(x.data_admissao).slice(0,10):"";
   document.getElementById("rdf-obs").value=x.observacao||"";
+  document.getElementById("rdf-aviso").value=x.aviso_previo===true?"sim":x.aviso_previo===false?"nao":"";
+  document.getElementById("rdf-aviso-tipo").value=x.aviso_tipo||"TRABALHADO";
+  document.getElementById("rdf-aviso-dias").value=x.aviso_dias||"";
+  rhDesAvisoToggle();
   document.getElementById("rd-form-title").textContent="✏️ Editando — "+(x.funcionario||"");
   document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
 }
