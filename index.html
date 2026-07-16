@@ -22,6 +22,46 @@
   --wh:#fff;--re:#e74c3c;--or:#f97316;--ye:#d97706;--gr:#16a34a;--pu:#7c3aed;--te:#0891b2;
   --sh:0 1px 4px rgba(0,0,0,.08);--shm:0 4px 16px rgba(0,0,0,.12);--r:10px;
 }
+/* ═══════════ DARK MODE ═══════════
+   O chrome usa var(--..). Invertendo a escala de cinza (g50 escuro → g800 claro)
+   e trocando --wh/--sb, todo o estrutural vira. Para os módulos com estilo inline
+   (RH, Comercial, Relatório Diário), usam-se seletores de atributo com !important. */
+html[data-theme="dark"]{
+  --sb:#0a1322;--sbh:#16283f;--sba:rgba(46,143,239,.22);--sbt:#8fa8c8;--sbta:#fff;--sbs:#5b7291;
+  --g50:#0f1826;--g100:#16202f;--g200:#293648;--g300:#3a4a60;--g400:#8496af;--g500:#9fb0c7;--g600:#c2ccdb;--g700:#dde3ec;--g800:#eef2f7;
+  --wh:#182234;
+  --sh:0 1px 4px rgba(0,0,0,.4);--shm:0 6px 20px rgba(0,0,0,.5);
+}
+html[data-theme="dark"] body{background:#0b1220;color:#dde3ec;}
+html[data-theme="dark"] .status{background:#0f2a1a!important;border-color:#1e5236!important;}
+html[data-theme="dark"] .rhf-i{background:#101a2b!important;color:#e6edf5!important;border-color:#293648!important;}
+html[data-theme="dark"] .rh-btn-sec{background:#1e2a3e!important;color:#c2ccdb!important;}
+html[data-theme="dark"] #themeToggle{border-color:#293648;color:#c2ccdb;background:#101a2b;}
+/* fundos claros inline → escuros */
+html[data-theme="dark"] [style*="background:#fff"],
+html[data-theme="dark"] [style*="background:#ffffff"],
+html[data-theme="dark"] [style*="background: #fff"]{background:#182234!important;}
+html[data-theme="dark"] [style*="background:#f8fafc"],
+html[data-theme="dark"] [style*="background:#f4f6f9"],
+html[data-theme="dark"] [style*="background:#eef2f7"],
+html[data-theme="dark"] [style*="background:#f1f5f9"],
+html[data-theme="dark"] [style*="background:#edf0f5"],
+html[data-theme="dark"] [style*="background:#f9fafb"]{background:#101a2b!important;}
+/* textos escuros inline → claros */
+html[data-theme="dark"] [style*="color:#0d1f35"],
+html[data-theme="dark"] [style*="color:#0f172a"],
+html[data-theme="dark"] [style*="color:#1e2d3e"],
+html[data-theme="dark"] [style*="color:#1e293b"],
+html[data-theme="dark"] [style*="color:#334155"]{color:#e6edf5!important;}
+/* bordas claras inline → escuras */
+html[data-theme="dark"] [style*="#e5e9f0"],
+html[data-theme="dark"] [style*="#e0e5ef"],
+html[data-theme="dark"] [style*="#dbe2ec"],
+html[data-theme="dark"] [style*="#eef2f7"]{border-color:#293648!important;}
+/* tabelas: cabeçalho e linhas */
+html[data-theme="dark"] th{background:#101a2b!important;border-color:#293648!important;}
+html[data-theme="dark"] td{border-color:#1c2740!important;}
+html[data-theme="dark"] canvas{filter:brightness(.92);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--g50);display:flex;height:100vh;overflow:hidden;}
 .sb{width:190px;min-width:190px;background:var(--sb);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
@@ -488,7 +528,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 <div class="main">
   <div class="topbar">
     <div><div class="tb-t" id="pgTitle">Visão Geral</div><div class="tb-s" id="pgSub">Grupo ServCamp</div></div>
-    <div class="status" id="dataStatus"><div class="sdot"></div> <span id="dataStatusTxt">Dados carregados</span></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="status" id="dataStatus"><div class="sdot"></div> <span id="dataStatusTxt">Dados carregados</span></div>
+      <button id="themeToggle" onclick="toggleTheme()" title="Alternar tema claro/escuro" style="background:transparent;border:1px solid var(--g200);border-radius:20px;padding:5px 12px;cursor:pointer;font-size:.72rem;font-weight:700;color:var(--g600);display:flex;align-items:center;gap:6px;transition:all .15s">🌙 <span id="themeToggleLbl">Escuro</span></button>
+    </div>
   </div>
   <div class="fb">
     <div class="fg"><span class="fl">Período</span>
@@ -5107,7 +5150,29 @@ function renderRelDia(){
   }
   if(blocksEl)blocksEl.innerHTML=html;
 }
+/* ═══════════ TEMA CLARO / ESCURO ═══════════ */
+const LS_THEME="svc_theme";
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");
+  const lbl=document.getElementById("themeToggleLbl"),btn=document.getElementById("themeToggle");
+  if(btn){btn.firstChild.textContent=t==="dark"?"☀️ ":"🌙 ";}
+  if(lbl)lbl.textContent=t==="dark"?"Claro":"Escuro";
+  // Chart.js: recolore eixos/legendas conforme o tema, se já houver gráficos
+  if(window.Chart){
+    const c=t==="dark"?"#c2ccdb":"#334155",g=t==="dark"?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)";
+    Chart.defaults.color=c;Chart.defaults.borderColor=g;
+    if(typeof CH!=="undefined")Object.values(CH).forEach(ch=>{try{ch.update();}catch(e){}});
+  }
+}
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute("data-theme")==="dark"?"dark":"light";
+  const next=cur==="dark"?"light":"dark";
+  try{localStorage.setItem(LS_THEME,next);}catch(e){}
+  applyTheme(next);
+}
+(function(){try{applyTheme(localStorage.getItem(LS_THEME)||"light");}catch(e){}})();
 function init(){
+  applyTheme(localStorage.getItem(LS_THEME)||"light");
   loadFromSupabase().then(function(got){
     if(!got)loadFromStorage();
     renderAfterLoad();
