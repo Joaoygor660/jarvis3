@@ -1,0 +1,139 @@
+{
+  "name": "JARVIS — Leitor de Respostas (Comercial)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Nova resposta na caixa",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [-320, 0],
+      "notes": "Dispara a cada e-mail NÃO LIDO que chega em comercial@gruposervcamp.com.br. Credencial IMAP: host email-ssl.com.br, porta 993, SSL ligado.",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrai só o endereço de e-mail do remetente.\n// Ex.: \"Maria Silva <maria@cliente.com.br>\" -> maria@cliente.com.br\nconst out = [];\nfor (const item of $input.all()) {\n  const from = item.json.from || item.json.From || '';\n  const m = String(from).match(/[\\w.+-]+@[\\w-]+\\.[\\w.-]+/);\n  if (!m) continue;\n  out.push({\n    json: {\n      remetente: m[0].toLowerCase(),\n      assunto: item.json.subject || '',\n      recebido_em: item.json.date || new Date().toISOString()\n    }\n  });\n}\nreturn out;"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Extrai o remetente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-100, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://SEU_PROJETO.supabase.co/rest/v1/com_propostas",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "select", "value": "id,nome,email,status,respondido_em" },
+            { "name": "email", "value": "=eq.{{ $json.remetente }}" },
+            { "name": "respondido_em", "value": "is.null" },
+            { "name": "status", "value": "not.in.(FECHADO,PERDIDO)" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=SUA_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer SUA_SERVICE_ROLE_KEY" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Procura proposta pelo e-mail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [140, 0],
+      "notes": "Troque SEU_PROJETO e SUA_SERVICE_ROLE_KEY. Busca proposta aberta cujo email == remetente."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "version": 2 },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "number", "operation": "exists", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "É um cliente da base?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [380, 0],
+      "notes": "Se o remetente não bate com nenhuma proposta aberta, o fluxo para aqui (e-mail comum)."
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://SEU_PROJETO.supabase.co/rest/v1/com_propostas",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "id", "value": "=eq.{{ $json.id }}" }]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=SUA_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer SUA_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ respondido_em: new Date().toISOString(), status: $json.status === 'PROPOSTA' ? 'NEGOCIAÇÃO' : $json.status, atualizado_em: new Date().toISOString() }) }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Marca respondido → PARA a cadência",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [620, -80],
+      "notes": "Preenche respondido_em: a cadência de e-mail nunca mais envia para este cliente. Se estava em PROPOSTA, promove para NEGOCIAÇÃO."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://SEU_PROJETO.supabase.co/rest/v1/com_cadencia_log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "=SUA_SERVICE_ROLE_KEY" },
+            { "name": "Authorization", "value": "=Bearer SUA_SERVICE_ROLE_KEY" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ proposta_id: $('Procura proposta pelo e-mail').item.json.id, etapa: 0, canal: 'EMAIL', destinatario: $('Extrai o remetente').item.json.remetente, status: 'evento', detalhe: 'Cliente respondeu por e-mail — cadência interrompida automaticamente (n8n)' }) }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Registra na timeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [860, -80],
+      "notes": "O evento aparece na Timeline 360º da proposta dentro do JARVIS."
+    }
+  ],
+  "connections": {
+    "Nova resposta na caixa": { "main": [[{ "node": "Extrai o remetente", "type": "main", "index": 0 }]] },
+    "Extrai o remetente": { "main": [[{ "node": "Procura proposta pelo e-mail", "type": "main", "index": 0 }]] },
+    "Procura proposta pelo e-mail": { "main": [[{ "node": "É um cliente da base?", "type": "main", "index": 0 }]] },
+    "É um cliente da base?": { "main": [[{ "node": "Marca respondido → PARA a cadência", "type": "main", "index": 0 }], []] },
+    "Marca respondido → PARA a cadência": { "main": [[{ "node": "Registra na timeline", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}

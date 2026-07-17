@@ -1,0 +1,41 @@
+# n8n para o JARVIS — leitor de respostas do Comercial.
+# Sobe na mesma VPS Hostinger onde a Evolution API já roda.
+#
+# Uso:
+#   1) Crie a pasta /opt/n8n na VPS e coloque este arquivo + .env lá
+#   2) docker compose up -d
+#   3) Acesse http://SEU_IP:5678 e crie o usuário admin
+#
+# Preencha o .env (mesma pasta) — NUNCA coloque senha aqui neste arquivo:
+#   N8N_HOST=srv1815873.hstgr.cloud
+#   N8N_USER=admin
+#   N8N_PASSWORD=<senha forte que você escolher>
+#   TZ=America/Sao_Paulo
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://${N8N_HOST}:5678/
+      - GENERIC_TIMEZONE=${TZ}
+      - TZ=${TZ}
+      # login básico do painel do n8n
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+      # execuções antigas não podem encher o disco
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=336
+      - N8N_DIAGNOSTICS_ENABLED=false
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
