@@ -3532,7 +3532,7 @@ function rhEntSalvar(e){
       else{
         const wa=j&&j.whatsapp;
         if(wa==="enviado"){txt="✔ Registrada! 📲 WhatsApp enviado ao candidato.";}
-        else if(wa==="falhou"){txt="✔ Registrada — mas o WhatsApp FALHOU. Verifique a conexão da Evolution.";cor="#d97706";hold=6000;}
+        else if(wa==="falhou"){txt="✔ Registrada — mas o WhatsApp FALHOU. "+((j&&j.wpErro)?("["+j.wpErro+"]"):"Verifique a conexão da Evolution.");cor="#d97706";hold=15000;}
         else if(body.situacao!=="EM PROCESSO"){txt="✔ Registrada. WhatsApp não enviado (situação: "+body.situacao+").";cor="#64748b";hold=5000;}
         else if(!body.telefone){txt="✔ Registrada. Sem telefone — WhatsApp não enviado.";cor="#64748b";hold=5000;}
         else{txt="✔ Registrada. WhatsApp não disparado (integração não configurada no servidor).";cor="#64748b";hold=6000;}

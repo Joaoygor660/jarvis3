@@ -121,6 +121,7 @@ module.exports = async function handler(req, res) {
   // Só em POST de entrevistas, só se houver telefone e a chave estiver configurada.
   // Falha do envio NÃO bloqueia o cadastro (try/catch).
   let whatsapp = null;
+  let wpErro = null;
   if (req.method === "POST" && tKey === "entrevistas" && process.env.EVOLUTION_APIKEY) {
     const novo = Array.isArray(data) ? data[0] : null;
     // Só envia para candidato AINDA no processo. Reprovado/Contratado/Desistiu/etc. NÃO recebe.
@@ -144,11 +145,17 @@ module.exports = async function handler(req, res) {
           body: JSON.stringify({ number: num, text: texto })
         });
         whatsapp = wr.ok ? "enviado" : "falhou";
+        if (!wr.ok) {
+          // captura o motivo real da Evolution para diagnóstico
+          const body = await wr.text().catch(() => "");
+          wpErro = `HTTP ${wr.status} inst=${inst} :: ${body.slice(0, 300)}`;
+        }
       } catch (e) {
         whatsapp = "falhou";
+        wpErro = `EXC inst=${inst} :: ${String(e && e.message || e).slice(0, 300)}`;
       }
     }
   }
 
-  return res.status(200).json({ ok: true, rows: data, whatsapp: whatsapp });
+  return res.status(200).json({ ok: true, rows: data, whatsapp: whatsapp, wpErro: wpErro });
 };
