@@ -1,33 +1,41 @@
-# n8n — Leitor de Respostas do Comercial (JARVIS)
+# n8n — Comercial (JARVIS): Maestro único
 
-## O que isso faz
+Importe **`fluxo-comercial-maestro.json`** — um único workflow que faz as duas coisas:
 
-Quando um cliente **responde o e-mail** da proposta, o n8n detecta em minutos e marca
-`respondido_em` no Supabase. A cadência automática **para imediatamente** — o cliente
-nunca mais recebe cobrança depois de responder.
+**A) Envia a cadência (todo dia às 9h)**
+```
+⏰ Schedule → chama o motor de envio na Vercel (SMTP Locaweb) → envia Msgs 2/3/4/5
+```
 
+**B) Lê as respostas (contínuo)**
 ```
 📥 Chega e-mail em comercial@gruposervcamp.com.br
-   → extrai o endereço do remetente
-   → procura proposta aberta com aquele e-mail
-   → achou? marca respondido_em + promove PROPOSTA → NEGOCIAÇÃO
-   → registra o evento na Timeline 360º do JARVIS
+   → extrai o remetente → procura a proposta pelo e-mail
+   → achou? marca respondido_em + PROPOSTA → NEGOCIAÇÃO
+   → registra na Timeline 360º do JARVIS
 ```
+Se o remetente não for cliente da base, o fluxo para (e-mail comum).
 
-Se o remetente não for um cliente da base, o fluxo simplesmente para (é e-mail comum).
+## Por que "maestro único" (modelo B)
 
-## Por que n8n e não a Vercel
+Envio e leitura vivem **juntos, num só painel**. Se o n8n cair, os dois param juntos —
+e isso é proposital: enviar cobrança **sem** conseguir detectar respostas faria clientes
+que já responderam receberem cobrança. Melhor pausar tudo do que cobrar quem respondeu.
 
-A Vercel no plano Hobby executa cron **1× por dia** — não dá para ler a caixa de entrada
-de minuto em minuto. O n8n roda na VPS sem esse limite.
+O n8n **agenda** e **chama** o endpoint da Vercel que já contém toda a lógica testada de
+envio (qual mensagem, quando, sem duplicar). Não há lógica de negócio duplicada em nós.
 
-Divisão de responsabilidades:
+> O arquivo antigo `fluxo-leitor-respostas.json` (só leitura) fica como referência —
+> use o **maestro**.
 
 | Tarefa | Onde |
 |---|---|
-| Enviar Msgs 2/3/4/5 (1×/dia) | Vercel — `api/comercial-cron.js` |
-| Ler respostas (contínuo) | **n8n** — este fluxo |
+| Agenda + envia Msgs 2/3/4/5 | **n8n** dispara → `api/comercial-cron.js` (Vercel, SMTP) |
+| Lê respostas (contínuo) | **n8n** |
 | WhatsApp Msg 1 (imediata) | Vercel — `api/comercial.js` → Evolution API |
+
+> A Vercel **não** agenda mais nada (o `vercel.json` foi removido). O endpoint de envio
+> continua existindo — quem o dispara agora é o n8n, protegido pelo `CRON_SECRET`.
 
 ## Instalação na VPS
 
@@ -51,7 +59,7 @@ Acesse `http://srv1815873.hstgr.cloud:5678` e crie a conta de dono.
 
 ## Configurar o fluxo
 
-1. No n8n: **Workflows → Import from File** → `fluxo-leitor-respostas.json`
+1. No n8n: **Workflows → Import from File** → `fluxo-comercial-maestro.json`
 
 2. **Credencial IMAP** (nó "Nova resposta na caixa") — Credentials → New → IMAP:
 
@@ -63,18 +71,28 @@ Acesse `http://srv1815873.hstgr.cloud:5678` e crie a conta de dono.
    | Port | `993` |
    | SSL/TLS | ativado |
 
-3. **Substituir nos 3 nós HTTP** (procure e troque):
+3. **Substituir nos nós HTTP** (procure e troque):
    - `SEU_PROJETO` → `agahqqlhajwhklurcjlc`
    - `SUA_SERVICE_ROLE_KEY` → a mesma `SUPABASE_SERVICE_ROLE_KEY` que está na Vercel
+   - `SEU_CRON_SECRET` (nó "Envia Msgs 2/3/4/5") → a mesma `CRON_SECRET` que está na Vercel
 
-4. **Ative** o workflow (toggle no canto superior direito).
+4. Na **Vercel**, configure as envs de envio: `MAIL_USER`, `MAIL_PASS`, `CRON_SECRET`
+   (o motor de envio roda lá; o n8n só o dispara).
+
+5. **Ative** o workflow (toggle no canto superior direito). Os dois gatilhos passam a valer.
 
 ## Testar
 
-1. Cadastre uma proposta de teste no JARVIS com **o seu e-mail pessoal**
-2. Responda/envie um e-mail do seu endereço para `comercial@gruposervcamp.com.br`
-3. Em segundos: a proposta deve ficar com ✅ **Respondeu** no JARVIS
-4. Abra a **Timeline (📜)** da proposta — o evento deve estar registrado
+**Envio (cadência):**
+1. Cadastre uma proposta com **seu e-mail** e **data de envio de 2 dias atrás**
+2. No n8n, abra o nó "Envia Msgs 2/3/4/5" e clique em **Execute step** (ou rode o
+   endpoint com `?dry=1` antes: mostra quem receberia sem enviar nada)
+3. O e-mail deve chegar na sua caixa; a proposta avança para a etapa 2 no JARVIS
+
+**Leitura (respostas):**
+1. Responda/envie um e-mail do seu endereço para `comercial@gruposervcamp.com.br`
+2. Em minutos a proposta fica com ✅ **Respondeu** no JARVIS
+3. Abra a **Timeline (📜)** da proposta — o evento deve estar registrado
 
 ## Segurança
 
