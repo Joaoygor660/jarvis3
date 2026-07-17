@@ -130,6 +130,9 @@ module.exports = async function handler(req, res) {
       // Instância do RH: número próprio do RH (EVOLUTION_INSTANCE_RH).
       // Sem essa env, cai na instância padrão — mantém o comportamento atual.
       const inst = process.env.EVOLUTION_INSTANCE_RH || process.env.EVOLUTION_INSTANCE || "servcamp";
+      // Chave da instância do RH: cada instância da Evolution tem a SUA própria
+      // apikey. Sem EVOLUTION_APIKEY_RH, cai na global (retrocompatível).
+      const apikey = process.env.EVOLUTION_APIKEY_RH || process.env.EVOLUTION_APIKEY;
       // normaliza telefone -> 55 + DDD + número
       let num = String(novo.telefone).replace(/\D/g, "");
       if (num && !num.startsWith("55")) num = "55" + num;
@@ -141,7 +144,7 @@ module.exports = async function handler(req, res) {
       try {
         const wr = await fetch(`${url}/message/sendText/${inst}`, {
           method: "POST",
-          headers: { apikey: process.env.EVOLUTION_APIKEY, "Content-Type": "application/json" },
+          headers: { apikey: apikey, "Content-Type": "application/json" },
           body: JSON.stringify({ number: num, text: texto })
         });
         whatsapp = wr.ok ? "enviado" : "falhou";
