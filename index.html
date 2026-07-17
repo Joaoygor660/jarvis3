@@ -562,7 +562,11 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-lbl">Diretoria</div>
     <div class="ni" onclick="navTo('rhdash',this)" style="position:relative"><span class="ni-ic">📈</span><span>Painel RH</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">EXEC</span></div>
   </div>
-  <div class="nav-sec" id="navSecCOM" style="display:none">
+  <div class="nav-sec" id="navSecCOMOP" style="display:none">
+    <div class="nav-lbl">Comercial</div>
+    <div class="ni" onclick="navTo('compro',this)" style="position:relative"><span class="ni-ic">💼</span><span>Propostas &amp; Cadência</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
+  </div>
+  <div class="nav-sec" id="navSecCOMDASH" style="display:none">
     <div class="nav-lbl">Comercial</div>
     <div class="ni" onclick="navTo('compro',this)" style="position:relative"><span class="ni-ic">💼</span><span>Propostas &amp; Cadência</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
     <div class="ni" onclick="navTo('comdash',this)" style="position:relative"><span class="ni-ic">📊</span><span>Painel Comercial</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">EXEC</span></div>
@@ -1397,7 +1401,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 const USERS={
   "joaoygor":{nome:"João Ygor",cargo:"Analista Operacional",senha:"Joaoygor1",admin:true},
   "paulocampana":{nome:"Paulo Campana",cargo:"Diretor",senha:"servcamp2026",admin:false,rhDash:true},
-  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true,com:true},
+  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true,com:true,comDash:true},
   "amauriantonio":{nome:"Amauri Antônio",cargo:"Gerente",senha:"servcamp2026",admin:false},
   "eduardocipriano":{nome:"Eduardo Cipriano",cargo:"Diretora RH",senha:"servcamp2026",admin:false},
   "sirleimodesto":{nome:"Sirlei Modesto",cargo:"Diretor RH",senha:"servcamp2026",admin:false},
@@ -1437,6 +1441,7 @@ async function doLogin(e){
   sessionStorage.setItem("userRh",usr.rh?"1":"0");
   sessionStorage.setItem("userRhDash",usr.rhDash?"1":"0");
   sessionStorage.setItem("userCom",usr.com?"1":"0");
+  sessionStorage.setItem("userComDash",usr.comDash?"1":"0");
   applyUserUI();
   const mustChange=override?override.must_change!==false:!usr.admin;
   if(mustChange){showForcePasswordChange(u);}
@@ -1489,11 +1494,15 @@ function applyUserUI(){
   // hoje Paulo Campana e Ingridy Campana). Estes NÃO veem os módulos de cadastro acima.
   const rhDashSec=document.getElementById("navSecRHDash");
   if(rhDashSec)rhDashSec.style.display=(isAdmin||isRh||isRhDash)?"":"none";
-  // Módulo Comercial: admin + usuários liberados (com:true — hoje Gabriela Alvarenga
-  // e Ingridy Campana).
+  // Módulo Comercial: admin + usuários liberados
   const isCom=sessionStorage.getItem("userCom")==="1";
-  const comSec=document.getElementById("navSecCOM");
-  if(comSec)comSec.style.display=(isAdmin||isCom)?"":"none";
+  const isComDash=sessionStorage.getItem("userComDash")==="1";
+  // Propostas & Cadência (operacional): admin + com:true (Gabriela + Ingridy)
+  const comOpSec=document.getElementById("navSecCOMOP");
+  if(comOpSec)comOpSec.style.display=(isAdmin||isCom)?"":"none";
+  // Painel Comercial (diretoria): admin + comDash:true (apenas Ingridy)
+  const comDashSec=document.getElementById("navSecCOMDASH");
+  if(comDashSec)comDashSec.style.display=(isAdmin||isComDash)?"":"none";
 }
 function showWelcome(){
   const nome=sessionStorage.getItem("userNome")||"";
