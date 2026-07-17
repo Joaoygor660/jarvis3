@@ -114,6 +114,7 @@ module.exports = async function handler(req, res) {
   // Regras: só propostas, só POST/PATCH, precisa de telefone + data_envio_proposta,
   // etapa 0 (nunca enviada), cadência ativa, cliente não respondeu, status não-final.
   let whatsapp = null;
+  let wpErro = null;
   if ((req.method === "POST" || req.method === "PATCH") && tKey === "propostas" && process.env.EVOLUTION_APIKEY) {
     const p = Array.isArray(data) ? data[0] : null;
     const statusFinal = p && ["FECHADO", "PERDIDO", "PAUSADO"].includes(p.status);
@@ -122,18 +123,23 @@ module.exports = async function handler(req, res) {
       // Instância do Comercial: número próprio da comercial (EVOLUTION_INSTANCE_COM).
       // Sem essa env, cai na instância padrão — mantém o comportamento atual.
       const inst = process.env.EVOLUTION_INSTANCE_COM || process.env.EVOLUTION_INSTANCE || "servcamp";
+      // Chave PRÓPRIA da instância do Comercial (cada instância Evolution tem a sua).
+      // Sem EVOLUTION_APIKEY_COM, cai na global (retrocompatível).
+      const apikey = process.env.EVOLUTION_APIKEY_COM || process.env.EVOLUTION_APIKEY;
       let num = String(p.telefone).replace(/\D/g, "");
       if (num && !num.startsWith("55")) num = "55" + num;
       const nome = ((p.contato || p.nome || "").trim().split(" ")[0]) || "tudo bem";
       try {
         const wr = await fetch(`${url}/message/sendText/${inst}`, {
           method: "POST",
-          headers: { apikey: process.env.EVOLUTION_APIKEY, "Content-Type": "application/json" },
+          headers: { apikey: apikey, "Content-Type": "application/json" },
           body: JSON.stringify({ number: num, text: MSG1(nome) })
         });
         whatsapp = wr.ok ? "enviado" : "falhou";
+        if (!wr.ok) { wpErro = `HTTP ${wr.status} inst=${inst} :: ${(await wr.text().catch(()=>"")).slice(0,300)}`; }
       } catch (e) {
         whatsapp = "falhou";
+        wpErro = `EXC inst=${inst} :: ${String(e && e.message || e).slice(0,300)}`;
       }
       // registra no log e, se enviou, avança a etapa para 1 (nunca reenvia)
       try {
@@ -154,5 +160,5 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  return res.status(200).json({ ok: true, rows: data, whatsapp: whatsapp });
+  return res.status(200).json({ ok: true, rows: data, whatsapp: whatsapp, wpErro: wpErro });
 };
