@@ -1326,6 +1326,18 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     .cv-skel{border-radius:14px;height:104px;background:linear-gradient(90deg,#eef2f7 25%,#f8fafc 37%,#eef2f7 63%);background-size:400px 100%;animation:cvShimmer 1.2s infinite linear}
     .cv-view{border:none;background:transparent;color:#64748b;font-size:.72rem;font-weight:800;padding:7px 16px;border-radius:8px;cursor:pointer;transition:all .15s}
     .cv-view-on{background:#0d1f35;color:#fff;box-shadow:0 2px 8px rgba(13,31,53,.25)}
+    .kb-legend{margin:0 2px 12px;background:#f4f7fb;border:1px solid #e5e9f0;border-radius:12px;padding:2px 12px}
+    .kb-legend>summary{cursor:pointer;font-size:.72rem;font-weight:600;color:#475569;padding:8px 2px;list-style:none;user-select:none}
+    .kb-legend>summary::-webkit-details-marker{display:none}
+    .kb-legend[open]>summary{border-bottom:1px solid #e5e9f0;margin-bottom:8px}
+    .kb-legend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 18px;padding:2px 2px 10px}
+    .kb-legend-item{display:flex;align-items:baseline;gap:7px;font-size:.7rem;line-height:1.35}
+    .kb-legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;position:relative;top:1px}
+    .kb-legend-item b{flex-shrink:0;font-size:.66rem;letter-spacing:.02em}
+    .kb-legend-txt{color:#64748b}
+    html[data-theme="dark"] .kb-legend{background:#101a2b!important;border-color:#293648!important}
+    html[data-theme="dark"] .kb-legend>summary{color:#c7d2e0}
+    html[data-theme="dark"] .kb-legend[open]>summary,html[data-theme="dark"] .kb-legend-txt{border-color:#293648;color:#9aa9bd}
     .kb-wrap{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 14px;align-items:flex-start}
     .kb-col{min-width:225px;max-width:225px;background:#f4f7fb;border:1px solid #e5e9f0;border-radius:12px;flex-shrink:0;transition:background .15s,border-color .15s}
     .kb-col.kb-over{background:#e8f1fd;border-color:#2e8fef;border-style:dashed}
@@ -1385,12 +1397,12 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 const USERS={
   "joaoygor":{nome:"João Ygor",cargo:"Analista Operacional",senha:"Joaoygor1",admin:true},
   "paulocampana":{nome:"Paulo Campana",cargo:"Diretor",senha:"servcamp2026",admin:false,rhDash:true},
-  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true},
+  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true,com:true},
   "amauriantonio":{nome:"Amauri Antônio",cargo:"Gerente",senha:"servcamp2026",admin:false},
   "eduardocipriano":{nome:"Eduardo Cipriano",cargo:"Diretora RH",senha:"servcamp2026",admin:false},
   "sirleimodesto":{nome:"Sirlei Modesto",cargo:"Diretor RH",senha:"servcamp2026",admin:false},
   "jussilenealmeida":{nome:"Jussilene Almeida",cargo:"Coordenação",senha:"servcamp2026",admin:false},
-  "gabrielaalvarenga":{nome:"Gabriela Alvarenga",cargo:"Comercial",senha:"servcamp2026",admin:false},
+  "gabrielaalvarenga":{nome:"Gabriela Alvarenga",cargo:"Comercial",senha:"servcamp2026",admin:false,com:true,rhDash:true},
   "rosisantos":{nome:"Rosi Santos",cargo:"Diretora Financeiro",senha:"servcamp2026",admin:false},
   "fabianalassala":{nome:"Fabiana Lassala",cargo:"Financeiro",senha:"servcamp2026",admin:false},
   "raphaelvictor":{nome:"Raphael Victor",cargo:"Auxiliar ADM",senha:"servcamp2026",admin:false},
@@ -1424,6 +1436,7 @@ async function doLogin(e){
   sessionStorage.setItem("userAdmin",usr.admin?"1":"0");
   sessionStorage.setItem("userRh",usr.rh?"1":"0");
   sessionStorage.setItem("userRhDash",usr.rhDash?"1":"0");
+  sessionStorage.setItem("userCom",usr.com?"1":"0");
   applyUserUI();
   const mustChange=override?override.must_change!==false:!usr.admin;
   if(mustChange){showForcePasswordChange(u);}
@@ -1476,10 +1489,11 @@ function applyUserUI(){
   // hoje Paulo Campana e Ingridy Campana). Estes NÃO veem os módulos de cadastro acima.
   const rhDashSec=document.getElementById("navSecRHDash");
   if(rhDashSec)rhDashSec.style.display=(isAdmin||isRh||isRhDash)?"":"none";
-  // Módulo Comercial: por enquanto SÓ admin (liberar depois p/ comercial+diretoria:
-  // isAdmin || cargo==="Comercial" || cargo.indexOf("DIRET")>=0)
+  // Módulo Comercial: admin + usuários liberados (com:true — hoje Gabriela Alvarenga
+  // e Ingridy Campana).
+  const isCom=sessionStorage.getItem("userCom")==="1";
   const comSec=document.getElementById("navSecCOM");
-  if(comSec)comSec.style.display=isAdmin?"":"none";
+  if(comSec)comSec.style.display=(isAdmin||isCom)?"":"none";
 }
 function showWelcome(){
   const nome=sessionStorage.getItem("userNome")||"";
@@ -4213,6 +4227,7 @@ function rhDashVagas(){
 let COM_P=[],COM_LOG=[],COM_METAS=[],COM_TBL_STATUS="TODAS",COM_VIEW="kanban";
 const COM_ST_COLORS={"LEAD":"#64748b","PROSPECÇÃO":"#7c3aed","PROPOSTA":"#2e8fef","NEGOCIAÇÃO":"#f97316","CONTRATO":"#0d9488","FECHADO":"#16a34a","PERDIDO":"#dc2626","PAUSADO":"#94a3b8"};
 const COM_ST_ORDER=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO","FECHADO","PERDIDO","PAUSADO"];
+const COM_ST_DESC={"LEAD":"Contato novo, ainda não trabalhado — a entrada do funil.","PROSPECÇÃO":"Primeiro contato feito; entendendo a necessidade e qualificando.","PROPOSTA":"Orçamento já enviado ao cliente; aguardando retorno.","NEGOCIAÇÃO":"Cliente respondeu; ajustando preço, prazo e condições.","CONTRATO":"Fechado verbalmente; formalizando a assinatura.","FECHADO":"Venda ganha. 🎉","PERDIDO":"Não avançou — recusa, sumiço ou concorrente.","PAUSADO":"Congelado por ora; retomar mais tarde (não é perdido)."};
 const COM_ST_ATIVOS=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO"];
 const COM_PRIOR_COLORS={"ALTA":"#dc2626","MÉDIA":"#f97316","BAIXA":"#94a3b8"};
 const COM_PAC_ICON={"LIGAÇÃO":"📞","WHATSAPP":"📱","E-MAIL":"✉️","VISITA":"🏠","REUNIÃO":"👥"};
@@ -4448,7 +4463,12 @@ function comRenderKanban(){
   const cnt=document.getElementById("cp-tbl-cnt");
   if(cnt)cnt.textContent=COM_P.length?`— ${rows.length} de ${COM_P.length}`:"";
   if(!COM_P.length){el.innerHTML='<div style="padding:36px;text-align:center;color:#94a3b8;font-size:.8rem"><div style="font-size:2rem;margin-bottom:8px">🗂️</div>Nenhuma proposta ainda. Cadastre a primeira acima e arraste-a pelo funil. 🚀</div>';return;}
-  let h='<div class="kb-wrap">';
+  let h='<details class="kb-legend"><summary>ℹ️ O que significa cada etapa do funil?</summary><div class="kb-legend-grid">';
+  COM_ST_ORDER.forEach(st=>{
+    h+=`<div class="kb-legend-item"><span class="kb-legend-dot" style="background:${COM_ST_COLORS[st]}"></span><b style="color:${COM_ST_COLORS[st]}">${st}</b><span class="kb-legend-txt">${COM_ST_DESC[st]||""}</span></div>`;
+  });
+  h+='</div></details>';
+  h+='<div class="kb-wrap">';
   COM_ST_ORDER.forEach(st=>{
     const cor=COM_ST_COLORS[st];
     const cards=rows.filter(p=>p.status===st).sort((a,b)=>({ALTA:0,"MÉDIA":1,BAIXA:2}[a.prioridade||"MÉDIA"]-{ALTA:0,"MÉDIA":1,BAIXA:2}[b.prioridade||"MÉDIA"])||comChance(b)-comChance(a));
