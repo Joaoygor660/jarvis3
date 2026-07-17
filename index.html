@@ -4144,7 +4144,8 @@ function rhDashRender(){
   document.getElementById("rd-k-contrs").innerHTML=desl.length?`saldo <b>${contr-desl.length>=0?"+":""}${contr-desl.length}</b> vs saídas`:"—";
   document.getElementById("rd-k-entr").textContent=entrev.length;
   const vagasDist=new Set(entrev.map(x=>x.vaga_numero).filter(Boolean)).size;
-  document.getElementById("rd-k-entrs").innerHTML=vagasDist?`para <b>${vagasDist}</b> vagas`:"—";
+  const perLbl=RDASH_PER==="tudo"?"total geral":"no mês (por data da entrevista)";
+  document.getElementById("rd-k-entrs").innerHTML=vagasDist?`para <b>${vagasDist}</b> vagas · <span style="opacity:.7">${perLbl}</span>`:`<span style="opacity:.7">${perLbl}</span>`;
   const fin=entrev.filter(x=>x.situacao!=="EM PROCESSO").length;
   document.getElementById("rd-k-taxa").textContent=fin?((contr/fin*100).toFixed(0)+"%"):"—";
   document.getElementById("rd-k-efet").textContent=res.filter(x=>x.resultado==="EFETIVADO").length;
