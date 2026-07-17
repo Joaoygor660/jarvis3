@@ -1,14 +1,22 @@
 // api/comercial-cron.js — Motor da cadência comercial (e-mails automáticos).
 // Roda 1x/dia via Vercel Cron (vercel.json). Envia as Msgs 2/3/4/5 por e-mail
-// (Microsoft Graph, conta ServCamp) conforme os dias desde data_envio_proposta:
+// (SMTP da Locaweb, conta comercial do Grupo ServCamp) conforme os dias desde
+// data_envio_proposta:
 //   Msg 2: +2 dias | Msg 3: +5 dias | Msg 4: +10 dias | Msg 5: +20 dias (pausa)
 //
 // Interrupção automática: respondido_em preenchido, status FECHADO/PERDIDO/PAUSADO
 // ou cadencia_ativa=false → nunca envia. Cada etapa sai no máximo 1 vez
 // (cadencia_etapa guarda a última enviada; com_cadencia_log audita tudo).
+// O n8n marca respondido_em ao detectar resposta do cliente na caixa de entrada.
 //
-// Envs necessárias: MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET, MS_SENDER
-// (conta que envia), CRON_SECRET (a Vercel manda como Bearer automaticamente).
+// Envs necessárias:
+//   MAIL_USER  — conta que envia (ex.: comercial@gruposervcamp.com.br)
+//   MAIL_PASS  — senha da conta de e-mail
+//   MAIL_HOST  — opcional (padrão email-ssl.com.br) | MAIL_PORT — opcional (padrão 465)
+//   MAIL_FROM  — opcional, nome exibido (padrão "Grupo Serv Camp <MAIL_USER>")
+//   CRON_SECRET — a Vercel manda como Bearer automaticamente
+
+const nodemailer = require("nodemailer");
 
 const ETAPAS = [
   { etapa: 2, dias: 2 },
@@ -28,36 +36,25 @@ function corpoEmail(etapa, nome) {
   return html + `<p style="margin:18px 0 0;color:#0d1f35"><b>Grupo Serv Camp</b><br><span style="color:#64748b;font-size:13px">Terceirização de Serviços</span></p>`;
 }
 
-async function graphToken() {
-  const r = await fetch(`https://login.microsoftonline.com/${process.env.MS_TENANT_ID}/oauth2/v2.0/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: process.env.MS_CLIENT_ID,
-      client_secret: process.env.MS_CLIENT_SECRET,
-      scope: "https://graph.microsoft.com/.default",
-      grant_type: "client_credentials"
-    })
+// Transporter SMTP (Locaweb). Criado uma vez por invocação e reaproveitado.
+function mailer() {
+  const port = Number(process.env.MAIL_PORT || 465);
+  return nodemailer.createTransport({
+    host: process.env.MAIL_HOST || "email-ssl.com.br",
+    port,
+    secure: port === 465,               // 465 = SSL direto; 587 = STARTTLS
+    auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
   });
-  const j = await r.json();
-  if (!r.ok || !j.access_token) throw new Error("Falha ao obter token Graph: " + JSON.stringify(j));
-  return j.access_token;
 }
 
-async function enviarEmail(token, para, assunto, html) {
-  const r = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(process.env.MS_SENDER)}/sendMail`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      message: {
-        subject: assunto,
-        body: { contentType: "HTML", content: html },
-        toRecipients: [{ emailAddress: { address: para } }]
-      },
-      saveToSentItems: true
-    })
+async function enviarEmail(tx, para, assunto, html) {
+  const info = await tx.sendMail({
+    from: process.env.MAIL_FROM || `"Grupo Serv Camp" <${process.env.MAIL_USER}>`,
+    to: para,
+    subject: assunto,
+    html
   });
-  return r.ok || r.status === 202;
+  return !!(info && info.accepted && info.accepted.length);
 }
 
 module.exports = async function handler(req, res) {
@@ -73,9 +70,11 @@ module.exports = async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!SUPABASE_URL || !KEY) return res.status(500).json({ error: "Envs do Supabase ausentes." });
-  if (!process.env.MS_TENANT_ID || !process.env.MS_CLIENT_ID || !process.env.MS_CLIENT_SECRET || !process.env.MS_SENDER) {
-    return res.status(200).json({ ok: false, motivo: "Envs do Microsoft Graph não configuradas — cadência de e-mail inativa.", enviadas: 0 });
+  if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
+    return res.status(200).json({ ok: false, motivo: "MAIL_USER/MAIL_PASS não configuradas — cadência de e-mail inativa.", enviadas: 0 });
   }
+  // ?dry=1 → simula: mostra quem receberia o quê, sem enviar e sem gravar nada.
+  const dry = req.query && (req.query.dry === "1" || req.query.dry === "true");
 
   const sb = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 
@@ -87,7 +86,8 @@ module.exports = async function handler(req, res) {
 
   const hoje = new Date(); hoje.setUTCHours(0, 0, 0, 0);
   const resultado = { candidatas: props.length, enviadas: 0, falhas: 0, detalhes: [] };
-  let token = null;
+  if (dry) resultado.modo = "SIMULAÇÃO — nenhum e-mail enviado, nada gravado";
+  let tx = null;
 
   for (const p of props) {
     const envio = new Date(String(p.data_envio_proposta).slice(0, 10) + "T00:00:00Z");
@@ -98,11 +98,15 @@ module.exports = async function handler(req, res) {
     if (!due) continue;
 
     const nome = ((p.contato || p.nome || "").trim().split(" ")[0]) || "tudo bem";
+    if (dry) {
+      resultado.detalhes.push({ id: p.id, nome: p.nome, email: p.email, etapa: due.etapa, dias, status: "simulado" });
+      continue;
+    }
     let ok = false, detalhe = null;
     try {
-      if (!token) token = await graphToken();
-      ok = await enviarEmail(token, p.email, "Acompanhamento da proposta — Grupo Serv Camp", corpoEmail(due.etapa, nome));
-      if (!ok) detalhe = "Graph não confirmou o envio";
+      if (!tx) tx = mailer();
+      ok = await enviarEmail(tx, p.email, "Acompanhamento da proposta — Grupo Serv Camp", corpoEmail(due.etapa, nome));
+      if (!ok) detalhe = "SMTP não confirmou o envio";
     } catch (e) {
       ok = false; detalhe = String(e).slice(0, 300);
     }
@@ -127,5 +131,6 @@ module.exports = async function handler(req, res) {
     resultado.detalhes.push({ id: p.id, nome: p.nome, etapa: due.etapa, dias, status: ok ? "enviado" : "falhou" });
   }
 
+  if (tx) tx.close();
   return res.status(200).json({ ok: true, ...resultado });
 };
