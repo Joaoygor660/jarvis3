@@ -1268,7 +1268,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
           <div><label class="rhf-l">Origem do Lead</label><input class="rhf-i" id="cpf-origem" type="text" list="dl-com-origem" placeholder="Ex: Indicação"><datalist id="dl-com-origem"><option>INDICAÇÃO</option><option>SITE</option><option>INSTAGRAM</option><option>GOOGLE</option><option>LINKEDIN</option><option>TELEFONE</option><option>VISITA</option><option>SÍNDICO PROFISSIONAL</option><option>OUTRO</option></datalist></div>
           <div><label class="rhf-l">Data do Envio da Proposta</label><input class="rhf-i" id="cpf-dtenvio" type="date"></div>
-          <div><label class="rhf-l">Valor da Proposta (R$)</label><input class="rhf-i" id="cpf-valor" type="number" step="0.01" min="0" placeholder="Ex: 15800.00"></div>
+          <div id="cpf-valor-box"><label class="rhf-l">Valor da Proposta (R$)</label><input class="rhf-i" id="cpf-valor" type="number" step="0.01" min="0" placeholder="Ex: 15800.00"></div>
           <div><label class="rhf-l">Status</label><select class="rhf-i" id="cpf-status"><option>LEAD</option><option>PROSPECÇÃO</option><option>PROPOSTA</option><option>NEGOCIAÇÃO</option><option>CONTRATO</option><option>FECHADO</option><option>PERDIDO</option><option>PAUSADO</option></select></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px">
@@ -1376,6 +1376,20 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     .cv-ins{background:#fff;border:1px solid #e5e9f0;border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;animation:cvFadeUp .35s ease both;transition:transform .15s,box-shadow .15s}
     .cv-ins:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(13,31,53,.09)}
     .cv-alert{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:10px;margin-bottom:6px;font-size:.72rem;animation:cvFadeUp .3s ease both}
+    /* ══ Vitrine "Modo Apresentação" (COM_VALORES=false) — cards 3D pulsantes ══ */
+    .v3d-sec{background:linear-gradient(135deg,#1a0b2e,#0d1f35 55%,#173a66);border-radius:18px;padding:26px 28px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden}
+    .v3d-sec::before{content:"";position:absolute;top:-70px;right:-70px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.35),transparent 70%);animation:floatBlob 9s ease-in-out infinite}
+    .v3d-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;perspective:1200px;position:relative}
+    .v3d{background:rgba(255,255,255,.07);border:1px solid rgba(167,139,250,.4);border-radius:14px;padding:16px 18px;transform-style:preserve-3d;animation:v3dFloat 7s ease-in-out infinite,v3dGlow 2.8s ease-in-out infinite;transition:transform .25s,border-color .25s;position:relative}
+    .v3d:hover{animation-play-state:paused,paused;transform:rotateX(0) rotateY(0) translateY(-5px) scale(1.05);border-color:#c4b5fd}
+    .v3d .v3d-tag{position:absolute;top:10px;right:12px;font-size:.5rem;font-weight:900;letter-spacing:.6px;color:#c4b5fd;border:1px solid rgba(196,181,253,.5);border-radius:8px;padding:1px 7px;opacity:.85}
+    .v3d .v3d-ic{font-size:1.3rem;margin-bottom:6px;display:inline-block;animation:pulseIcon 2.2s ease-in-out infinite}
+    .v3d .v3d-lb{font-size:.6rem;font-weight:800;color:#b7c7e4;text-transform:uppercase;letter-spacing:.6px}
+    .v3d .v3d-v{font-size:1.45rem;font-weight:900;margin:4px 0 2px;background:linear-gradient(90deg,#fff,#c4b5fd);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .v3d .v3d-sub{font-size:.64rem;color:#93a7cc;line-height:1.45}
+    @keyframes v3dFloat{0%,100%{transform:rotateX(7deg) rotateY(-6deg) translateY(0)}50%{transform:rotateX(3deg) rotateY(6deg) translateY(-8px)}}
+    @keyframes v3dGlow{0%,100%{box-shadow:0 8px 26px rgba(124,58,237,.16)}50%{box-shadow:0 16px 46px rgba(124,58,237,.55),0 0 0 1px rgba(196,181,253,.28)}}
+    .v3d-cta{margin-top:18px;background:rgba(124,58,237,.16);border:1px dashed rgba(196,181,253,.55);border-radius:12px;padding:12px 18px;font-size:.74rem;color:#ddd6fe;line-height:1.55}
     .cv-gauge{position:relative;width:120px;height:120px;margin:0 auto}
     @media(max-width:768px){.kb-col{min-width:200px;max-width:200px}}
     /* ===== MOBILE — módulos RH e Painel RH (sobrepõe os grids inline) ===== */
@@ -4303,7 +4317,16 @@ function comLogEvento(pid,detalhe,canal){
   fetch("/api/comercial?t=cadencia",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({proposta_id:pid,etapa:0,canal:canal||"SISTEMA",status:"evento",detalhe:detalhe,destinatario:sessionStorage.getItem("userNome")||null})}).catch(()=>{});
 }
 const COM_ETAPA_LBL={1:"Msg 1 · WhatsApp (envio da proposta)",2:"Msg 2 · E-mail (+2 dias)",3:"Msg 3 · E-mail (+5 dias)",4:"Msg 4 · E-mail (+10 dias)",5:"Msg 5 · E-mail (+20 dias — pausa)"};
-function fmtBRL(v){return(v===null||v===undefined||v==="")?"—":Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+/* ══ INTERRUPTOR DE VALORES (R$) DO COMERCIAL ══
+   false = fase de adoção: nenhuma tela comercial pede/mostra dinheiro, e o
+   Painel Comercial ganha a vitrine "Modo Apresentação" (dados simulados).
+   true  = religa TODO o sistema de valores (receitas, pipeline, metas R$,
+   insights monetários) e a vitrine some sozinha. Nada foi apagado. */
+const COM_VALORES=false;
+function fmtBRL0(v){return(v===null||v===undefined||v==="")?"—":Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+function fmtBRL(v){return COM_VALORES?fmtBRL0(v):"—";}
+/* sem valores: o campo do formulário some (o script roda após o DOM) */
+(function(){const vb=document.getElementById("cpf-valor-box");if(vb&&!COM_VALORES)vb.style.display="none";})();
 function comDias(p){if(!p.data_envio_proposta)return"—";const ini=new Date(String(p.data_envio_proposta).slice(0,10)+"T00:00:00");const fim=p.fechado_em?new Date(String(p.fechado_em).slice(0,10)+"T00:00:00"):new Date();return Math.max(0,Math.round((fim-ini)/86400000));}
 function comFetchAll(){
   return Promise.all([
@@ -4349,7 +4372,7 @@ function comDet(kind){
   const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
   const hd=["Cliente","Tipo","Contato","Cidade","Valor","Status","Envio","Parado","Chance","Resp."];
   const det=p=>[p.nome||"—",p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.contato||"—",p.cidade||"—",fmtBRL(p.valor),p.status||"—",p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—",comDiasParado(p)+"d",comChance(p)+"%",(p.responsavel||"—").split(" ")[0]];
-  const soma=arr=>fmtBRL(arr.reduce((s,p)=>s+(Number(p.valor)||0),0));
+  const soma=arr=>COM_VALORES?fmtBRL0(arr.reduce((s,p)=>s+(Number(p.valor)||0),0)):arr.length+" proposta(s)";
   let title="",rows=[],headers=hd;
   if(kind==="abertas"){
     const arr=P.filter(p=>COM_ST_ATIVOS.includes(p.status));
@@ -4449,11 +4472,19 @@ function comRenderCards(){
   const card=(kind,ic,icBg,lbl,val,cmpHtml,spark,tip)=>`<div class="cvk" style="cursor:pointer" onclick="comDet('${kind}')" title="${tip||""} — clique para ver os registros"><div class="cvk-ic" style="background:${icBg}">${ic}</div><div class="cvk-lb">${lbl}</div><div class="cvk-v">${val}</div><div class="cvk-cmp">${cmpHtml}</div>${spark}</div>`;
   el.innerHTML=
     card("abertas","📂","#eef6ff","Propostas abertas",abertas.length,cmp(envMes.length,envAnt.length),comSpark(sEnv,"#2e8fef"),"Leads a contratos em andamento")+
-    card("negociacao","💰","#e6fffb","Receita em negociação",fmtBRL(negR),`<span style="color:#64748b">${negoc.length} propostas ativas</span>`,"","Proposta + Negociação + Contrato")+
-    card("fechadaMes","🏆","#ecfdf5","Receita fechada (mês)",fmtBRL(fecMesR),cmp(fecMesR,fecAntR),comSpark(sFec,"#16a34a"),"Contratos fechados no mês")+
-    card("perdidaMes","📉","#fef2f2","Receita perdida (mês)",fmtBRL(perMesR),cmp(perMesR,perMesR&&fecAntR?fecAntR:null,true),comSpark(sPer,"#dc2626"),"Propostas perdidas no mês")+
+    (COM_VALORES
+      ?card("negociacao","💰","#e6fffb","Receita em negociação",fmtBRL0(negR),`<span style="color:#64748b">${negoc.length} propostas ativas</span>`,"","Proposta + Negociação + Contrato")
+      :card("negociacao","🤝","#e6fffb","Em negociação",negoc.length,'<span style="color:#64748b">propostas ativas no funil</span>',"","Proposta + Negociação + Contrato"))+
+    (COM_VALORES
+      ?card("fechadaMes","🏆","#ecfdf5","Receita fechada (mês)",fmtBRL0(fecMesR),cmp(fecMesR,fecAntR),comSpark(sFec,"#16a34a"),"Contratos fechados no mês")
+      :card("fechadaMes","🏆","#ecfdf5","Fechadas (mês)",fecMes.length,cmp(fecMes.length,fecAnt.length),comSpark(sFec,"#16a34a"),"Contratos fechados no mês"))+
+    (COM_VALORES
+      ?card("perdidaMes","📉","#fef2f2","Receita perdida (mês)",fmtBRL0(perMesR),cmp(perMesR,perMesR&&fecAntR?fecAntR:null,true),comSpark(sPer,"#dc2626"),"Propostas perdidas no mês")
+      :card("perdidaMes","📉","#fef2f2","Perdidas (mês)",perMes.length,'<span style="color:#64748b">no mês atual</span>',comSpark(sPer,"#dc2626"),"Propostas perdidas no mês"))+
     card("conversao","🎯","#f5f3ff","Taxa de conversão",taxa===null?"—":taxa+"%",taxaAnt===null?'<span style="color:#94a3b8">— vs mês ant.</span>':cmp(taxa,taxaAnt),"","Fechadas ÷ enviadas no mês")+
-    card("ticket","📈","#fff7ed","Ticket médio",ticket===null?"—":fmtBRL(ticket),`<span style="color:#64748b">${fechTodas.length} contratos</span>`,"","Média dos contratos fechados")+
+    (COM_VALORES
+      ?card("ticket","📈","#fff7ed","Ticket médio",ticket===null?"—":fmtBRL0(ticket),`<span style="color:#64748b">${fechTodas.length} contratos</span>`,"","Média dos contratos fechados")
+      :card("visitasMes","🏠","#fff7ed","Visitas no mês",visMes,cmp(visMes,visAnt),"","Clientes visitados no mês"))+
     card("semresp","⏳","#fefce8","Sem resposta",semResp.length,`<span style="color:${semResp.length?"#d97706":"#16a34a"}">${semResp.length?"aguardando retorno":"tudo respondido"}</span>`,"","Propostas enviadas aguardando retorno do cliente")+
     card("criticas","🚨","#fef2f2","Críticas / Ações hoje",`${criticas.length} <span style="font-size:.85rem;color:#64748b">/ ${acoesPend}</span>`,`<span style="color:${criticas.length?"#dc2626":"#16a34a"}">${criticas.length?"exigem contato":"sob controle"} · ${acoesPend} ações pendentes</span>`,comSpark(sVis,"#7c3aed"),"Negociações paradas + próximas ações vencidas");
 }
@@ -4497,7 +4528,7 @@ function comRenderKanban(){
     const valTot=cards.reduce((s,p)=>s+(Number(p.valor)||0),0);
     h+=`<div class="kb-col" data-st="${st}" ondragover="kbOver(event,this)" ondragleave="kbLeave(this)" ondrop="kbDrop(event,this)">
       <div class="kb-col-h" style="border-bottom-color:${cor}"><span class="kb-col-t" style="color:${cor}">${st}</span><span class="kb-col-n">${cards.length}</span></div>
-      ${valTot?`<div class="kb-col-v">${fmtBRL(valTot)}</div>`:""}
+      ${COM_VALORES&&valTot?`<div class="kb-col-v">${fmtBRL0(valTot)}</div>`:""}
       <div class="kb-body">`;
     if(!cards.length)h+=`<div style="padding:14px 6px;text-align:center;color:#b6c2d4;font-size:.62rem">solte aqui</div>`;
     cards.forEach(p=>{
@@ -4507,7 +4538,7 @@ function comRenderKanban(){
         <div class="kb-nome"><span class="cv-prior" style="background:${COM_PRIOR_COLORS[p.prioridade||"MÉDIA"]}" title="Prioridade ${p.prioridade||"MÉDIA"}"></span>${p.nome||"—"}</div>
         <div class="kb-sub">${p.contato||p.cidade||"—"}${p.servico?" · "+p.servico:""}</div>
         <div class="kb-meta">
-          ${p.valor?`<span class="kb-pill" style="background:#ecfdf5;color:#16a34a">${fmtBRL(p.valor)}</span>`:""}
+          ${COM_VALORES&&p.valor?`<span class="kb-pill" style="background:#ecfdf5;color:#16a34a">${fmtBRL0(p.valor)}</span>`:""}
           ${t?`<span title="${t.lbl}">${t.ic}</span>`:""}
           <span class="cv-chance" style="background:${comChanceCor(ch)}18;color:${comChanceCor(ch)}" title="Probabilidade de fechamento">${ch}%</span>
           <span class="kb-pill" style="background:#f1f5f9;color:#64748b" title="Dias sem movimento">${d}d</span>
@@ -4583,7 +4614,7 @@ function comRenderTbl(){
     const vazio=(!COM_P.length)?'Nenhuma proposta ainda. Cadastre a primeira acima e deixe a cadência trabalhar. 🚀':'Nenhuma proposta com este filtro.';
     el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">'+vazio+'</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
-  ["Nome","Contato","Cidade","Envio","Valor","Status","🌡️","Chance","Prior.","Próx. ação","Resp.","Parado","Cadência",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  ["Nome","Contato","Cidade","Envio",...(COM_VALORES?["Valor"]:[]),"Status","🌡️","Chance","Prior.","Próx. ação","Resp.","Parado","Cadência",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
   h+='</tr></thead><tbody>';
   rows.forEach(x=>{
     const cor=COM_ST_COLORS[x.status]||"#64748b";
@@ -4595,7 +4626,7 @@ function comRenderTbl(){
       <td style="padding:8px 10px">${x.contato||"—"}</td>
       <td style="padding:8px 10px">${x.cidade||"—"}</td>
       <td style="padding:8px 10px;white-space:nowrap">${rhFmt(x.data_envio_proposta)}</td>
-      <td style="padding:8px 10px;font-weight:700;white-space:nowrap">${fmtBRL(x.valor)}</td>
+      ${COM_VALORES?`<td style="padding:8px 10px;font-weight:700;white-space:nowrap">${fmtBRL0(x.valor)}</td>`:""}
       <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cor}18;color:${cor};border:1px solid ${cor}40">${x.status||"—"}</span></td>
       <td style="padding:8px 10px" title="${t?t.lbl:""}">${t?t.ic:"—"}</td>
       <td style="padding:8px 10px"><span class="cv-chance" style="background:${comChanceCor(ch)}18;color:${comChanceCor(ch)}">${ch}%</span></td>
@@ -4730,7 +4761,7 @@ function comPDF(){
     <table style="width:100%;border-collapse:collapse;font-size:14px">
       ${li("Cliente",p.nome+" ("+(p.tipo_cliente||"EMPRESA")+")")}${li("Contato",p.contato)}${li("Telefone",p.telefone)}${li("E-mail",p.email)}
       ${li("Cidade",p.cidade)}${li("Serviço",p.servico)}${li("Origem do lead",p.origem_lead)}
-      ${li("Proposta enviada em",p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—")}${li("Valor",fmtBRL(p.valor))}
+      ${li("Proposta enviada em",p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—")}${COM_VALORES?li("Valor",fmtBRL0(p.valor)):""}
       ${li("Prioridade",p.prioridade)}${li("Responsável",p.responsavel)}
       ${li("Próxima ação",(p.proxima_acao_tipo?p.proxima_acao_tipo+" — ":"")+(p.proxima_acao||"")+(p.proxima_acao_data?" em "+rhFmt(p.proxima_acao_data):""))}
       ${li("Visitas realizadas",p.visitas||0)}${li("Cadência automática",(p.cadencia_etapa||0)+"/5 mensagens enviadas"+(p.respondido_em?" · cliente respondeu":""))}
@@ -4773,7 +4804,7 @@ function comRespondeu(id){
 function comFechou(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
   if(!confirm("🎉 Confirmar FECHAMENTO do contrato com "+(x.nome||"")+"?"))return;
-  comLogEvento(id,"Contrato FECHADO 🎉"+(x.valor?" · "+fmtBRL(x.valor):""));
+  comLogEvento(id,"Contrato FECHADO 🎉"+(COM_VALORES&&x.valor?" · "+fmtBRL0(x.valor):""));
   _comPatch(id,{status:"FECHADO",fechado_em:ymd(new Date())});
 }
 function comPerdido(id){
@@ -4788,7 +4819,7 @@ function comTimeline(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
   const ev=[];
   ev.push({dt:new Date(x.criado_em),ic:"🆕",cor:"#64748b",t:"Proposta criada",d:(x.criado_por?"por "+x.criado_por:"")});
-  if(x.data_envio_proposta)ev.push({dt:new Date(String(x.data_envio_proposta).slice(0,10)+"T08:00:00"),ic:"📨",cor:"#2e8fef",t:"Proposta enviada ao cliente",d:fmtBRL(x.valor)});
+  if(x.data_envio_proposta)ev.push({dt:new Date(String(x.data_envio_proposta).slice(0,10)+"T08:00:00"),ic:"📨",cor:"#2e8fef",t:"Proposta enviada ao cliente",d:COM_VALORES?fmtBRL0(x.valor):""});
   COM_LOG.filter(l=>l.proposta_id===id).forEach(l=>{
     if(l.etapa>0){
       const ok=l.status==="enviado";
@@ -4799,7 +4830,7 @@ function comTimeline(id){
     }
   });
   if(x.respondido_em)ev.push({dt:new Date(x.respondido_em),ic:"✅",cor:"#16a34a",t:"Cliente respondeu",d:"cadência interrompida"});
-  if(x.fechado_em)ev.push({dt:new Date(String(x.fechado_em).slice(0,10)+"T18:00:00"),ic:"🤝",cor:"#16a34a",t:"Contrato fechado",d:fmtBRL(x.valor)});
+  if(x.fechado_em)ev.push({dt:new Date(String(x.fechado_em).slice(0,10)+"T18:00:00"),ic:"🤝",cor:"#16a34a",t:"Contrato fechado",d:COM_VALORES?fmtBRL0(x.valor):""});
   if(x.status==="PERDIDO")ev.push({dt:new Date(x.atualizado_em||x.criado_em),ic:"❌",cor:"#dc2626",t:"Proposta perdida",d:x.motivo_perda||""});
   ev.sort((a,b)=>a.dt-b.dt);
   const ex=document.getElementById("rdModal");if(ex)ex.remove();
@@ -4811,7 +4842,7 @@ function comTimeline(id){
   ov.innerHTML=`<div style="background:#fff;border-radius:16px;max-width:620px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid #e5e9f0;position:sticky;top:0;background:#fff;z-index:2">
       <div><div style="font-size:.92rem;font-weight:800;color:#0d1f35">📜 ${x.nome}</div>
-      <div style="font-size:.66rem;color:#64748b;margin-top:2px"><span class="rh-badge" style="background:${COM_ST_COLORS[x.status]}18;color:${COM_ST_COLORS[x.status]}">${x.status}</span> ${t?t.ic+" "+t.lbl:""} · Chance ${ch}% · ${fmtBRL(x.valor)}</div></div>
+      <div style="font-size:.66rem;color:#64748b;margin-top:2px"><span class="rh-badge" style="background:${COM_ST_COLORS[x.status]}18;color:${COM_ST_COLORS[x.status]}">${x.status}</span> ${t?t.ic+" "+t.lbl:""} · Chance ${ch}%${COM_VALORES?" · "+fmtBRL0(x.valor):""}</div></div>
       <span onclick="document.getElementById('rdModal').remove()" style="cursor:pointer;font-size:1rem;color:#64748b;padding:4px 10px;border-radius:8px">✖</span></div>
     <div style="padding:20px 26px"><div class="cv-tl">
       ${ev.map(e=>`<div class="cv-tl-item"><div class="cv-tl-dot" style="border-color:${e.cor}">${e.ic}</div>
@@ -4866,7 +4897,7 @@ function comDashRender(){
   const servicoR$=(function(){const m={};P.filter(p=>p.status==="FECHADO").forEach(p=>{m[p.servico||"NÃO INFORMADO"]=(m[p.servico||"NÃO INFORMADO"]||0)+(Number(p.valor)||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
   const parados=ativas.map(p=>({p,d:comDiasParado(p)})).filter(o=>o.d>=7).sort((a,b)=>b.d-a.d);
   const criticas=ativas.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status)&&comDiasParado(p)>=5);
-  const vips=ticket?ativas.filter(p=>(Number(p.valor)||0)>=ticket*1.5&&comDiasParado(p)>=5):[];
+  const vips=(COM_VALORES&&ticket)?ativas.filter(p=>(Number(p.valor)||0)>=ticket*1.5&&comDiasParado(p)>=5):[];
   const mesNome=hoje.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
   /* receita prevista (pipeline ponderado) e previsão de meta */
   const previstaR$=fecMesR$+ativas.reduce((s,p)=>s+(Number(p.valor)||0)*comChance(p)/100,0);
@@ -4878,7 +4909,7 @@ function comDashRender(){
   let saude=0;
   saude+=ativas.length?Math.round((1-Math.min(1,parados.length/ativas.length))*25):12;
   saude+=taxa===null?12:Math.min(25,Math.round(taxa/40*25));
-  saude+=metaV?Math.min(25,Math.round(fecMesR$/metaV*25)):(pipeR$>0?15:5);
+  saude+=COM_VALORES?(metaV?Math.min(25,Math.round(fecMesR$/metaV*25)):(pipeR$>0?15:5)):(meta.meta_fechamentos?Math.min(25,Math.round(fecMes.length/Number(meta.meta_fechamentos)*25)):(fecMes.length>0?18:8));
   const respondidas=P.filter(p=>p.data_envio_proposta).length?Math.round(P.filter(p=>p.respondido_em).length/P.filter(p=>p.data_envio_proposta).length*100):null;
   saude+=respondidas===null?12:Math.min(25,Math.round(respondidas/60*25));
   saude=Math.min(100,saude);
@@ -4886,22 +4917,25 @@ function comDashRender(){
   /* insights automáticos */
   const insights=[];
   if(taxa!==null&&taxaAnt!==null&&taxaAnt>0)insights.push({ic:taxa>=taxaAnt?"📈":"📉",cor:taxa>=taxaAnt?"#16a34a":"#dc2626",t:`Conversão ${taxa>=taxaAnt?"subiu":"caiu"} de <b>${taxaAnt}%</b> para <b>${taxa}%</b> vs mês anterior.`});
-  if(cidadeR$.length)insights.push({ic:"🏙️",cor:"#0d9488",t:`<b>${cidadeR$[0][0]}</b> é a cidade líder em receita: <b>${fmtBRL(cidadeR$[0][1])}</b> em contratos fechados.`});
-  if(origemR$.length)insights.push({ic:"🧲",cor:"#7c3aed",t:`A origem mais lucrativa é <b>${origemR$[0][0]}</b> (${fmtBRL(origemR$[0][1])} fechados) — vale investir mais neste canal.`});
-  if(parados.length)insights.push({ic:"⏸️",cor:"#f97316",t:`<b>${parados.length} proposta(s)</b> paradas há 7+ dias somando <b>${fmtBRL(parados.reduce((s,o)=>s+(Number(o.p.valor)||0),0))}</b> — priorizar contato.`});
-  if(ticket)insights.push({ic:"💎",cor:"#2e8fef",t:`Ticket médio de <b>${fmtBRL(ticket)}</b> por contrato fechado.`});
-  if(probMeta!==null)insights.push({ic:"🎯",cor:probMeta>=70?"#16a34a":probMeta>=40?"#f97316":"#dc2626",t:`Mantendo o ritmo atual, a probabilidade de bater a meta do mês é de <b>${probMeta}%</b> (previsão: ${fmtBRL(Math.max(runRate,previstaR$))}).`});
-  if(!insights.length)insights.push({ic:"🚀",cor:"#2e8fef",t:"Cadastre propostas com valor e cidade para o JARVIS gerar insights automáticos."});
+  if(COM_VALORES&&cidadeR$.length)insights.push({ic:"🏙️",cor:"#0d9488",t:`<b>${cidadeR$[0][0]}</b> é a cidade líder em receita: <b>${fmtBRL0(cidadeR$[0][1])}</b> em contratos fechados.`});
+  if(!COM_VALORES&&cidades.length)insights.push({ic:"🏙️",cor:"#0d9488",t:`<b>${cidades[0][0]}</b> é a cidade com mais propostas: <b>${cidades[0][1]}</b> no total.`});
+  if(COM_VALORES&&origemR$.length)insights.push({ic:"🧲",cor:"#7c3aed",t:`A origem mais lucrativa é <b>${origemR$[0][0]}</b> (${fmtBRL0(origemR$[0][1])} fechados) — vale investir mais neste canal.`});
+  if(!COM_VALORES&&origem.length)insights.push({ic:"🧲",cor:"#7c3aed",t:`A origem que mais traz leads é <b>${origem[0][0]}</b> (${origem[0][1]} proposta(s)) — vale investir mais neste canal.`});
+  if(parados.length)insights.push({ic:"⏸️",cor:"#f97316",t:`<b>${parados.length} proposta(s)</b> paradas há 7+ dias${COM_VALORES?` somando <b>${fmtBRL0(parados.reduce((s,o)=>s+(Number(o.p.valor)||0),0))}</b>`:""} — priorizar contato.`});
+  if(COM_VALORES&&ticket)insights.push({ic:"💎",cor:"#2e8fef",t:`Ticket médio de <b>${fmtBRL0(ticket)}</b> por contrato fechado.`});
+  if(COM_VALORES&&probMeta!==null)insights.push({ic:"🎯",cor:probMeta>=70?"#16a34a":probMeta>=40?"#f97316":"#dc2626",t:`Mantendo o ritmo atual, a probabilidade de bater a meta do mês é de <b>${probMeta}%</b> (previsão: ${fmtBRL0(Math.max(runRate,previstaR$))}).`});
+  if(!COM_VALORES&&meta.meta_fechamentos&&fecMes.length)insights.push({ic:"🎯",cor:fecMes.length>=Number(meta.meta_fechamentos)?"#16a34a":"#f97316",t:`Fechamentos do mês: <b>${fecMes.length}</b> de <b>${meta.meta_fechamentos}</b> da meta (${Math.round(fecMes.length/Number(meta.meta_fechamentos)*100)}%).`});
+  if(!insights.length)insights.push({ic:"🚀",cor:"#2e8fef",t:"Cadastre propostas com cidade e origem para o JARVIS gerar insights automáticos."});
   /* alertas */
   const alertas=[];
-  criticas.forEach(p=>alertas.push({cor:"#dc2626",bg:"#fef2f2",t:`🚨 <b>${p.nome}</b> — negociação crítica: ${comDiasParado(p)}d sem movimento (${fmtBRL(p.valor)})`}));
-  vips.filter(p=>!criticas.includes(p)).forEach(p=>alertas.push({cor:"#7c3aed",bg:"#f5f3ff",t:`👑 <b>${p.nome}</b> — cliente VIP (${fmtBRL(p.valor)}) parado há ${comDiasParado(p)}d`}));
-  if(metaV){const esperado=metaV*(hoje.getDate()/diasMes);if(fecMesR$<esperado*0.75)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`📉 Receita fechada (${fmtBRL(fecMesR$)}) está <b>abaixo do ritmo da meta</b> — esperado ${fmtBRL(esperado)} até hoje.`});}
+  criticas.forEach(p=>alertas.push({cor:"#dc2626",bg:"#fef2f2",t:`🚨 <b>${p.nome}</b> — negociação crítica: ${comDiasParado(p)}d sem movimento${COM_VALORES?` (${fmtBRL0(p.valor)})`:""}`}));
+  vips.filter(p=>!criticas.includes(p)).forEach(p=>alertas.push({cor:"#7c3aed",bg:"#f5f3ff",t:`👑 <b>${p.nome}</b> — cliente VIP (${fmtBRL0(p.valor)}) parado há ${comDiasParado(p)}d`}));
+  if(COM_VALORES&&metaV){const esperado=metaV*(hoje.getDate()/diasMes);if(fecMesR$<esperado*0.75)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`📉 Receita fechada (${fmtBRL0(fecMesR$)}) está <b>abaixo do ritmo da meta</b> — esperado ${fmtBRL0(esperado)} até hoje.`});}
   if(taxa!==null&&taxaAnt!==null&&taxa<taxaAnt)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`🎯 Conversão caiu vs mês anterior (${taxaAnt}% → ${taxa}%).`});
   if(envMes.length<envAnt.length)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`🗂️ Pipeline desacelerou: ${envMes.length} propostas enviadas vs ${envAnt.length} no mês anterior.`});
   parados.slice(0,3).forEach(o=>{if(!criticas.includes(o.p)&&!vips.includes(o.p))alertas.push({cor:"#64748b",bg:"#f8fafc",t:`⏸️ <b>${o.p.nome}</b> — ${o.d}d parado (${o.p.status})`});});
   /* ranking por responsável */
-  const ranking=(function(){const m={};P.forEach(p=>{const r=(p.responsavel||"—").trim()||"—";if(!m[r])m[r]={env:0,fec:0,rec:0,pipe:0};if(p.data_envio_proposta)m[r].env++;if(p.status==="FECHADO"){m[r].fec++;m[r].rec+=Number(p.valor)||0;}if(COM_ST_ATIVOS.includes(p.status))m[r].pipe+=Number(p.valor)||0;});return Object.entries(m).sort((a,b)=>b[1].rec-a[1].rec);})();
+  const ranking=(function(){const m={};P.forEach(p=>{const r=(p.responsavel||"—").trim()||"—";if(!m[r])m[r]={env:0,fec:0,rec:0,pipe:0};if(p.data_envio_proposta)m[r].env++;if(p.status==="FECHADO"){m[r].fec++;m[r].rec+=Number(p.valor)||0;}if(COM_ST_ATIVOS.includes(p.status))m[r].pipe+=Number(p.valor)||0;});return Object.entries(m).sort((a,b)=>(b[1].rec-a[1].rec)||(b[1].fec-a[1].fec)||(b[1].env-a[1].env));})();
   /* série 6 meses p/ gráficos */
   const mesesLbl=[];for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);mesesLbl.push(d.toLocaleDateString("pt-BR",{month:"short"}));}
   const sFecR=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
@@ -4914,7 +4948,7 @@ function comDashRender(){
     return `<div style="margin-bottom:12px"><div class="rd-bar-row"><span style="font-weight:700;color:#334155">${lbl}</span><b>${fmt(real)} / ${alvo?fmt(alvo):"sem meta"}</b></div><div style="background:#eef2f7;border-radius:6px;height:9px"><div style="width:${alvo?Math.max(3,pct):0}%;height:9px;border-radius:6px;background:${c};transition:width .4s"></div></div>${alvo?`<div style="font-size:.62rem;color:${c};font-weight:800;margin-top:2px">${pct}% da meta</div>`:""}</div>`;
   };
   const resumoAuto=`O comercial está com saúde <b style="color:${saudeInfo.cor}">${saudeInfo.lbl.toLowerCase()} (${saude}/100)</b>. `+
-    `${envMes.length} proposta(s) enviadas em ${mesNome} (${emp} empresas, ${cond} condomínios), pipeline de <b>${fmtBRL(pipeR$)}</b> em negociação e <b>${fmtBRL(fecMesR$)}</b> já fechados no mês`+
+    `${envMes.length} proposta(s) enviadas em ${mesNome} (${emp} empresas, ${cond} condomínios), ${COM_VALORES?`pipeline de <b>${fmtBRL0(pipeR$)}</b> em negociação e <b>${fmtBRL0(fecMesR$)}</b> já fechados no mês`:`<b>${ativas.length}</b> em andamento no funil e <b>${fecMes.length}</b> contrato(s) fechados no mês`}`+
     `${taxa!==null?`, com conversão de <b>${taxa}%</b>`:""}.`+
     `${criticas.length?` <b style="color:#dc2626">${criticas.length} negociação(ões) críticas exigem contato imediato.</b>`:""}`+
     `${probMeta!==null?` Probabilidade de bater a meta: <b>${probMeta}%</b>.`:""}`;
@@ -4935,22 +4969,55 @@ function comDashRender(){
       <div style="font-size:.66rem;font-weight:800;color:#9fb3d1;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🧭 Cockpit Executivo — ${mesNome}</div>
       <div style="font-size:.82rem;line-height:1.6;color:#e6eefc">${resumoAuto}</div>
       <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap">
-        <div onclick="comDet('prevista')" style="cursor:pointer" title="Clique para ver o cálculo por proposta"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Receita prevista</div><div style="font-size:1.05rem;font-weight:900">${fmtBRL(previstaR$)}</div></div>
-        <div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver os contratos"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Confirmada</div><div style="font-size:1.05rem;font-weight:900;color:#4ade80">${fmtBRL(fecMesR$)}</div></div>
-        <div onclick="comDet('perdidaMes')" style="cursor:pointer" title="Clique para ver as perdas"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Perdida (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#f87171">${fmtBRL(perMesR$)}</div></div>
-        <div onclick="comDet('negociacao')" style="cursor:pointer" title="Clique para ver o pipeline"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Pipeline</div><div style="font-size:1.05rem;font-weight:900;color:#93c5fd">${fmtBRL(pipeR$)}</div></div>
+        ${COM_VALORES?`
+        <div onclick="comDet('prevista')" style="cursor:pointer" title="Clique para ver o cálculo por proposta"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Receita prevista</div><div style="font-size:1.05rem;font-weight:900">${fmtBRL0(previstaR$)}</div></div>
+        <div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver os contratos"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Confirmada</div><div style="font-size:1.05rem;font-weight:900;color:#4ade80">${fmtBRL0(fecMesR$)}</div></div>
+        <div onclick="comDet('perdidaMes')" style="cursor:pointer" title="Clique para ver as perdas"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Perdida (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#f87171">${fmtBRL0(perMesR$)}</div></div>
+        <div onclick="comDet('negociacao')" style="cursor:pointer" title="Clique para ver o pipeline"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Pipeline</div><div style="font-size:1.05rem;font-weight:900;color:#93c5fd">${fmtBRL0(pipeR$)}</div></div>
         ${metaV?`<div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver o realizado"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Meta</div><div style="font-size:1.05rem;font-weight:900">${Math.round(fecMesR$/metaV*100)}%</div></div>`:""}
         ${probMeta!==null?`<div onclick="comDet('prevista')" style="cursor:pointer" title="Clique para ver a base do cálculo"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Prob. de bater meta</div><div style="font-size:1.05rem;font-weight:900;color:${probMeta>=70?"#4ade80":probMeta>=40?"#fbbf24":"#f87171"}">${probMeta}%</div></div>`:""}
+        `:`
+        <div onclick="comDet('abertas')" style="cursor:pointer" title="Clique para ver as propostas"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Ativas no funil</div><div style="font-size:1.05rem;font-weight:900">${ativas.length}</div></div>
+        <div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver os contratos"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Fechadas (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#4ade80">${fecMes.length}</div></div>
+        <div onclick="comDet('perdidaMes')" style="cursor:pointer" title="Clique para ver as perdas"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Perdidas (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#f87171">${perMes.length}</div></div>
+        <div onclick="comDet('negociacao')" style="cursor:pointer" title="Clique para ver o funil ativo"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Em negociação</div><div style="font-size:1.05rem;font-weight:900;color:#93c5fd">${P.filter(p=>["PROPOSTA","NEGOCIAÇÃO","CONTRATO"].includes(p.status)).length}</div></div>
+        ${respondidas!==null?`<div onclick="comDet('semresp')" style="cursor:pointer" title="Clique para ver quem não respondeu"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Respondidas</div><div style="font-size:1.05rem;font-weight:900;color:${respondidas>=60?"#4ade80":"#fbbf24"}">${respondidas}%</div></div>`:""}
+        `}
       </div>
     </div>
   </div>`;
+  /* ── VITRINE "MODO APRESENTAÇÃO" — só existe enquanto COM_VALORES=false.
+        Mostra à diretoria, com números SIMULADOS, o que o painel passa a
+        exibir no dia em que o campo Valor começar a ser preenchido. ── */
+  if(!COM_VALORES){
+    const demo=(ic,lbl,v,sub,delay)=>`<div class="v3d" style="animation-delay:${delay}s,${delay}s"><span class="v3d-tag">SIMULAÇÃO</span><span class="v3d-ic">${ic}</span><div class="v3d-lb">${lbl}</div><div class="v3d-v">${v}</div><div class="v3d-sub">${sub}</div></div>`;
+    h+=`<div class="v3d-sec">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.58rem;font-weight:900;letter-spacing:.8px;padding:4px 12px;border-radius:12px">🎬 MODO APRESENTAÇÃO</span>
+        <span style="font-size:.62rem;color:#b7c7e4;font-weight:700">números ilustrativos — nenhum dado real</span>
+      </div>
+      <div style="font-size:1.02rem;font-weight:900;margin-bottom:4px">O que a diretoria passa a ver quando os <span style="color:#c4b5fd">valores</span> entrarem</div>
+      <div style="font-size:.72rem;color:#93a7cc;margin-bottom:18px">O painel já está pronto para tudo isto — hoje fica adormecido porque as propostas ainda não têm valor preenchido.</div>
+      <div class="v3d-grid">
+        ${demo("🔮","Receita Prevista","R$ 187.400","Pipeline ponderado pela chance real de cada proposta fechar",0)}
+        ${demo("💰","Pipeline em Negociação","R$ 245.000","Quanto dinheiro está na mesa agora, etapa por etapa",0.4)}
+        ${demo("🏆","Fechado no mês × Meta","76%","R$ 92.000 de R$ 120.000 — barra de meta em tempo real",0.8)}
+        ${demo("🎯","Prob. de bater a meta","78%","Previsão automática pelo ritmo do mês + funil atual",1.2)}
+        ${demo("📈","Ticket Médio","R$ 11.500","Valor médio por contrato — e a evolução mês a mês",1.6)}
+        ${demo("👑","Radar VIP","R$ 38.000","Alerta na hora quando uma negociação valiosa fica parada",2)}
+      </div>
+      <div class="v3d-cta">🔓 <b>Zero configuração:</b> no dia em que o campo <b>Valor da Proposta</b> começar a ser preenchido, tudo isto liga sozinho — receitas, metas em R$, previsões e alertas — e esta demonstração dá lugar aos números reais.</div>
+    </div>`;
+  }
   /* ── KPIs ── */
   h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px">`;
   h+=kpi("envMes","📨","Propostas no mês",envMes.length,`${emp} empresas · ${cond} condomínios`,"#2e8fef",comSpark(sEnvN,"#2e8fef"));
   h+=kpi("visitasMes","🏠","Visitas no mês",visMes.length,"clientes visitados","#7c3aed");
   h+=kpi("conversao","🎯","Conversão",taxa===null?"—":taxa+"%",taxaAnt!==null?`mês anterior: ${taxaAnt}%`:`${fecMes.length} fechadas no mês`,"#16a34a");
   h+=kpi("tempo","⏱️","Tempo médio p/ fechar",tempoMedio,"dias (proposta → contrato)","#f97316");
-  h+=kpi("ticket","📈","Ticket médio",ticket===null?"—":fmtBRL(ticket),`${fechTodas.length} contratos`,"#0d9488",comSpark(sFecR,"#16a34a"));
+  h+=COM_VALORES
+    ?kpi("ticket","📈","Ticket médio",ticket===null?"—":fmtBRL0(ticket),`${fechTodas.length} contratos`,"#0d9488",comSpark(sFecR,"#16a34a"))
+    :kpi("fechadaMes","🏆","Fechadas no mês",fecMes.length,`total histórico: ${fechTodas.length}`,"#0d9488",comSpark(sFecN,"#16a34a"));
   h+=`</div>`;
   /* ── INSIGHTS + ALERTAS ── */
   h+=`<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">`;
@@ -4960,34 +5027,36 @@ function comDashRender(){
     ${alertas.length?alertas.slice(0,8).map((a,ix)=>`<div class="cv-alert" style="background:${a.bg};color:#334155;animation-delay:${ix*50}ms"><span>${a.t}</span></div>`).join(""):'<div style="color:#16a34a;font-weight:700;font-size:.76rem">✅ Nenhum alerta. Operação comercial sob controle!</div>'}</div>`;
   h+=`</div>`;
   /* ── GRÁFICOS: receita mensal + meta×realizado ── */
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📈 Receita Fechada — últimos 6 meses</div><div style="height:190px"><canvas id="cdRev"></canvas></div></div>`;
+  h+=`<div style="display:grid;grid-template-columns:${COM_VALORES?"1fr 1fr":"1fr"};gap:14px;margin-bottom:14px">`;
+  if(COM_VALORES)h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📈 Receita Fechada — últimos 6 meses</div><div style="height:190px"><canvas id="cdRev"></canvas></div></div>`;
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📊 Propostas × Fechamentos — últimos 6 meses</div><div style="height:190px"><canvas id="cdEnvFec"></canvas></div></div>`;
   h+=`</div>`;
   /* ── FUNIL com R$ e conversão por etapa ── */
   const funilAtivo=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO","FECHADO"].map(s=>{const arr=P.filter(p=>p.status===s);return[s,arr.length,arr.reduce((t,p)=>t+(Number(p.valor)||0),0)];});
   h+=`<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔻 Funil Comercial <span style="font-size:.6rem;color:#94a3b8;font-weight:700">quantidade · valor · conversão etapa a etapa</span></div>
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔻 Funil Comercial <span style="font-size:.6rem;color:#94a3b8;font-weight:700">quantidade${COM_VALORES?" · valor":""} · conversão etapa a etapa</span></div>
     <div style="font-size:.76rem">${funilAtivo.map(([s,v,r],i)=>{
       const prev=i>0?funilAtivo[i-1][1]:null;
       const convPct=prev?Math.round(v/prev*100):null;
       const wmax=Math.max(1,...funilAtivo.map(f=>f[1]));
-      return`<div style="margin-bottom:9px"><div class="rd-bar-row"><span style="font-weight:700;color:${COM_ST_COLORS[s]}">${s} <span style="color:#94a3b8;font-weight:600">${r?"· "+fmtBRL(r):""}</span></span><b>${v}${convPct!==null&&prev?` <span style="font-size:.62rem;color:${convPct>=50?"#16a34a":"#f97316"}">(${convPct}%)</span>`:""}</b></div><div style="background:#eef2f7;border-radius:6px;height:10px"><div style="width:${Math.max(3,v/wmax*100)}%;height:10px;border-radius:6px;background:${COM_ST_COLORS[s]};transition:width .5s"></div></div></div>`;}).join("")}
-    ${perMes.length?`<div style="font-size:.66rem;color:#dc2626;margin-top:6px">❌ ${perMes.length} perdida(s) no mês (${fmtBRL(perMesR$)})</div>`:""}</div></div>`;
+      return`<div style="margin-bottom:9px"><div class="rd-bar-row"><span style="font-weight:700;color:${COM_ST_COLORS[s]}">${s} <span style="color:#94a3b8;font-weight:600">${COM_VALORES&&r?"· "+fmtBRL0(r):""}</span></span><b>${v}${convPct!==null&&prev?` <span style="font-size:.62rem;color:${convPct>=50?"#16a34a":"#f97316"}">(${convPct}%)</span>`:""}</b></div><div style="background:#eef2f7;border-radius:6px;height:10px"><div style="width:${Math.max(3,v/wmax*100)}%;height:10px;border-radius:6px;background:${COM_ST_COLORS[s]};transition:width .5s"></div></div></div>`;}).join("")}
+    ${perMes.length?`<div style="font-size:.66rem;color:#dc2626;margin-top:6px">❌ ${perMes.length} perdida(s) no mês${COM_VALORES?` (${fmtBRL0(perMesR$)})`:""}</div>`:""}</div></div>`;
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧲 Origem dos Leads</div><div style="font-size:.76rem">${_cdBarRows(origem,()=>"#7c3aed")}</div></div>`;
   h+=`</div>`;
   /* ── CIDADES (heat ranking) + SERVIÇOS ── */
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
   const cidMax=cidadeR$.length?cidadeR$[0][1]:0;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🗺️ Heatmap de Cidades <span style="font-size:.6rem;color:#94a3b8;font-weight:700">receita fechada · propostas</span></div>
-    <div style="font-size:.74rem">${cidadeR$.length?cidadeR$.slice(0,8).map(([c,r])=>{const q=(cidades.find(x=>x[0]===c)||[,0])[1];const heat=cidMax?r/cidMax:0;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;margin-bottom:5px;background:rgba(13,148,136,${(0.06+heat*0.22).toFixed(2)})"><span style="font-weight:800;color:#0d1f35">${c} <span style="font-weight:600;color:#64748b;font-size:.64rem">· ${q} proposta(s)</span></span><b style="color:#0d9488">${fmtBRL(r)}</b></div>`;}).join(""):_cdBarRows(cidades,()=>"#0d9488")}</div></div>`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Receita por Serviço</div><div style="font-size:.76rem">${servicoR$.length?_cdBarRows(servicoR$.map(([k,v])=>[k+" — "+fmtBRL(v),v]),()=>"#1e4d8c"):'<div style="color:#94a3b8">Sem contratos fechados ainda.</div>'}</div></div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🗺️ Heatmap de Cidades <span style="font-size:.6rem;color:#94a3b8;font-weight:700">${COM_VALORES?"receita fechada · propostas":"propostas por cidade"}</span></div>
+    <div style="font-size:.74rem">${COM_VALORES&&cidadeR$.length?cidadeR$.slice(0,8).map(([c,r])=>{const q=(cidades.find(x=>x[0]===c)||[,0])[1];const heat=cidMax?r/cidMax:0;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;margin-bottom:5px;background:rgba(13,148,136,${(0.06+heat*0.22).toFixed(2)})"><span style="font-weight:800;color:#0d1f35">${c} <span style="font-weight:600;color:#64748b;font-size:.64rem">· ${q} proposta(s)</span></span><b style="color:#0d9488">${fmtBRL0(r)}</b></div>`;}).join(""):_cdBarRows(cidades,()=>"#0d9488")}</div></div>`;
+  h+=COM_VALORES
+    ?`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Receita por Serviço</div><div style="font-size:.76rem">${servicoR$.length?_cdBarRows(servicoR$.map(([k,v])=>[k+" — "+fmtBRL0(v),v]),()=>"#1e4d8c"):'<div style="color:#94a3b8">Sem contratos fechados ainda.</div>'}</div></div>`
+    :`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Propostas por Serviço</div><div style="font-size:.76rem">${(function(){const m={};P.forEach(p=>{m[p.servico||"NÃO INFORMADO"]=(m[p.servico||"NÃO INFORMADO"]||0)+1});const a=Object.entries(m).sort((x,y)=>y[1]-x[1]).slice(0,8);return a.length?_cdBarRows(a,()=>"#1e4d8c"):'<div style="color:#94a3b8">Sem propostas ainda.</div>';})()}</div></div>`;
   h+=`</div>`;
   /* ── RANKING + TIMELINE GERAL ── */
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🏅 Ranking Comercial <span style="font-size:.6rem;color:#94a3b8;font-weight:700">por responsável</span></div>
-    <table style="width:100%;border-collapse:collapse;font-size:.72rem"><thead><tr>${["","Responsável","Receita","Contratos","Conversão","Pipeline"].map(c=>`<th style="text-align:left;padding:6px 8px;color:#64748b;font-size:.6rem;text-transform:uppercase;border-bottom:1px solid #e5e9f0">${c}</th>`).join("")}</tr></thead><tbody>
-    ${ranking.map(([r,d],i)=>`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:7px 8px">${["🥇","🥈","🥉"][i]||(i+1)+"º"}</td><td style="padding:7px 8px;font-weight:800;color:#0d1f35">${r}</td><td style="padding:7px 8px;font-weight:700;color:#16a34a">${fmtBRL(d.rec)}</td><td style="padding:7px 8px">${d.fec}</td><td style="padding:7px 8px">${d.env?Math.round(d.fec/d.env*100)+"%":"—"}</td><td style="padding:7px 8px">${fmtBRL(d.pipe)}</td></tr>`).join("")}</tbody></table></div>`;
+    <table style="width:100%;border-collapse:collapse;font-size:.72rem"><thead><tr>${(COM_VALORES?["","Responsável","Receita","Contratos","Conversão","Pipeline"]:["","Responsável","Propostas","Contratos","Conversão"]).map(c=>`<th style="text-align:left;padding:6px 8px;color:#64748b;font-size:.6rem;text-transform:uppercase;border-bottom:1px solid #e5e9f0">${c}</th>`).join("")}</tr></thead><tbody>
+    ${ranking.map(([r,d],i)=>`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:7px 8px">${["🥇","🥈","🥉"][i]||(i+1)+"º"}</td><td style="padding:7px 8px;font-weight:800;color:#0d1f35">${r}</td>${COM_VALORES?`<td style="padding:7px 8px;font-weight:700;color:#16a34a">${fmtBRL0(d.rec)}</td>`:`<td style="padding:7px 8px">${d.env}</td>`}<td style="padding:7px 8px">${d.fec}</td><td style="padding:7px 8px">${d.env?Math.round(d.fec/d.env*100)+"%":"—"}</td>${COM_VALORES?`<td style="padding:7px 8px">${fmtBRL0(d.pipe)}</td>`:""}</tr>`).join("")}</tbody></table></div>`;
   const tlGeral=COM_LOG.slice(0,10);
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🕐 Últimas Atividades</div>
     <div style="font-size:.7rem">${tlGeral.length?tlGeral.map(l=>{const p=P.find(x=>x.id===l.proposta_id);const ic=l.etapa>0?(l.canal==="WHATSAPP"?"📱":"✉️"):({VISITA:"🏠",WHATSAPP:"📱",EMAIL:"✉️"}[l.canal]||"⚙️");return`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;align-items:baseline"><span>${ic}</span><div style="flex:1"><b style="color:#0d1f35">${p?p.nome:"#"+l.proposta_id}</b> — ${l.etapa>0?(COM_ETAPA_LBL[l.etapa]||"")+(l.status==="falhou"?" ⚠️":""):l.detalhe||"evento"}</div><span style="color:#94a3b8;white-space:nowrap;font-size:.62rem">${new Date(l.enviado_em).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</span></div>`;}).join(""):'<div style="color:#94a3b8">Sem atividades registradas ainda.</div>'}</div></div>`;
@@ -4998,12 +5067,12 @@ function comDashRender(){
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🎯 Metas de ${mesNome}</div>
     ${metaBar("Propostas enviadas",envMes.length,meta.meta_propostas,v=>v)}
     ${metaBar("Contratos fechados",fecMes.length,meta.meta_fechamentos,v=>v)}
-    ${metaBar("Valor fechado",fecMesR$,meta.meta_valor?Number(meta.meta_valor):null,fmtBRL)}
-    ${melhorMes?`<div style="font-size:.64rem;color:#64748b;margin-top:2px">🏆 Melhor mês: <b>${melhorMes.lbl}</b> (${fmtBRL(melhorMes.val)})</div>`:""}
+    ${COM_VALORES?metaBar("Valor fechado",fecMesR$,meta.meta_valor?Number(meta.meta_valor):null,fmtBRL0):""}
+    ${COM_VALORES&&melhorMes?`<div style="font-size:.64rem;color:#64748b;margin-top:2px">🏆 Melhor mês: <b>${melhorMes.lbl}</b> (${fmtBRL0(melhorMes.val)})</div>`:""}
     <div style="display:flex;gap:8px;margin-top:14px;align-items:end">
       <div style="flex:1"><label class="rhf-l">Meta propostas</label><input class="rhf-i" id="cm-mp" type="number" min="0" value="${meta.meta_propostas||""}"></div>
       <div style="flex:1"><label class="rhf-l">Meta fechamentos</label><input class="rhf-i" id="cm-mf" type="number" min="0" value="${meta.meta_fechamentos||""}"></div>
-      <div style="flex:1"><label class="rhf-l">Meta valor (R$)</label><input class="rhf-i" id="cm-mv" type="number" step="0.01" min="0" value="${meta.meta_valor||""}"></div>
+      ${COM_VALORES?`<div style="flex:1"><label class="rhf-l">Meta valor (R$)</label><input class="rhf-i" id="cm-mv" type="number" step="0.01" min="0" value="${meta.meta_valor||""}"></div>`:""}
       <button class="rh-btn" style="padding:9px 16px" onclick="comSalvarMeta('${mesKey}')">💾</button>
     </div><div id="cm-msg" style="font-size:.7rem;font-weight:700;margin-top:6px"></div></div>`;
   h+=`<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);border-radius:14px;padding:18px 22px;color:#fff"><div style="font-size:.8rem;font-weight:800;margin-bottom:10px">🤖 Resumo Executivo por IA</div>
@@ -5014,12 +5083,13 @@ function comDashRender(){
   el.innerHTML=h;
   /* gráficos Chart.js */
   try{
-    dc2("cdRev");CH["cdRev"]=new Chart(document.getElementById("cdRev"),{type:"line",data:{labels:mesesLbl,datasets:[{label:"Receita fechada",data:sFecR,borderColor:"#16a34a",backgroundColor:"rgba(22,163,74,.10)",borderWidth:2.5,pointRadius:4,pointBackgroundColor:"#16a34a",fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL(c.parsed.y)}}},scales:{y:{ticks:{callback:v=>"R$ "+(v>=1000?(v/1000)+"k":v),font:{size:10}}},x:{ticks:{font:{size:10}}}}}});
+    if(COM_VALORES){dc2("cdRev");CH["cdRev"]=new Chart(document.getElementById("cdRev"),{type:"line",data:{labels:mesesLbl,datasets:[{label:"Receita fechada",data:sFecR,borderColor:"#16a34a",backgroundColor:"rgba(22,163,74,.10)",borderWidth:2.5,pointRadius:4,pointBackgroundColor:"#16a34a",fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL0(c.parsed.y)}}},scales:{y:{ticks:{callback:v=>"R$ "+(v>=1000?(v/1000)+"k":v),font:{size:10}}},x:{ticks:{font:{size:10}}}}}});}
     dc2("cdEnvFec");CH["cdEnvFec"]=new Chart(document.getElementById("cdEnvFec"),{type:"bar",data:{labels:mesesLbl,datasets:[{label:"Enviadas",data:sEnvN,backgroundColor:"#2e8fef",borderRadius:4},{label:"Fechadas",data:sFecN,backgroundColor:"#16a34a",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:10}}},scales:{y:{ticks:{stepSize:1,font:{size:10}}},x:{ticks:{font:{size:10}}}}}});
   }catch(e){console.warn("charts comercial:",e);}
 }
 function comSalvarMeta(mesKey){
-  const body={mes:mesKey,meta_propostas:document.getElementById("cm-mp").value||null,meta_fechamentos:document.getElementById("cm-mf").value||null,meta_valor:document.getElementById("cm-mv").value||null};
+  const mvEl=document.getElementById("cm-mv"); /* o campo de meta em R$ não existe quando COM_VALORES=false */
+  const body={mes:mesKey,meta_propostas:document.getElementById("cm-mp").value||null,meta_fechamentos:document.getElementById("cm-mf").value||null,meta_valor:mvEl?(mvEl.value||null):null};
   const m=document.getElementById("cm-msg");m.style.color="#64748b";m.textContent="Salvando meta…";
   fetch("/api/comercial?t=metas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
     .then(r=>r.json().then(j=>({ok:r.ok,j})))
