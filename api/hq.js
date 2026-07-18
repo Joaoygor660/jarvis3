@@ -10,18 +10,23 @@ module.exports = async function handler(req, res) {
   }
   const headers = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 
-  // GET → estado completo: presença de todos + últimas mensagens do chat
+  // GET → estado completo: presença de todos + mensagens (geral + DMs do usuário).
+  // "me" identifica quem pergunta: só as DMs DELE voltam (enviadas ou recebidas).
   if (req.method === "GET") {
     try {
+      const me = String((req.query && req.query.me) || "").slice(0, 60);
+      const filtro = me
+        ? `&or=(para.is.null,para.eq.${encodeURIComponent(me)},and(user_key.eq.${encodeURIComponent(me)},para.not.is.null))`
+        : `&para=is.null`;
       const [pr, mr] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/app_users?select=user_key,presence_page,presence_at`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,criado_em&order=criado_em.desc&limit=40`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,para,criado_em&order=criado_em.desc&limit=80${filtro}`, { headers })
       ]);
       const presenca = pr.ok ? await pr.json() : [];
       const msgs = mr.ok ? await mr.json() : [];
       return res.status(200).json({ presenca, mensagens: msgs.reverse() });
     } catch (e) {
-      return res.status(500).json({ error: "Erro ao consultar estado da sede." });
+      return res.status(500).json({ error: "Erro ao consultar estado da base." });
     }
   }
 
@@ -42,16 +47,17 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    // Mensagem no chat da equipe
+    // Mensagem no chat: geral (para=null) ou particular (para=user_key do destinatário)
     if (body.action === "msg") {
       const userKey = String(body.userKey || "").slice(0, 60);
       const nome = String(body.nome || "").slice(0, 80).trim();
       const texto = String(body.texto || "").trim().slice(0, 500);
+      const para = body.para ? String(body.para).slice(0, 60) : null;
       if (!userKey || !nome || !texto) return res.status(400).json({ error: "userKey, nome e texto são obrigatórios." });
       const r = await fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens`, {
         method: "POST",
         headers: { ...headers, Prefer: "return=minimal" },
-        body: JSON.stringify({ user_key: userKey, nome, texto })
+        body: JSON.stringify({ user_key: userKey, nome, texto, para })
       });
       if (!r.ok) { const t = await r.text(); return res.status(r.status).json({ error: "Erro ao enviar mensagem.", details: t.slice(0, 200) }); }
       // quem manda mensagem obviamente está online, na sede

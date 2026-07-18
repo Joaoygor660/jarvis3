@@ -580,7 +580,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   </div>
   <div class="nav-sec">
     <div class="nav-lbl">Equipe</div>
-    <div class="ni" onclick="navTo('sede',this)" style="position:relative"><span class="ni-ic">🏢</span><span>Sede Virtual</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">AO VIVO</span></div>
+    <div class="ni" onclick="navTo('sede',this)" style="position:relative"><span class="ni-ic">🏢</span><span>Base Virtual</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">AO VIVO</span></div>
   </div>
   <div class="nav-sec" id="navSecCFG" style="display:none">
     <div class="nav-lbl">Sistema</div>
@@ -1320,8 +1320,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div id="cfg-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando…</div></div>
   </div>
   <div class="page" id="pg-sede">
-    <div class="sec-hdr"><span class="sec-hdr-ic">🏢</span><div><div class="sec-hdr-t">Sede Virtual — Grupo ServCamp</div><div class="sec-hdr-sub">Cada sala é um módulo do JARVIS: seu avatar aparece onde você está trabalhando</div></div></div>
-    <div id="hq-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Abrindo a sede…</div></div>
+    <div class="sec-hdr"><span class="sec-hdr-ic">🏢</span><div><div class="sec-hdr-t">Base Virtual — Grupo ServCamp</div><div class="sec-hdr-sub">Cada sala é um módulo do JARVIS: seu personagem anda até onde você está trabalhando</div></div></div>
+    <div id="hq-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Abrindo a base…</div></div>
   </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
@@ -1712,7 +1712,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Sede Virtual — Equipe"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -4975,16 +4975,19 @@ function cfgRender(){
   </div>`;
   el.innerHTML=h;
 }
-/* ═════════ SEDE VIRTUAL — presença ao vivo + chat da equipe ═════════
-   Cada sala = um módulo do JARVIS. O avatar aparece na sala correspondente
-   à guia que a pessoa está usando (batimento a cada 2 min + ao navegar). */
+/* ═════════ BASE VIRTUAL — escritório isométrico animado + chat ═════════
+   Cada sala = um módulo do JARVIS. O personagem ANDA até a sala da guia
+   que a pessoa está usando; offline descansa no sofá. Clique = DM. */
 const HQ_SALAS=[
-  {k:"oper",lbl:"Operações",ic:"🖥️",cor:"#2e8fef",desc:"Visão Geral, faltas, coberturas, OS…"},
-  {k:"rh",lbl:"RH",ic:"🗂️",cor:"#7c3aed",desc:"Vagas, entrevistas, desligamentos"},
-  {k:"com",lbl:"Comercial",ic:"💼",cor:"#f97316",desc:"Propostas & Cadência"},
-  {k:"dir",lbl:"Diretoria",ic:"📊",cor:"#0d9488",desc:"Painéis executivos RH e Comercial"},
-  {k:"lounge",lbl:"Lounge",ic:"☕",cor:"#a16207",desc:"Quem está aqui na Sede Virtual, de papo"}
+  {k:"oper",lbl:"Operações",ic:"🖥️",cor:"#2e8fef",piso:"#dbe7f7",cx:250,cy:330,w:170,desc:"Visão Geral, faltas, coberturas, OS…"},
+  {k:"rh",lbl:"RH",ic:"🗂️",cor:"#7c3aed",piso:"#eae2f8",cx:300,cy:185,w:150,desc:"Vagas, entrevistas, desligamentos"},
+  {k:"com",lbl:"Comercial",ic:"💼",cor:"#f97316",piso:"#f9e5d2",cx:660,cy:185,w:150,desc:"Propostas & Cadência"},
+  {k:"dir",lbl:"Diretoria",ic:"📊",cor:"#0d9488",piso:"#d8efe9",cx:710,cy:330,w:160,desc:"Painéis executivos RH e Comercial"},
+  {k:"lounge",lbl:"Lounge",ic:"☕",cor:"#a16207",piso:"#f4e9cd",cx:480,cy:300,w:95,desc:"Quem está aqui na Base, de papo"}
 ];
+const HQ_SLOTS=[[-46,-10],[22,-24],[-8,18],[50,6],[-62,16],[64,28]];
+const HQ_DESCANSO=[[788,492],[832,478],[876,492],[766,516],[810,530],[854,516],[898,530],[832,552]];
+const HQ_PORTA={x:480,y:462},HQ_HALL={x:480,y:300};
 function hqSala(p){
   if(!p)return"oper";
   if(p==="sede")return"lounge";
@@ -5004,78 +5007,214 @@ function hqBeat(){
 setInterval(hqBeat,120000);
 if(sessionStorage.getItem("logged")==="1")setTimeout(hqBeat,3000);
 let HQ_TIMER=null;let HQ_STATE={presenca:[],mensagens:[]};
+let HQ_CH={},HQ_ANIM=null,HQ_T0=0,HQ_FIRST=true,HQ_DM=null,HQ_SEEN={};
 function hqLoad(){
-  const el=document.getElementById("hq-content");
-  if(el&&!(HQ_STATE.presenca||[]).length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Abrindo a sede…</div>';
+  hqShell();
   hqFetch();
   if(HQ_TIMER)clearInterval(HQ_TIMER);
   HQ_TIMER=setInterval(hqFetch,12000);
+  if(!HQ_ANIM){HQ_T0=0;HQ_ANIM=setInterval(hqStep,40);}
 }
 function hqFetch(){
-  fetch("/api/hq").then(r=>r.ok?r.json():null).then(j=>{if(j&&j.presenca){HQ_STATE=j;hqRender();}}).catch(()=>{});
+  const me=sessionStorage.getItem("userKey")||"";
+  fetch("/api/hq?me="+encodeURIComponent(me)).then(r=>r.ok?r.json():null).then(j=>{
+    if(j&&j.presenca){hqStep();HQ_STATE=j;hqSync(HQ_FIRST);HQ_FIRST=false;hqRenderChat();}
+  }).catch(()=>{});
 }
-function hqRender(){
-  const el=document.getElementById("hq-content");if(!el)return;
+/* ── monta o cenário isométrico (uma vez) ── */
+function hqShell(){
+  const el=document.getElementById("hq-content");if(!el||el.dataset.pronto==="1")return;
+  el.dataset.pronto="1";
+  const zona=s=>{const h=s.w/2;
+    return `<polygon points="${s.cx},${s.cy-h} ${s.cx+s.w},${s.cy} ${s.cx},${s.cy+h} ${s.cx-s.w},${s.cy}" fill="${s.piso}" stroke="#c9b795" stroke-width="1"/>`+
+      `<text x="${s.cx}" y="${s.cy-h+15}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#7c6f57" style="letter-spacing:.6px">${s.ic} ${s.lbl.toUpperCase()}</text>`;};
+  const mesa=(x,y)=>`<polygon points="${x-16},${y} ${x},${y-8} ${x+16},${y} ${x},${y+8}" fill="#b07c46"/><polygon points="${x-16},${y} ${x},${y+8} ${x},${y+15} ${x-16},${y+7}" fill="#8a5c2f"/><polygon points="${x},${y+8} ${x+16},${y} ${x+16},${y+7} ${x},${y+15}" fill="#754e26"/><rect x="${x-5}" y="${y-15}" width="10" height="7" rx="1" fill="#0f172a"/><rect x="${x-1}" y="${y-8}" width="2" height="3" fill="#334155"/>`;
+  const sofa=(x,y)=>`<polygon points="${x-20},${y} ${x},${y-10} ${x+20},${y} ${x},${y+10}" fill="#5b6bb0"/><polygon points="${x-20},${y} ${x},${y+10} ${x},${y+16} ${x-20},${y+6}" fill="#47549a"/><polygon points="${x},${y+10} ${x+20},${y} ${x+20},${y+6} ${x},${y+16}" fill="#3d4787"/>`;
+  const planta=(x,y)=>`<rect x="${x-4}" y="${y-6}" width="8" height="8" rx="2" fill="#8a5c2f"/><circle cx="${x}" cy="${y-12}" r="8" fill="#3f9e5f"/><circle cx="${x-6}" cy="${y-8}" r="5" fill="#2f7d49"/><circle cx="${x+6}" cy="${y-8}" r="5" fill="#2f7d49"/>`;
+  let mob="";HQ_SALAS.forEach(s=>{if(s.k!=="lounge")HQ_SLOTS.slice(0,4).forEach(o=>{mob+=mesa(s.cx+o[0],s.cy+o[1]-14);});});
+  mob+=`<ellipse cx="480" cy="294" rx="26" ry="13" fill="#9b6b3c"/><ellipse cx="480" cy="289" rx="26" ry="13" fill="#b07c46"/><rect x="473" y="279" width="5" height="6" rx="1" fill="#f8fafc"/><rect x="483" y="281" width="4" height="5" rx="1" fill="#fbbf24"/>`;
+  let rest="";HQ_DESCANSO.forEach(p=>{rest+=sofa(p[0],p[1]+6);});
+  el.innerHTML=`<style>
+    .hqc{cursor:pointer}
+    .hqc .hqc-fig,.hqc .hq-zzz{transform-box:fill-box;transform-origin:50% 85%}
+    .hqc.hq-walk .hqc-fig{animation:hqStep .32s ease-in-out infinite alternate}
+    @keyframes hqStep{from{transform:translateY(0)}to{transform:translateY(-3.5px)}}
+    .hqc.hq-off .hqc-fig{transform:rotate(-62deg) translate(2px,-2px)}
+    .hqc .hq-zzz{display:none}
+    .hqc.hq-off .hq-zzz{display:block;animation:hqZzz 2.4s ease-in-out infinite}
+    @keyframes hqZzz{0%{opacity:0;transform:translateY(0)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+    .hq-chip{display:inline-flex;align-items:center;gap:6px;background:#141022;border:1px solid #2c2450;border-radius:16px;padding:4px 10px;font-size:.62rem;font-weight:800;color:#e2e8f0;cursor:pointer;transition:border-color .15s}
+    .hq-chip:hover{border-color:#7c3aed}
+    .hq-tab{border:none;border-radius:12px;padding:5px 11px;font-size:.64rem;font-weight:800;cursor:pointer;background:#f1f5f9;color:#475569;position:relative}
+    .hq-tab.on{background:#0d1f35;color:#fff}
+    .hq-badge{position:absolute;top:-5px;right:-4px;background:#dc2626;color:#fff;font-size:.5rem;font-weight:900;border-radius:8px;padding:1px 5px}
+  </style>
+  <div style="display:grid;grid-template-columns:minmax(0,1.62fr) minmax(0,1fr);gap:14px;align-items:start">
+    <div>
+      <div id="hq-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div style="background:linear-gradient(160deg,#241a3d,#0f0b1d 70%);border-radius:16px;overflow:hidden;border:1px solid #2c2450">
+        <svg id="hq-svg" viewBox="0 0 960 600" style="width:100%;display:block">
+          <polygon points="480,42 920,262 920,270 480,50" fill="#cbbb9c"/>
+          <polygon points="480,42 40,262 40,270 480,50" fill="#d8c9ab"/>
+          <polygon points="480,50 920,270 480,490 40,270" fill="#e8dcc8"/>
+          ${HQ_SALAS.map(zona).join("")}
+          ${mob}
+          <polygon points="440,478 480,498 520,478 480,458" fill="#c9b795"/>
+          <text x="480" y="516" text-anchor="middle" font-size="9" font-weight="800" fill="#8d81a8">🚪 ENTRADA</text>
+          <polygon points="830,468 945,522 830,576 715,522" fill="#d9d2e8" stroke="#b9aed2" stroke-width="1"/>
+          <text x="830" y="462" text-anchor="middle" font-size="9" font-weight="800" fill="#8d81a8">😴 DESCANSO</text>
+          ${rest}
+          ${planta(96,270)}${planta(864,262)}${planta(480,118)}
+          <g id="hq-chars"></g>
+        </svg>
+      </div>
+      <div style="font-size:.62rem;color:#94a3b8;margin-top:6px">🖱️ Clique num personagem (ou num chip) para conversa particular · o personagem anda sozinho até a sala da guia que a pessoa está usando · offline descansa no sofá</div>
+    </div>
+    <div id="hq-chat"></div>
+  </div>`;
+}
+/* ── personagem SVG ── */
+function hqChar(k){
+  const u=USERS[k]||{nome:k};const c=hqCor(k);
+  const nome=_esc(String((u.nome||k)).split(" ")[0]).slice(0,10);
+  return `<g id="hqch-${k}" class="hqc" transform="translate(${HQ_PORTA.x},${HQ_PORTA.y})" onclick="hqAbrirDM('${k}')">
+    <g class="hqc-fig">
+      <ellipse cx="0" cy="1" rx="9" ry="3.5" fill="rgba(0,0,0,.28)"/>
+      <rect x="-7" y="-20" width="14" height="16" rx="5" fill="${c[0]}" stroke="${c[1]}" stroke-width="1"/>
+      <circle cx="0" cy="-25" r="6.5" fill="#f2c9a4"/>
+      <path d="M -6.5 -26 a 6.5 6.5 0 0 1 13 0 z" fill="${c[1]}"/>
+    </g>
+    <text class="hq-zzz" x="9" y="-28" font-size="10">💤</text>
+    <g class="hq-tag">
+      <rect x="-28" y="-48" width="56" height="14" rx="7" fill="#0d1f35" opacity=".9"/>
+      <circle class="hq-dot" cx="-20" cy="-41" r="3" fill="#22c55e"/>
+      <text x="3" y="-37.5" text-anchor="middle" font-size="8.5" font-weight="800" fill="#fff">${nome}</text>
+    </g>
+  </g>`;
+}
+/* ── sincroniza presença → posições/estados (a cada poll) ── */
+function hqSync(first){
+  const layer=document.getElementById("hq-chars");if(!layer)return;
   const agora=Date.now();
   const pres={};(HQ_STATE.presenca||[]).forEach(p=>{pres[p.user_key]=p;});
   const online=k=>{const p=pres[k];return !!(p&&p.presence_at&&(agora-new Date(p.presence_at).getTime())<5*60000);};
   const keys=Object.keys(USERS);
-  const onKeys=keys.filter(online);
-  const offKeys=keys.filter(k=>!online(k));
-  const porSala={};onKeys.forEach(k=>{const s=hqSala(pres[k].presence_page);(porSala[s]=porSala[s]||[]).push(k);});
-  const meuKey=sessionStorage.getItem("userKey")||"";
-  const av=(k,salaLbl)=>{
-    const u=USERS[k],c=hqCor(k);
-    const ini=(u.nome||"?").split(" ").map(x=>x[0]).slice(0,2).join("").toUpperCase();
-    const pg=pres[k]&&pres[k].presence_page;
-    const lblPg=PTITLES[pg]?PTITLES[pg].split("—")[0].trim():salaLbl;
-    return `<div style="text-align:center" title="${_esc(u.nome)} — ${_esc(lblPg)}">
-      <div style="width:44px;height:44px;border-radius:50%;background:${c[0]};color:${c[1]};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.8rem;margin:0 auto;position:relative;border:2px solid ${k===meuKey?"#16a34a":"transparent"};animation:pulseIcon 3s ease-in-out infinite">${ini}<span style="position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;background:#16a34a;border:2px solid #fff"></span></div>
-      <div style="font-size:.58rem;font-weight:700;color:#334155;margin-top:3px">${_esc((u.nome||"").split(" ")[0])}${k===meuKey?" (você)":""}</div>
-    </div>`;
-  };
-  let h=`<div style="display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px;align-items:start">`;
-  h+=`<div>`;
-  h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-    <div style="font-size:.72rem;color:#64748b">🟢 <b>${onKeys.length}</b> online agora · atualiza sozinho a cada 12s</div>
-    <div style="font-size:.6rem;color:#94a3b8">presença = guia aberta nos últimos 5 min</div></div>`;
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`;
-  HQ_SALAS.forEach(s=>{
-    const gente=porSala[s.k]||[];
-    h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-top:3px solid ${s.cor};border-radius:14px;padding:12px 14px;min-height:118px${s.k==="lounge"?";grid-column:1/-1;min-height:96px":""}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-size:.72rem;font-weight:800;color:#0d1f35">${s.ic} Sala ${s.lbl}</div>
-        <span style="font-size:.62rem;font-weight:800;color:${gente.length?s.cor:"#cbd5e1"}">${gente.length||"—"}</span></div>
-      <div style="font-size:.56rem;color:#94a3b8;margin-bottom:8px">${s.desc}</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">${gente.length?gente.map(k=>av(k,s.lbl)).join(""):'<div style="font-size:.62rem;color:#cbd5e1;padding:6px 0">sala vazia</div>'}</div>
-    </div>`;
+  const meu=sessionStorage.getItem("userKey")||"";
+  const porSala={};keys.filter(online).forEach(k=>{const s=hqSala(pres[k].presence_page);(porSala[s]=porSala[s]||[]).push(k);});
+  Object.keys(porSala).forEach(s=>porSala[s].sort());
+  let offIdx=0;
+  keys.forEach(k=>{
+    let c=HQ_CH[k];
+    if(!c){layer.insertAdjacentHTML("beforeend",hqChar(k));c=HQ_CH[k]={x:HQ_PORTA.x,y:HQ_PORTA.y,tx:0,ty:0,path:[],el:document.getElementById("hqch-"+k),sala:null,novo:true};}
+    const el=c.el;if(!el)return;
+    if(online(k)){
+      const salaK=hqSala(pres[k].presence_page);
+      const sala=HQ_SALAS.find(s=>s.k===salaK)||HQ_SALAS[0];
+      const idx=Math.max(0,(porSala[salaK]||[]).indexOf(k));
+      const o=HQ_SLOTS[idx%HQ_SLOTS.length];
+      const alvo={x:sala.cx+o[0],y:sala.cy+o[1]+(salaK==="lounge"?20:12)};
+      el.classList.remove("hq-off");
+      const dot=el.querySelector(".hq-dot");if(dot)dot.setAttribute("fill","#22c55e");
+      el.style.display="";
+      if(c.novo){
+        c.novo=false;
+        if(first){c.x=alvo.x;c.y=alvo.y;c.path=[];}
+        else{c.x=HQ_PORTA.x;c.y=HQ_PORTA.y;c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];hqToast("🚪 "+String((USERS[k]||{}).nome||k).split(" ")[0]+" chegou na Base");}
+      }
+      else if(c.sala==="off"){c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];if(!first)hqToast("☀️ "+String((USERS[k]||{}).nome||k).split(" ")[0]+" entrou na Base");}
+      else if(c.sala!==salaK){c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];}
+      else if(Math.abs(c.tx-alvo.x)>1||Math.abs(c.ty-alvo.y)>1){c.path=[alvo];}
+      c.sala=salaK;c.tx=alvo.x;c.ty=alvo.y;
+      if(!c.path.length){c.x=alvo.x;c.y=alvo.y;}
+    }else{
+      c.novo=false;c.sala="off";c.path=[];el.classList.remove("hq-walk");
+      if(offIdx<HQ_DESCANSO.length){const p=HQ_DESCANSO[offIdx++];c.x=p[0];c.y=p[1];c.tx=p[0];c.ty=p[1];el.style.display="";el.classList.add("hq-off");const dot=el.querySelector(".hq-dot");if(dot)dot.setAttribute("fill","#94a3b8");}
+      else{el.style.display="none";}
+    }
+    el.setAttribute("transform","translate("+c.x+","+c.y+")");
   });
-  h+=`</div>`;
-  if(offKeys.length)h+=`<div style="margin-top:10px;background:#f8fafc;border:1px dashed #e2e8f0;border-radius:12px;padding:9px 14px;font-size:.62rem;color:#94a3b8">😴 Offline: ${offKeys.map(k=>_esc((USERS[k].nome||"").split(" ")[0])).join(", ")}</div>`;
-  h+=`</div>`;
+  keys.slice().sort((a,b)=>(((HQ_CH[a]||{}).y)||0)-(((HQ_CH[b]||{}).y)||0)).forEach(k=>{const c=HQ_CH[k];if(c&&c.el)layer.appendChild(c.el);});
+  const chips=document.getElementById("hq-chips");
+  if(chips){const on=keys.filter(online);
+    chips.innerHTML=on.length?on.map(k=>{const c2=hqCor(k);const n=_esc(String((USERS[k]||{}).nome||k).split(" ")[0]);
+      return `<span class="hq-chip" onclick="hqAbrirDM('${k}')"><span style="width:9px;height:9px;border-radius:50%;background:${c2[0]};display:inline-block"></span>${n}${k===meu?" (você)":""}<span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span></span>`;}).join("")
+      :'<span style="font-size:.62rem;color:#94a3b8">Ninguém online agora…</span>';}
+}
+/* ── loop de animação (setInterval: funciona mesmo com a aba em segundo
+      plano, onde requestAnimationFrame congela): anda até o destino ── */
+function hqStep(){
+  if(typeof ST!=="undefined"&&ST.pg!=="sede"){if(HQ_ANIM){clearInterval(HQ_ANIM);HQ_ANIM=null;}return;}
+  const ts=Date.now();
+  /* dt real (limitado a 1s): mantém a velocidade certa mesmo quando o
+     navegador desacelera o setInterval em abas de segundo plano */
+  const dt=Math.min(1000,ts-(HQ_T0||ts));HQ_T0=ts;
+  Object.keys(HQ_CH).forEach(k=>{
+    const c=HQ_CH[k];if(!c||!c.el)return;
+    if(c.path&&c.path.length){
+      const t=c.path[0];const dx=t.x-c.x,dy=t.y-c.y;const d=Math.hypot(dx,dy);const passo=0.095*dt;
+      if(d<=passo){c.x=t.x;c.y=t.y;c.path.shift();if(!c.path.length)c.el.classList.remove("hq-walk");}
+      else{c.x+=dx/d*passo;c.y+=dy/d*passo;c.el.classList.add("hq-walk");}
+      c.el.setAttribute("transform","translate("+c.x.toFixed(1)+","+c.y.toFixed(1)+")");
+    }
+  });
+}
+/* ── toast de chegada ── */
+function hqToast(txt){
+  const n=document.querySelectorAll(".hq-toast").length;
+  const d=document.createElement("div");
+  d.className="hq-toast";
+  d.style.cssText="position:fixed;bottom:"+(18+n*48)+"px;right:18px;z-index:99998;background:#0d1f35;color:#fff;padding:10px 16px;border-radius:12px;font-size:.74rem;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.35);animation:cvFadeUp .3s ease both";
+  d.textContent=txt;document.body.appendChild(d);
+  setTimeout(()=>{d.style.transition="opacity .4s";d.style.opacity="0";setTimeout(()=>d.remove(),400);},3800);
+}
+/* ── chat: Geral + conversas particulares (DM) ── */
+function hqAbrirDM(k){
+  const meu=sessionStorage.getItem("userKey")||"";
+  if(k===meu)return;
+  HQ_DM=k||null;
+  hqRenderChat();
+  const inp=document.getElementById("hq-input");if(inp)inp.focus();
+}
+function hqRenderChat(){
+  const box=document.getElementById("hq-chat");if(!box)return;
+  const meu=sessionStorage.getItem("userKey")||"";
   const msgs=HQ_STATE.mensagens||[];
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:11px 14px;border-bottom:1px solid #e5e9f0;font-size:.76rem;font-weight:800;color:#0d1f35">💬 Chat da Equipe <span style="font-size:.56rem;color:#94a3b8;font-weight:700">todos os usuários veem</span></div>
-    <div id="hq-msgs" style="height:330px;overflow-y:auto;padding:10px 14px">${
-      msgs.length?msgs.map(m=>{const c=hqCor(m.user_key||"");const dt=new Date(m.criado_em);const eu=m.user_key===meuKey;
+  const ehDM=(m,k)=>((m.user_key===meu&&m.para===k)||(m.user_key===k&&m.para===meu));
+  const parceiros={};msgs.forEach(m=>{if(m.para){const outro=m.user_key===meu?m.para:m.user_key;if(outro&&outro!==meu)parceiros[outro]=true;}});
+  if(HQ_DM)parceiros[HQ_DM]=true;
+  const lista=HQ_DM?msgs.filter(m=>ehDM(m,HQ_DM)):msgs.filter(m=>!m.para);
+  const badge=k=>{const seen=HQ_SEEN[k||"geral"]||0;const arr=k?msgs.filter(m=>ehDM(m,k)&&m.user_key!==meu):msgs.filter(m=>!m.para&&m.user_key!==meu);return arr.filter(m=>new Date(m.criado_em).getTime()>seen).length;};
+  const bG=HQ_DM?badge(null):0;
+  const nomeDe=k=>String(((USERS[k]||{}).nome||k)).split(" ")[0];
+  HQ_SEEN[HQ_DM||"geral"]=Date.now();
+  const tabs=`<div style="display:flex;gap:6px;flex-wrap:wrap;padding:9px 12px;border-bottom:1px solid #e5e9f0">
+    <button class="hq-tab ${HQ_DM?"":"on"}" onclick="hqAbrirDM(null)"># Geral${bG?`<span class="hq-badge">${bG}</span>`:""}</button>
+    ${Object.keys(parceiros).map(k=>{const b=HQ_DM===k?0:badge(k);return `<button class="hq-tab ${HQ_DM===k?"on":""}" onclick="hqAbrirDM('${k}')">🔒 ${_esc(nomeDe(k))}${b?`<span class="hq-badge">${b}</span>`:""}</button>`;}).join("")}
+  </div>`;
+  const cab=HQ_DM
+    ?`🔒 Particular com <b>${_esc(nomeDe(HQ_DM))}</b> <span style="font-size:.56rem;color:#94a3b8;font-weight:700">só vocês dois veem</span>`
+    :`💬 Chat da Equipe <span style="font-size:.56rem;color:#94a3b8;font-weight:700">todos os usuários veem</span>`;
+  const inpAntigo=document.getElementById("hq-input");const digitado=inpAntigo?inpAntigo.value:"";const focado=document.activeElement===inpAntigo;
+  const msgsAntigo=document.getElementById("hq-msgs");const noFim=!msgsAntigo||msgsAntigo.scrollTop+msgsAntigo.clientHeight>=msgsAntigo.scrollHeight-30;
+  box.innerHTML=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:10px 14px;border-bottom:1px solid #e5e9f0;font-size:.76rem;font-weight:800;color:#0d1f35">${cab}</div>
+    ${tabs}
+    <div id="hq-msgs" style="height:352px;overflow-y:auto;padding:10px 14px">${
+      lista.length?lista.map(m=>{const c=hqCor(m.user_key||"");const dt=new Date(m.criado_em);const eu=m.user_key===meu;
         return `<div style="margin-bottom:9px${eu?";text-align:right":""}">
           <span style="font-size:.6rem;font-weight:800;color:${c[1]}">${_esc(m.nome)}</span>
           <span style="font-size:.54rem;color:#94a3b8"> ${dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} ${dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
-          <div style="display:inline-block;max-width:92%;background:${eu?"#dbeafe":"#f1f5f9"};border-radius:10px;padding:6px 10px;font-size:.7rem;color:#0f172a;margin-top:2px;text-align:left;word-break:break-word">${_esc(m.texto)}</div>
-        </div>`;}).join(""):'<div style="color:#94a3b8;font-size:.7rem;text-align:center;padding:30px 0">Nenhuma mensagem ainda — diga oi! 👋</div>'
+          <div style="display:inline-block;max-width:92%;background:${eu?(m.para?"#fef3c7":"#dbeafe"):(m.para?"#fef9c3":"#f1f5f9")};border-radius:10px;padding:6px 10px;font-size:.7rem;color:#0f172a;margin-top:2px;text-align:left;word-break:break-word">${_esc(m.texto)}</div>
+        </div>`;}).join("")
+      :(HQ_DM?'<div style="color:#94a3b8;font-size:.7rem;text-align:center;padding:30px 0">Comece a conversa particular 🔒</div>':'<div style="color:#94a3b8;font-size:.7rem;text-align:center;padding:30px 0">Nenhuma mensagem ainda — diga oi! 👋</div>')
     }</div>
     <form onsubmit="return hqEnviar(event)" style="display:flex;gap:6px;padding:9px 10px;border-top:1px solid #e5e9f0">
-      <input id="hq-input" class="rhf-i" maxlength="500" placeholder="Mensagem para a equipe…" style="flex:1" autocomplete="off">
+      <input id="hq-input" class="rhf-i" maxlength="500" placeholder="${HQ_DM?"Mensagem para "+_esc(nomeDe(HQ_DM))+"… (particular)":"Mensagem para a equipe…"}" style="flex:1" autocomplete="off">
       <button class="rh-btn" style="padding:8px 14px" type="submit">➤</button>
     </form>
   </div>`;
-  h+=`</div>`;
-  /* preserva o texto digitado e a rolagem entre as atualizações automáticas */
-  const inpAntigo=document.getElementById("hq-input");const digitado=inpAntigo?inpAntigo.value:"";
-  const msgsAntigo=document.getElementById("hq-msgs");const noFim=!msgsAntigo||msgsAntigo.scrollTop+msgsAntigo.clientHeight>=msgsAntigo.scrollHeight-30;
-  el.innerHTML=h;
-  const inpNovo=document.getElementById("hq-input");if(inpNovo&&digitado)inpNovo.value=digitado;
-  const box=document.getElementById("hq-msgs");if(box&&noFim)box.scrollTop=box.scrollHeight;
+  const inpNovo=document.getElementById("hq-input");if(inpNovo){if(digitado)inpNovo.value=digitado;if(focado)inpNovo.focus();}
+  const b2=document.getElementById("hq-msgs");if(b2&&noFim)b2.scrollTop=b2.scrollHeight;
 }
 function hqEnviar(e){
   e.preventDefault();
@@ -5084,9 +5223,9 @@ function hqEnviar(e){
   if(!texto)return false;
   inp.value="";
   const u=sessionStorage.getItem("userKey")||"",nome=sessionStorage.getItem("userNome")||u;
-  HQ_STATE.mensagens=(HQ_STATE.mensagens||[]).concat([{user_key:u,nome:nome,texto:texto,criado_em:new Date().toISOString()}]);
-  hqRender();
-  fetch("/api/hq",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"msg",userKey:u,nome:nome,texto:texto})}).then(()=>hqFetch()).catch(()=>{});
+  HQ_STATE.mensagens=(HQ_STATE.mensagens||[]).concat([{user_key:u,nome:nome,texto:texto,para:HQ_DM||null,criado_em:new Date().toISOString()}]);
+  hqRenderChat();
+  fetch("/api/hq",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"msg",userKey:u,nome:nome,texto:texto,para:HQ_DM||null})}).then(()=>hqFetch()).catch(()=>{});
   return false;
 }
 function comDashRender(){
