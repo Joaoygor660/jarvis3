@@ -4953,6 +4953,29 @@ function comDashRender(){
     `${criticas.length?` <b style="color:#dc2626">${criticas.length} negociação(ões) críticas exigem contato imediato.</b>`:""}`+
     `${probMeta!==null?` Probabilidade de bater a meta: <b>${probMeta}%</b>.`:""}`;
   let h='';
+  /* ── VITRINE "MODO APRESENTAÇÃO" (topo) — só existe enquanto COM_VALORES=false.
+        Mostra à diretoria, com números SIMULADOS, o que o painel passa a
+        exibir no dia em que o campo Valor começar a ser preenchido. ── */
+  if(!COM_VALORES){
+    const demo=(ic,lbl,v,sub,delay)=>`<div class="v3d" style="animation-delay:${delay}s,${delay}s"><span class="v3d-tag">SIMULAÇÃO</span><span class="v3d-ic">${ic}</span><div class="v3d-lb">${lbl}</div><div class="v3d-v">${v}</div><div class="v3d-sub">${sub}</div></div>`;
+    h+=`<div class="v3d-sec">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.58rem;font-weight:900;letter-spacing:.8px;padding:4px 12px;border-radius:12px">🎬 MODO APRESENTAÇÃO</span>
+        <span style="font-size:.62rem;color:#b7c7e4;font-weight:700">números ilustrativos — nenhum dado real</span>
+      </div>
+      <div style="font-size:1.02rem;font-weight:900;margin-bottom:4px">O que a diretoria passa a ver quando os <span style="color:#c4b5fd">valores</span> entrarem</div>
+      <div style="font-size:.72rem;color:#93a7cc;margin-bottom:18px">O painel já está pronto para tudo isto — hoje fica adormecido porque as propostas ainda não têm valor preenchido.</div>
+      <div class="v3d-grid">
+        ${demo("🔮","Receita Prevista","R$ 187.400","Pipeline ponderado pela chance real de cada proposta fechar",0)}
+        ${demo("💰","Pipeline em Negociação","R$ 245.000","Quanto dinheiro está na mesa agora, etapa por etapa",0.4)}
+        ${demo("🏆","Fechado no mês × Meta","76%","R$ 92.000 de R$ 120.000 — barra de meta em tempo real",0.8)}
+        ${demo("🎯","Prob. de bater a meta","78%","Previsão automática pelo ritmo do mês + funil atual",1.2)}
+        ${demo("📈","Ticket Médio","R$ 11.500","Valor médio por contrato — e a evolução mês a mês",1.6)}
+        ${demo("👑","Radar VIP","R$ 38.000","Alerta na hora quando uma negociação valiosa fica parada",2)}
+      </div>
+      <div class="v3d-cta">🔓 <b>Zero configuração:</b> no dia em que o campo <b>Valor da Proposta</b> começar a ser preenchido, tudo isto liga sozinho — receitas, metas em R$, previsões e alertas — e esta demonstração dá lugar aos números reais.</div>
+    </div>`;
+  }
   /* ── COCKPIT HERO ── */
   h+=`<div style="background:linear-gradient(135deg,#0d1f35,#173a66);border-radius:16px;padding:22px 26px;margin-bottom:14px;color:#fff;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:center;animation:cvFadeUp .4s ease both">
     <div style="text-align:center">
@@ -4986,29 +5009,6 @@ function comDashRender(){
       </div>
     </div>
   </div>`;
-  /* ── VITRINE "MODO APRESENTAÇÃO" — só existe enquanto COM_VALORES=false.
-        Mostra à diretoria, com números SIMULADOS, o que o painel passa a
-        exibir no dia em que o campo Valor começar a ser preenchido. ── */
-  if(!COM_VALORES){
-    const demo=(ic,lbl,v,sub,delay)=>`<div class="v3d" style="animation-delay:${delay}s,${delay}s"><span class="v3d-tag">SIMULAÇÃO</span><span class="v3d-ic">${ic}</span><div class="v3d-lb">${lbl}</div><div class="v3d-v">${v}</div><div class="v3d-sub">${sub}</div></div>`;
-    h+=`<div class="v3d-sec">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-        <span style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.58rem;font-weight:900;letter-spacing:.8px;padding:4px 12px;border-radius:12px">🎬 MODO APRESENTAÇÃO</span>
-        <span style="font-size:.62rem;color:#b7c7e4;font-weight:700">números ilustrativos — nenhum dado real</span>
-      </div>
-      <div style="font-size:1.02rem;font-weight:900;margin-bottom:4px">O que a diretoria passa a ver quando os <span style="color:#c4b5fd">valores</span> entrarem</div>
-      <div style="font-size:.72rem;color:#93a7cc;margin-bottom:18px">O painel já está pronto para tudo isto — hoje fica adormecido porque as propostas ainda não têm valor preenchido.</div>
-      <div class="v3d-grid">
-        ${demo("🔮","Receita Prevista","R$ 187.400","Pipeline ponderado pela chance real de cada proposta fechar",0)}
-        ${demo("💰","Pipeline em Negociação","R$ 245.000","Quanto dinheiro está na mesa agora, etapa por etapa",0.4)}
-        ${demo("🏆","Fechado no mês × Meta","76%","R$ 92.000 de R$ 120.000 — barra de meta em tempo real",0.8)}
-        ${demo("🎯","Prob. de bater a meta","78%","Previsão automática pelo ritmo do mês + funil atual",1.2)}
-        ${demo("📈","Ticket Médio","R$ 11.500","Valor médio por contrato — e a evolução mês a mês",1.6)}
-        ${demo("👑","Radar VIP","R$ 38.000","Alerta na hora quando uma negociação valiosa fica parada",2)}
-      </div>
-      <div class="v3d-cta">🔓 <b>Zero configuração:</b> no dia em que o campo <b>Valor da Proposta</b> começar a ser preenchido, tudo isto liga sozinho — receitas, metas em R$, previsões e alertas — e esta demonstração dá lugar aos números reais.</div>
-    </div>`;
-  }
   /* ── KPIs ── */
   h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px">`;
   h+=kpi("envMes","📨","Propostas no mês",envMes.length,`${emp} empresas · ${cond} condomínios`,"#2e8fef",comSpark(sEnvN,"#2e8fef"));
