@@ -578,6 +578,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-lbl">Comercial — Diretoria</div>
     <div class="ni" onclick="navTo('comdash',this)" style="position:relative"><span class="ni-ic">📊</span><span>Painel Comercial</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">EXEC</span></div>
   </div>
+  <div class="nav-sec">
+    <div class="nav-lbl">Equipe</div>
+    <div class="ni" onclick="navTo('sede',this)" style="position:relative"><span class="ni-ic">🏢</span><span>Sede Virtual</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">AO VIVO</span></div>
+  </div>
   <div class="nav-sec" id="navSecCFG" style="display:none">
     <div class="nav-lbl">Sistema</div>
     <div class="ni" onclick="navTo('config',this)"><span class="ni-ic">⚙️</span><span>Configurações</span></div>
@@ -1315,6 +1319,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="sec-hdr"><span class="sec-hdr-ic">⚙️</span><div><div class="sec-hdr-t">Configurações — Acessos & Usuários</div><div class="sec-hdr-sub">Quem acessa cada painel, status de senha e último acesso</div></div></div>
     <div id="cfg-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando…</div></div>
   </div>
+  <div class="page" id="pg-sede">
+    <div class="sec-hdr"><span class="sec-hdr-ic">🏢</span><div><div class="sec-hdr-t">Sede Virtual — Grupo ServCamp</div><div class="sec-hdr-sub">Cada sala é um módulo do JARVIS: seu avatar aparece onde você está trabalhando</div></div></div>
+    <div id="hq-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Abrindo a sede…</div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1474,6 +1482,7 @@ async function doLogin(e){
   applyUserUI();
   // registra o último acesso (auditoria) — não bloqueia a entrada se falhar
   fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"login",userKey:u})}).catch(()=>{});
+  if(typeof hqBeat==="function")hqBeat(); // já aparece na Sede Virtual
   const mustChange=override?override.must_change!==false:!usr.admin;
   if(mustChange){showForcePasswordChange(u);}
   else{showWelcome();}
@@ -1703,7 +1712,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Sede Virtual — Equipe"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1728,7 +1737,10 @@ function navTo(p,btn){
   else if(p==="compro"){comLoad();}
   else if(p==="comdash"){comDashLoad();}
   else if(p==="config"){cfgLoad();}
+  else if(p==="sede"){hqLoad();}
   else{updVGCharts();}
+  if(p!=="sede"&&typeof HQ_TIMER!=="undefined"&&HQ_TIMER){clearInterval(HQ_TIMER);HQ_TIMER=null;}
+  if(typeof hqBeat==="function")hqBeat(); // presença: avisa em qual sala estou
 }
 
 function refresh(){
@@ -4962,6 +4974,120 @@ function cfgRender(){
     <div style="font-size:.72rem;color:#c7d6ec;line-height:1.6">Criar e editar usuários direto por aqui · ligar/desligar painéis com um clique · perfis prontos (Diretoria, RH, Comercial) · forçar troca de senha. Hoje esta tela é <b>somente leitura</b> — os usuários ainda vêm do código.</div>
   </div>`;
   el.innerHTML=h;
+}
+/* ═════════ SEDE VIRTUAL — presença ao vivo + chat da equipe ═════════
+   Cada sala = um módulo do JARVIS. O avatar aparece na sala correspondente
+   à guia que a pessoa está usando (batimento a cada 2 min + ao navegar). */
+const HQ_SALAS=[
+  {k:"oper",lbl:"Operações",ic:"🖥️",cor:"#2e8fef",desc:"Visão Geral, faltas, coberturas, OS…"},
+  {k:"rh",lbl:"RH",ic:"🗂️",cor:"#7c3aed",desc:"Vagas, entrevistas, desligamentos"},
+  {k:"com",lbl:"Comercial",ic:"💼",cor:"#f97316",desc:"Propostas & Cadência"},
+  {k:"dir",lbl:"Diretoria",ic:"📊",cor:"#0d9488",desc:"Painéis executivos RH e Comercial"},
+  {k:"lounge",lbl:"Lounge",ic:"☕",cor:"#a16207",desc:"Quem está aqui na Sede Virtual, de papo"}
+];
+function hqSala(p){
+  if(!p)return"oper";
+  if(p==="sede")return"lounge";
+  if(p==="rhdash"||p==="comdash")return"dir";
+  if(p==="compro")return"com";
+  if(String(p).indexOf("rh")===0)return"rh";
+  return"oper";
+}
+const HQ_CORES=[["#dbeafe","#1e40af"],["#ede9fe","#5b21b6"],["#dcfce7","#166534"],["#ffedd5","#9a3412"],["#fce7f3","#9d174d"],["#e0f2fe","#075985"],["#fef9c3","#854d0e"],["#e2e8f0","#334155"]];
+function hqCor(k){let s=0;const t=String(k||"");for(let i=0;i<t.length;i++)s+=t.charCodeAt(i);return HQ_CORES[s%HQ_CORES.length];}
+function _esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function hqBeat(){
+  if(sessionStorage.getItem("logged")!=="1")return;
+  const u=sessionStorage.getItem("userKey");if(!u)return;
+  fetch("/api/hq",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"beat",userKey:u,page:(typeof ST!=="undefined"&&ST.pg)||"visao"})}).catch(()=>{});
+}
+setInterval(hqBeat,120000);
+if(sessionStorage.getItem("logged")==="1")setTimeout(hqBeat,3000);
+let HQ_TIMER=null;let HQ_STATE={presenca:[],mensagens:[]};
+function hqLoad(){
+  const el=document.getElementById("hq-content");
+  if(el&&!(HQ_STATE.presenca||[]).length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Abrindo a sede…</div>';
+  hqFetch();
+  if(HQ_TIMER)clearInterval(HQ_TIMER);
+  HQ_TIMER=setInterval(hqFetch,12000);
+}
+function hqFetch(){
+  fetch("/api/hq").then(r=>r.ok?r.json():null).then(j=>{if(j&&j.presenca){HQ_STATE=j;hqRender();}}).catch(()=>{});
+}
+function hqRender(){
+  const el=document.getElementById("hq-content");if(!el)return;
+  const agora=Date.now();
+  const pres={};(HQ_STATE.presenca||[]).forEach(p=>{pres[p.user_key]=p;});
+  const online=k=>{const p=pres[k];return !!(p&&p.presence_at&&(agora-new Date(p.presence_at).getTime())<5*60000);};
+  const keys=Object.keys(USERS);
+  const onKeys=keys.filter(online);
+  const offKeys=keys.filter(k=>!online(k));
+  const porSala={};onKeys.forEach(k=>{const s=hqSala(pres[k].presence_page);(porSala[s]=porSala[s]||[]).push(k);});
+  const meuKey=sessionStorage.getItem("userKey")||"";
+  const av=(k,salaLbl)=>{
+    const u=USERS[k],c=hqCor(k);
+    const ini=(u.nome||"?").split(" ").map(x=>x[0]).slice(0,2).join("").toUpperCase();
+    const pg=pres[k]&&pres[k].presence_page;
+    const lblPg=PTITLES[pg]?PTITLES[pg].split("—")[0].trim():salaLbl;
+    return `<div style="text-align:center" title="${_esc(u.nome)} — ${_esc(lblPg)}">
+      <div style="width:44px;height:44px;border-radius:50%;background:${c[0]};color:${c[1]};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.8rem;margin:0 auto;position:relative;border:2px solid ${k===meuKey?"#16a34a":"transparent"};animation:pulseIcon 3s ease-in-out infinite">${ini}<span style="position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;background:#16a34a;border:2px solid #fff"></span></div>
+      <div style="font-size:.58rem;font-weight:700;color:#334155;margin-top:3px">${_esc((u.nome||"").split(" ")[0])}${k===meuKey?" (você)":""}</div>
+    </div>`;
+  };
+  let h=`<div style="display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:14px;align-items:start">`;
+  h+=`<div>`;
+  h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+    <div style="font-size:.72rem;color:#64748b">🟢 <b>${onKeys.length}</b> online agora · atualiza sozinho a cada 12s</div>
+    <div style="font-size:.6rem;color:#94a3b8">presença = guia aberta nos últimos 5 min</div></div>`;
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`;
+  HQ_SALAS.forEach(s=>{
+    const gente=porSala[s.k]||[];
+    h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-top:3px solid ${s.cor};border-radius:14px;padding:12px 14px;min-height:118px${s.k==="lounge"?";grid-column:1/-1;min-height:96px":""}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-size:.72rem;font-weight:800;color:#0d1f35">${s.ic} Sala ${s.lbl}</div>
+        <span style="font-size:.62rem;font-weight:800;color:${gente.length?s.cor:"#cbd5e1"}">${gente.length||"—"}</span></div>
+      <div style="font-size:.56rem;color:#94a3b8;margin-bottom:8px">${s.desc}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">${gente.length?gente.map(k=>av(k,s.lbl)).join(""):'<div style="font-size:.62rem;color:#cbd5e1;padding:6px 0">sala vazia</div>'}</div>
+    </div>`;
+  });
+  h+=`</div>`;
+  if(offKeys.length)h+=`<div style="margin-top:10px;background:#f8fafc;border:1px dashed #e2e8f0;border-radius:12px;padding:9px 14px;font-size:.62rem;color:#94a3b8">😴 Offline: ${offKeys.map(k=>_esc((USERS[k].nome||"").split(" ")[0])).join(", ")}</div>`;
+  h+=`</div>`;
+  const msgs=HQ_STATE.mensagens||[];
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:11px 14px;border-bottom:1px solid #e5e9f0;font-size:.76rem;font-weight:800;color:#0d1f35">💬 Chat da Equipe <span style="font-size:.56rem;color:#94a3b8;font-weight:700">todos os usuários veem</span></div>
+    <div id="hq-msgs" style="height:330px;overflow-y:auto;padding:10px 14px">${
+      msgs.length?msgs.map(m=>{const c=hqCor(m.user_key||"");const dt=new Date(m.criado_em);const eu=m.user_key===meuKey;
+        return `<div style="margin-bottom:9px${eu?";text-align:right":""}">
+          <span style="font-size:.6rem;font-weight:800;color:${c[1]}">${_esc(m.nome)}</span>
+          <span style="font-size:.54rem;color:#94a3b8"> ${dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} ${dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
+          <div style="display:inline-block;max-width:92%;background:${eu?"#dbeafe":"#f1f5f9"};border-radius:10px;padding:6px 10px;font-size:.7rem;color:#0f172a;margin-top:2px;text-align:left;word-break:break-word">${_esc(m.texto)}</div>
+        </div>`;}).join(""):'<div style="color:#94a3b8;font-size:.7rem;text-align:center;padding:30px 0">Nenhuma mensagem ainda — diga oi! 👋</div>'
+    }</div>
+    <form onsubmit="return hqEnviar(event)" style="display:flex;gap:6px;padding:9px 10px;border-top:1px solid #e5e9f0">
+      <input id="hq-input" class="rhf-i" maxlength="500" placeholder="Mensagem para a equipe…" style="flex:1" autocomplete="off">
+      <button class="rh-btn" style="padding:8px 14px" type="submit">➤</button>
+    </form>
+  </div>`;
+  h+=`</div>`;
+  /* preserva o texto digitado e a rolagem entre as atualizações automáticas */
+  const inpAntigo=document.getElementById("hq-input");const digitado=inpAntigo?inpAntigo.value:"";
+  const msgsAntigo=document.getElementById("hq-msgs");const noFim=!msgsAntigo||msgsAntigo.scrollTop+msgsAntigo.clientHeight>=msgsAntigo.scrollHeight-30;
+  el.innerHTML=h;
+  const inpNovo=document.getElementById("hq-input");if(inpNovo&&digitado)inpNovo.value=digitado;
+  const box=document.getElementById("hq-msgs");if(box&&noFim)box.scrollTop=box.scrollHeight;
+}
+function hqEnviar(e){
+  e.preventDefault();
+  const inp=document.getElementById("hq-input");
+  const texto=(inp&&inp.value||"").trim();
+  if(!texto)return false;
+  inp.value="";
+  const u=sessionStorage.getItem("userKey")||"",nome=sessionStorage.getItem("userNome")||u;
+  HQ_STATE.mensagens=(HQ_STATE.mensagens||[]).concat([{user_key:u,nome:nome,texto:texto,criado_em:new Date().toISOString()}]);
+  hqRender();
+  fetch("/api/hq",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"msg",userKey:u,nome:nome,texto:texto})}).then(()=>hqFetch()).catch(()=>{});
+  return false;
 }
 function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
