@@ -578,6 +578,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-lbl">Comercial — Diretoria</div>
     <div class="ni" onclick="navTo('comdash',this)" style="position:relative"><span class="ni-ic">📊</span><span>Painel Comercial</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">EXEC</span></div>
   </div>
+  <div class="nav-sec" id="navSecCFG" style="display:none">
+    <div class="nav-lbl">Sistema</div>
+    <div class="ni" onclick="navTo('config',this)"><span class="ni-ic">⚙️</span><span>Configurações</span></div>
+  </div>
   <div class="sb-foot upload-btn" id="btnNovoExcel">
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
     <input type="file" id="fu" accept=".xlsx,.xls" onchange="handleUp(event)">
@@ -1307,6 +1311,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="sec-hdr"><span class="sec-hdr-ic">📊</span><div><div class="sec-hdr-t">Painel Comercial — Diretoria</div><div class="sec-hdr-sub">Visão executiva do mês: propostas, conversão, pipeline e metas</div></div></div>
     <div id="cd-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando painel comercial…</div></div>
   </div>
+  <div class="page" id="pg-config">
+    <div class="sec-hdr"><span class="sec-hdr-ic">⚙️</span><div><div class="sec-hdr-t">Configurações — Acessos & Usuários</div><div class="sec-hdr-sub">Quem acessa cada painel, status de senha e último acesso</div></div></div>
+    <div id="cfg-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando…</div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1464,6 +1472,8 @@ async function doLogin(e){
   sessionStorage.setItem("userCom",usr.com?"1":"0");
   sessionStorage.setItem("userComDash",usr.comDash?"1":"0");
   applyUserUI();
+  // registra o último acesso (auditoria) — não bloqueia a entrada se falhar
+  fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"login",userKey:u})}).catch(()=>{});
   const mustChange=override?override.must_change!==false:!usr.admin;
   if(mustChange){showForcePasswordChange(u);}
   else{showWelcome();}
@@ -1508,6 +1518,9 @@ function applyUserUI(){
   const isRhDash=sessionStorage.getItem("userRhDash")==="1";
   // Upload de Excel continua SOMENTE para admin
   document.querySelectorAll(".upload-btn,#btnNovoExcel").forEach(function(el){el.style.display=isAdmin?"":"none";});
+  // Configurações: SOMENTE admin
+  const cfgSec=document.getElementById("navSecCFG");
+  if(cfgSec)cfgSec.style.display=isAdmin?"":"none";
   // Módulos de cadastro RH: admin + responsável de RH (Sandra)
   const rhSec=document.getElementById("navSecRH");
   if(rhSec)rhSec.style.display=(isAdmin||isRh)?"":"none";
@@ -1690,7 +1703,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1714,6 +1727,7 @@ function navTo(p,btn){
   else if(p==="rhdash"){rhDashLoad();}
   else if(p==="compro"){comLoad();}
   else if(p==="comdash"){comDashLoad();}
+  else if(p==="config"){cfgLoad();}
   else{updVGCharts();}
 }
 
@@ -4862,6 +4876,92 @@ function _cdBarRows(pairs,corFn){
   if(!pairs.length)return'<div style="color:#94a3b8">Sem dados ainda.</div>';
   const max=pairs[0][1];
   return pairs.map(([k,v],i)=>`<div style="margin-bottom:7px"><div class="rd-bar-row"><span style="font-weight:700;color:#334155">${k}</span><b>${v}</b></div><div style="background:#eef2f7;border-radius:6px;height:7px"><div style="width:${Math.max(4,v/max*100)}%;height:7px;border-radius:6px;background:${corFn?corFn(k,i):"#1e4d8c"}"></div></div></div>`).join("");
+}
+/* ═════════ CONFIGURAÇÕES — Acessos & Usuários (Fase 1: só leitura) ═════════ */
+const CFG_PANEIS=[
+  {key:"rh",lbl:"RH Cadastro",ic:"🗂️",has:u=>!!(u.admin||u.rh)},
+  {key:"rhDash",lbl:"Painel RH",ic:"📈",has:u=>!!(u.admin||u.rh||u.rhDash)},
+  {key:"com",lbl:"Comercial",ic:"💼",has:u=>!!(u.admin||u.com)},
+  {key:"comDash",lbl:"Painel Comercial",ic:"📊",has:u=>!!(u.admin||u.comDash)},
+  {key:"config",lbl:"Configurações",ic:"⚙️",has:u=>!!u.admin}
+];
+function cfgPerfil(u){
+  if(u.admin)return{lbl:"Admin",cor:"#0d1f35"};
+  if(u.rhDash&&u.comDash)return{lbl:"Diretoria",cor:"#7c3aed"};
+  if(u.rh)return{lbl:"RH",cor:"#2563eb"};
+  if(u.rhDash)return{lbl:"Diretoria RH",cor:"#7c3aed"};
+  if(u.com||u.comDash)return{lbl:"Comercial",cor:"#f97316"};
+  return{lbl:"Operacional",cor:"#64748b"};
+}
+function cfgFmtAcesso(iso){
+  if(!iso)return{desde:"nunca acessou",txt:"",cor:"#dc2626",peso:800};
+  const d=new Date(iso),ms=Date.now()-d.getTime(),h=Math.floor(ms/3600000);
+  const online=ms<8*60000; // ~8 min = considerado "agora"
+  const dt=d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  let desde;
+  if(online)desde="🟢 agora";
+  else if(h<1)desde="há poucos min";
+  else if(h<24)desde="há "+h+"h";
+  else desde="há "+Math.floor(h/24)+"d";
+  return{txt:dt,desde:desde,cor:online?"#16a34a":(h<48?"#334155":"#d97706"),peso:600};
+}
+let CFG_AUDIT={};
+function cfgLoad(){
+  const el=document.getElementById("cfg-content");
+  if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando acessos…</div>';
+  fetch("/api/users?all=1").then(r=>r.ok?r.json():{users:[]}).then(j=>{
+    CFG_AUDIT={};((j&&j.users)||[]).forEach(u=>{CFG_AUDIT[u.user_key]=u;});
+  }).catch(()=>{CFG_AUDIT={};}).finally(cfgRender);
+}
+function cfgRender(){
+  const el=document.getElementById("cfg-content");if(!el)return;
+  const keys=Object.keys(USERS);
+  const total=keys.length;
+  let comSenha=0,jaAcessou=0,online=0;
+  keys.forEach(k=>{const a=CFG_AUDIT[k];if(a&&a.has_custom)comSenha++;if(a&&a.last_login){jaAcessou++;if(Date.now()-new Date(a.last_login).getTime()<8*60000)online++;}});
+  const semSenha=total-comSenha;
+  const card=(ic,lbl,v,sub,cor)=>`<div class="cvk" style="border-top:3px solid ${cor}"><div style="font-size:1.1rem">${ic}</div><div class="cvk-lb" style="margin-top:4px">${lbl}</div><div class="cvk-v" style="font-size:1.5rem">${v}</div><div style="font-size:.62rem;color:#94a3b8">${sub}</div></div>`;
+  let h='';
+  /* resumo */
+  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">`;
+  h+=card("👥","Usuários",total,"cadastrados no sistema","#2e8fef");
+  h+=card("🟢","Online agora",online,"ativos nos últimos 8 min","#16a34a");
+  h+=card("🔑","Senha própria",comSenha+"/"+total,semSenha?`${semSenha} ainda na senha padrão`:"todos trocaram","#7c3aed");
+  h+=card("🕐","Já acessaram",jaAcessou+"/"+total,(total-jaAcessou)+" nunca entraram","#f97316");
+  h+=`</div>`;
+  /* aviso senha padrão */
+  if(semSenha>0){
+    const lista=keys.filter(k=>{const a=CFG_AUDIT[k];return !(a&&a.has_custom);}).map(k=>USERS[k].nome).join(", ");
+    h+=`<div style="background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f97316;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.76rem;color:#9a3412"><b>⚠️ ${semSenha} usuário(s) ainda com a senha padrão</b> (visível no código-fonte): ${lista}. Peça para trocarem no próximo login.</div>`;
+  }
+  /* matriz de acessos */
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 20px;margin-bottom:16px;overflow-x:auto">
+    <div style="font-size:.82rem;font-weight:800;color:#0d1f35;margin-bottom:4px">🔐 Matriz de Acessos</div>
+    <div style="font-size:.66rem;color:#94a3b8;margin-bottom:14px">Quem enxerga cada painel · ✓ = tem acesso</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.74rem;min-width:720px"><thead><tr style="background:#f8fafc">
+      <th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.6rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0">Usuário</th>
+      <th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.6rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0">Perfil</th>
+      ${CFG_PANEIS.map(p=>`<th style="padding:9px 8px;text-align:center;color:#64748b;font-size:.58rem;border-bottom:1px solid #e5e9f0" title="${p.lbl}">${p.ic}<div style="font-weight:600;text-transform:none;letter-spacing:0;margin-top:2px">${p.lbl}</div></th>`).join("")}
+      <th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.6rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0">Último acesso</th>
+      <th style="padding:9px 10px;text-align:center;color:#64748b;font-size:.6rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0">Senha</th>
+    </tr></thead><tbody>`;
+  keys.forEach(k=>{
+    const u=USERS[k],perf=cfgPerfil(u),a=CFG_AUDIT[k]||{},ac=cfgFmtAcesso(a.last_login);
+    h+=`<tr style="border-bottom:1px solid #f1f5f9">
+      <td style="padding:8px 10px"><div style="font-weight:800;color:#0d1f35">${u.nome}</div><div style="font-size:.62rem;color:#94a3b8">${u.cargo||""} · @${k}</div></td>
+      <td style="padding:8px 10px"><span class="rh-badge" style="background:${perf.cor}18;color:${perf.cor};font-weight:800">${perf.lbl}</span></td>
+      ${CFG_PANEIS.map(p=>`<td style="padding:8px 8px;text-align:center;font-size:.9rem">${p.has(u)?'<span style="color:#16a34a;font-weight:900">✓</span>':'<span style="color:#e2e8f0">·</span>'}</td>`).join("")}
+      <td style="padding:8px 10px"><div style="color:${ac.cor};font-weight:${ac.peso};font-size:.7rem">${ac.desde||""}</div><div style="font-size:.6rem;color:#94a3b8">${ac.desde?ac.txt:""}</div></td>
+      <td style="padding:8px 10px;text-align:center">${a.has_custom?'<span title="Senha própria" style="color:#16a34a">🔒</span>':'<span title="Ainda na senha padrão" style="color:#f97316">🔓</span>'}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  /* rodapé: o que vem na próxima fase */
+  h+=`<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);border-radius:14px;padding:16px 20px;color:#fff">
+    <div style="font-size:.8rem;font-weight:800;margin-bottom:6px">🚧 Em breve nesta tela</div>
+    <div style="font-size:.72rem;color:#c7d6ec;line-height:1.6">Criar e editar usuários direto por aqui · ligar/desligar painéis com um clique · perfis prontos (Diretoria, RH, Comercial) · forçar troca de senha. Hoje esta tela é <b>somente leitura</b> — os usuários ainda vêm do código.</div>
+  </div>`;
+  el.innerHTML=h;
 }
 function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
