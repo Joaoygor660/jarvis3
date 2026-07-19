@@ -4979,23 +4979,33 @@ function cfgRender(){
 /* ═════════ BASE VIRTUAL — escritório isométrico animado + chat ═════════
    Cada sala = um módulo do JARVIS. O personagem ANDA até a sala da guia
    que a pessoa está usando; offline descansa no sofá. Clique = DM. */
+/* Coordenadas mapeadas sobre a ILUSTRAÇÃO base-fundo.png (1024×572) */
 const HQ_SALAS=[
-  {k:"oper",lbl:"Operações",ic:"🖥️",cor:"#2e8fef",piso:"#dce7f5",cx:310,cy:285,w:150,desc:"Visão Geral, faltas, coberturas, OS…"},
-  {k:"rh",lbl:"RH",ic:"🗂️",cor:"#7c3aed",piso:"#e9e2f7",cx:430,cy:168,w:125,desc:"Vagas, entrevistas, desligamentos"},
-  {k:"com",lbl:"Comercial",ic:"💼",cor:"#f97316",piso:"#f8e6d4",cx:700,cy:168,w:125,desc:"Propostas & Cadência"},
-  {k:"dir",lbl:"Diretoria",ic:"📊",cor:"#0d9488",piso:"#d9efe8",cx:830,cy:285,w:140,desc:"Painéis executivos"},
-  {k:"lounge",lbl:"Lounge & Café",ic:"☕",cor:"#a16207",piso:"#f4ead2",cx:410,cy:398,w:115,desc:"Café, papo e descanso"},
-  {k:"reuniao",lbl:"Reunião",ic:"🤝",cor:"#64748b",piso:"#e8e6f0",cx:722,cy:400,w:112,desc:"Sala de reunião com mesa oval"},
-  {k:"recep",lbl:"Recepção",ic:"🛎️",cor:"#b45309",piso:"#f1e7d6",cx:560,cy:478,w:92,desc:"Boas-vindas — o JARVIS atende aqui"}
+  {k:"oper",lbl:"Operações",ic:"🖥️",cor:"#2e8fef",cx:160,cy:230,desc:"Visão Geral, faltas, coberturas, OS…"},
+  {k:"rh",lbl:"RH",ic:"🗂️",cor:"#7c3aed",cx:228,cy:105,desc:"Vagas, entrevistas, desligamentos"},
+  {k:"com",lbl:"Comercial",ic:"💼",cor:"#f97316",cx:748,cy:100,desc:"Propostas & Cadência"},
+  {k:"dir",lbl:"Diretoria",ic:"📊",cor:"#0d9488",cx:882,cy:270,desc:"Painéis executivos"},
+  {k:"lounge",lbl:"Lounge & Café",ic:"☕",cor:"#a16207",cx:330,cy:415,desc:"Café, papo e descanso"},
+  {k:"reuniao",lbl:"Reunião",ic:"🤝",cor:"#64748b",cx:876,cy:466,desc:"Sala de reunião com mesa oval"},
+  {k:"recep",lbl:"Recepção",ic:"🛎️",cor:"#b45309",cx:560,cy:478,desc:"Boas-vindas — o JARVIS atende aqui"}
 ];
-const HQ_SLOTS=[[-42,-8],[20,-22],[-6,18],[46,6],[-56,14],[58,24]];
+/* assentos reais (frente das mesas da ilustração) por sala */
+const HQ_MESAS={
+  oper:[[100,205],[212,210],[72,258],[185,262],[140,305],[255,312]],
+  rh:[[222,95],[290,122],[172,128],[247,158]],
+  com:[[692,85],[770,105],[662,132],[748,155],[820,120]],
+  dir:[[848,262],[915,262],[848,296],[915,296]],
+  reuniao:[[838,455],[910,450],[840,488],[912,484]],
+  lounge:[[310,352],[352,438],[272,428],[390,486]],
+  recep:[[534,494],[590,500]]
+};
 /* pontos de descanso dos offline: sofá (dormindo), café (em pé) e banco do jardim (celular) */
 const HQ_OFF=[
-  {x:372,y:420,t:"sofa"},{x:446,y:428,t:"sofa"},{x:452,y:372,t:"cafe"},{x:378,y:378,t:"cafe"},
-  {x:128,y:520,t:"banco"},{x:186,y:548,t:"banco"},{x:236,y:516,t:"banco"},{x:170,y:496,t:"banco"},
-  {x:690,y:428,t:"sofa"},{x:756,y:420,t:"banco"},{x:722,y:378,t:"cafe"},{x:560,y:508,t:"banco"}
+  {x:272,y:426,t:"sofa"},{x:352,y:438,t:"sofa"},{x:392,y:486,t:"sofa"},{x:300,y:348,t:"cafe"},
+  {x:95,y:444,t:"banco"},{x:228,y:518,t:"banco"},{x:72,y:498,t:"banco"},{x:162,y:474,t:"banco"},
+  {x:660,y:540,t:"banco"},{x:706,y:552,t:"sofa"},{x:250,y:378,t:"cafe"},{x:130,y:540,t:"banco"}
 ];
-const HQ_PORTA={x:560,y:530},HQ_HALL={x:560,y:300};
+const HQ_PORTA={x:560,y:540},HQ_HALL={x:520,y:285};
 /* roupa por cargo: diretor terno escuro, gerência azul, RH social, comercial moderno, admin premium, resto uniforme */
 function hqRoupa(u){
   const cg=String((u&&u.cargo)||"").toUpperCase();
@@ -5046,30 +5056,13 @@ function hqShell(){
   const el=document.getElementById("hq-content");if(!el||el.dataset.pronto==="1")return;
   el.dataset.pronto="1";
   const NOITE=(function(){const hr=new Date().getHours();return hr<6||hr>=18;})();
-  const zona=s=>{const h=s.w/2;
-    return `<polygon points="${s.cx},${s.cy-h} ${s.cx+s.w},${s.cy} ${s.cx},${s.cy+h} ${s.cx-s.w},${s.cy}" fill="${s.piso}" stroke="#cfc2a4" stroke-width="1"/>`+
-      `<polygon points="${s.cx},${s.cy-h} ${s.cx+s.w},${s.cy} ${s.cx+s.w},${s.cy-14} ${s.cx},${s.cy-h-14}" fill="rgba(190,215,240,.30)" stroke="rgba(255,255,255,.55)" stroke-width="1"/>`+
-      `<polygon points="${s.cx},${s.cy-h} ${s.cx-s.w},${s.cy} ${s.cx-s.w},${s.cy-14} ${s.cx},${s.cy-h-14}" fill="rgba(190,215,240,.22)" stroke="rgba(255,255,255,.45)" stroke-width="1"/>`+
-      `<text x="${s.cx}" y="${s.cy-h+16}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#77694e" style="letter-spacing:.6px">${s.ic} ${s.lbl.toUpperCase()}</text>`;};
-  const mesa=(x,y)=>`<rect x="${x-8}" y="${y+8}" width="16" height="13" rx="4" fill="#3b475e"/><polygon points="${x-16},${y} ${x},${y-8} ${x+16},${y} ${x},${y+8}" fill="#b07c46"/><polygon points="${x-16},${y} ${x},${y+8} ${x},${y+15} ${x-16},${y+7}" fill="#8a5c2f"/><polygon points="${x},${y+8} ${x+16},${y} ${x+16},${y+7} ${x},${y+15}" fill="#754e26"/><rect x="${x-5}" y="${y-15}" width="10" height="7" rx="1" fill="#0f172a"/><rect x="${x-4}" y="${y-14}" width="8" height="5" fill="${NOITE?"#7dd3fc":"#38bdf8"}" opacity=".85"/><rect x="${x-1}" y="${y-8}" width="2" height="3" fill="#334155"/>`;
-  const sofa=(x,y)=>`<polygon points="${x-20},${y} ${x},${y-10} ${x+20},${y} ${x},${y+10}" fill="#5b6bb0"/><polygon points="${x-20},${y} ${x},${y+10} ${x},${y+16} ${x-20},${y+6}" fill="#47549a"/><polygon points="${x},${y+10} ${x+20},${y} ${x+20},${y+6} ${x},${y+16}" fill="#3d4787"/>`;
-  const planta=(x,y)=>`<rect x="${x-4}" y="${y-6}" width="8" height="8" rx="2" fill="#8a5c2f"/><circle cx="${x}" cy="${y-12}" r="8" fill="#3f9e5f"/><circle cx="${x-6}" cy="${y-8}" r="5" fill="#2f7d49"/><circle cx="${x+6}" cy="${y-8}" r="5" fill="#2f7d49"/>`;
-  const arvore=(x,y)=>`<ellipse cx="${x}" cy="${y+4}" rx="14" ry="5" fill="rgba(0,0,0,.15)"/><rect x="${x-3}" y="${y-16}" width="6" height="18" rx="2" fill="#7c4a24"/><circle cx="${x}" cy="${y-26}" r="13" fill="#3f9e5f"/><circle cx="${x-10}" cy="${y-18}" r="9" fill="#2f7d49"/><circle cx="${x+10}" cy="${y-18}" r="9" fill="#2f7d49"/>`;
-  const tv=(x,y,id)=>`<rect x="${x-46}" y="${y-26}" width="92" height="52" rx="6" fill="#0f172a" stroke="#334155" stroke-width="2"/><rect x="${x-40}" y="${y-20}" width="80" height="34" rx="3" fill="#0d1f35"/><text id="${id}" x="${x}" y="${y-6}" text-anchor="middle" font-size="8.5" font-weight="800" fill="#7dd3fc"></text><text id="${id}b" x="${x}" y="${y+7}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#94a3b8"></text>`;
-  /* mesas + cadeiras nas salas de trabalho */
-  let mob="";["oper","rh","com","dir"].forEach(k=>{const s=HQ_SALAS.find(z=>z.k===k);HQ_SLOTS.slice(0,4).forEach(o=>{mob+=mesa(s.cx+o[0],s.cy+o[1]-14);});});
-  /* lounge: café + sofás | reunião: mesa oval + cadeiras | recepção: balcão */
-  mob+=`<rect x="404" y="352" width="18" height="26" rx="3" fill="#7c3f2c"/><rect x="407" y="356" width="12" height="8" rx="2" fill="#0f172a"/><circle cx="410" cy="372" r="2" fill="#ef4444"/><rect x="416" y="368" width="5" height="5" rx="1" fill="#f8fafc"/>${sofa(372,426)}${sofa(446,434)}`;
-  mob+=`<ellipse cx="722" cy="404" rx="36" ry="17" fill="#6b4a26"/><ellipse cx="722" cy="399" rx="36" ry="17" fill="#8a5c2f"/>`+[[-46,2],[46,2],[-24,-18],[24,-18],[-24,20],[24,20]].map(o=>`<rect x="${722+o[0]-6}" y="${399+o[1]}" width="12" height="10" rx="3" fill="#3b475e"/>`).join("");
-  mob+=`<polygon points="530,470 560,455 590,470 560,485" fill="#9b6b3c"/><polygon points="530,470 560,485 560,492 530,477" fill="#7a5330"/><polygon points="560,485 590,470 590,477 560,492" fill="#6b4826"/>`;
-  /* JARVIS, o recepcionista-robô */
-  mob+=`<g id="hq-jarvis" transform="translate(596,462)"><ellipse cx="0" cy="2" rx="9" ry="3.5" fill="rgba(0,0,0,.25)"/><rect x="-8" y="-20" width="16" height="17" rx="6" fill="#94a3b8"/><circle cx="0" cy="-26" r="7" fill="#cbd5e1"/><circle cx="-2.5" cy="-27" r="1.6" fill="#0ea5e9"/><circle cx="2.5" cy="-27" r="1.6" fill="#0ea5e9"/><line x1="0" y1="-33" x2="0" y2="-38" stroke="#64748b" stroke-width="1.5"/><circle cx="0" cy="-39" r="2" fill="#22d3ee"><animate attributeName="opacity" values="1;.3;1" dur="2s" repeatCount="indefinite"/></circle></g>`;
-  /* balão de fala do JARVIS */
-  mob+=`<g id="hq-bubble" style="display:none"><rect id="hq-bubble-r" x="430" y="392" width="260" height="26" rx="9" fill="#0d1f35" opacity=".94"/><polygon points="590,418 600,428 606,418" fill="#0d1f35" opacity=".94"/><text id="hq-bubble-t" x="560" y="409" text-anchor="middle" font-size="10" font-weight="700" fill="#e0f2fe"></text></g>`;
-  const ceu=NOITE
-    ?`<rect width="1200" height="680" fill="#141026"/>${[[90,40],[210,72],[330,30],[500,58],[640,26],[760,64],[900,38],[1030,70],[1120,34],[170,110],[980,108],[560,96]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="1.4" fill="#e2e8f0" opacity=".8"/>`).join("")}<circle cx="1096" cy="70" r="22" fill="#fef9c3" opacity=".92"/><circle cx="1088" cy="62" r="20" fill="#141026"/>${[0,1,2,3,4,5,6,7,8,9].map(i=>`<rect x="${60+i*118}" y="${96+(i%3)*14}" width="34" height="${70-(i%3)*14}" fill="#241a3d"/><rect x="${68+i*118}" y="${106+(i%3)*14}" width="5" height="5" fill="#fbbf24" opacity=".8"/><rect x="${78+i*118}" y="${118+(i%3)*14}" width="5" height="5" fill="#fbbf24" opacity=".6"/>`).join("")}`
-    :`<rect width="1200" height="680" fill="#dbeafe"/><circle cx="1080" cy="78" r="30" fill="#fde047" opacity=".9"/><ellipse cx="220" cy="70" rx="60" ry="16" fill="#fff" opacity=".7"/><ellipse cx="820" cy="52" rx="76" ry="18" fill="#fff" opacity=".6"/>`;
-  const janelas=NOITE?[[640,132],[700,162],[760,192],[820,222],[880,252],[480,132],[420,162],[360,192],[300,222],[240,252]].map(p=>`<rect x="${p[0]-6}" y="${p[1]-30}" width="12" height="9" fill="#fde047" opacity=".75"/>`).join(""):"";
+  /* etiqueta flutuante de sala (pílula sobre a ilustração) */
+  const tag=(x,y,txt)=>{const w=txt.length*5.6+20;return `<g opacity=".92"><rect x="${x-w/2}" y="${y-9}" width="${w}" height="17" rx="8.5" fill="#0d1f35"/><text x="${x}" y="${y+3.5}" text-anchor="middle" font-size="8.5" font-weight="800" fill="#fff" style="letter-spacing:.5px">${txt}</text></g>`;};
+  /* telão HUD ao vivo */
+  const hud=(x,id)=>`<rect x="${x-88}" y="10" width="176" height="36" rx="10" fill="#0d1f35" opacity=".9" stroke="#38bdf8" stroke-opacity=".4"/><text id="${id}" x="${x}" y="25" text-anchor="middle" font-size="9.5" font-weight="800" fill="#7dd3fc"></text><text id="${id}b" x="${x}" y="38" text-anchor="middle" font-size="7.8" font-weight="700" fill="#94a3b8"></text>`;
+  /* JARVIS, o recepcionista-robô (atrás do balcão da ilustração) */
+  const jarvis=`<g id="hq-jarvis" transform="translate(560,452)"><ellipse cx="0" cy="2" rx="9" ry="3.5" fill="rgba(0,0,0,.25)"/><rect x="-8" y="-20" width="16" height="17" rx="6" fill="#94a3b8"/><circle cx="0" cy="-26" r="7" fill="#cbd5e1"/><circle cx="-2.5" cy="-27" r="1.6" fill="#0ea5e9"/><circle cx="2.5" cy="-27" r="1.6" fill="#0ea5e9"/><line x1="0" y1="-33" x2="0" y2="-38" stroke="#64748b" stroke-width="1.5"/><circle cx="0" cy="-39" r="2" fill="#22d3ee"><animate attributeName="opacity" values="1;.3;1" dur="2s" repeatCount="indefinite"/></circle></g>`;
+  const bubble=`<g id="hq-bubble" style="display:none"><rect id="hq-bubble-r" x="430" y="386" width="260" height="26" rx="9" fill="#0d1f35" opacity=".94"/><polygon points="552,412 560,424 568,412" fill="#0d1f35" opacity=".94"/><text id="hq-bubble-t" x="560" y="403" text-anchor="middle" font-size="10" font-weight="700" fill="#e0f2fe"></text></g>`;
   el.innerHTML=`<style>
     .hqc{cursor:pointer}
     .hqc .hqc-fig,.hqc .hq-zzz{transform-box:fill-box;transform-origin:50% 85%}
@@ -5102,30 +5095,13 @@ function hqShell(){
           <button class="hq-zbtn" onclick="hqZoom(0.77)" title="Afastar">－</button>
           <button class="hq-zbtn" onclick="hqZoomReset()" title="Visão geral">⌂</button>
         </div>
-        <svg id="hq-svg" viewBox="0 0 1200 680" style="width:100%;display:block;cursor:grab;touch-action:none">
-          ${ceu}
-          <polygon points="300,540 560,524 560,538 300,554" fill="${NOITE?"#3a3152":"#cfd8c9"}" opacity=".85"/>
-          <polygon points="180,447 330,522 180,597 30,522" fill="${NOITE?"#1e3a2c":"#b7e2b9"}" stroke="${NOITE?"#2f5c44":"#8fcf96"}" stroke-width="1.5"/>
-          <text x="180" y="452" text-anchor="middle" font-size="9" font-weight="800" fill="${NOITE?"#86efac":"#3e7a4b"}">🌳 JARDIM</text>
-          ${arvore(112,540)}${arvore(212,568)}${arvore(238,502)}
-          <polygon points="560,42 1040,282 1040,300 560,60" fill="${NOITE?"#4c4370":"#b9c8d8"}"/>
-          <polygon points="560,42 80,282 80,300 560,60" fill="${NOITE?"#5a5180":"#c9d6e3"}"/>
-          <polygon points="560,60 1040,300 560,540 80,300" fill="#eadfc9"/>
-          ${janelas}
-          <polygon points="560,96 592,300 560,504 528,300" fill="#f3ebd7" opacity=".95"/>
-          <polygon points="130,300 560,258 990,300 560,342" fill="#f3ebd7" opacity=".8"/>
-          ${HQ_SALAS.map(zona).join("")}
-          <polygon points="560,50 598,69 560,88 522,69" fill="#b6c0cc"/>
-          <polygon points="522,69 560,88 560,124 522,105" fill="#8b95a3"/>
-          <polygon points="560,88 598,69 598,105 560,124" fill="#77808d"/>
-          <line x1="579" y1="80" x2="579" y2="113" stroke="#5b6472" stroke-width="1.5"/>
-          <circle cx="590" cy="76" r="2" fill="#22d3ee"/>
-          <text x="560" y="42" text-anchor="middle" font-size="9" font-weight="800" fill="${NOITE?"#a5b4fc":"#475569"}">🛗 ELEVADOR</text>
-          ${tv(238,140,"hq-tv1")}${tv(886,140,"hq-tv2")}
-          ${mob}
-          <text x="560" y="562" text-anchor="middle" font-size="9.5" font-weight="800" fill="${NOITE?"#a5b4fc":"#64748b"}">🚪 ENTRADA PRINCIPAL</text>
-          ${HQ_OFF.filter(p=>p.t==="banco").map(p=>`<rect x="${p.x-13}" y="${p.y+2}" width="26" height="6" rx="2" fill="#9b6b3c"/><rect x="${p.x-11}" y="${p.y+8}" width="3" height="5" fill="#7a5330"/><rect x="${p.x+8}" y="${p.y+8}" width="3" height="5" fill="#7a5330"/>`).join("")}
-          ${planta(150,296)}${planta(962,296)}${planta(560,222)}${planta(620,468)}
+        <svg id="hq-svg" viewBox="0 0 1024 572" style="width:100%;display:block;cursor:grab;touch-action:none">
+          <image href="base-fundo.png" x="0" y="0" width="1024" height="572" preserveAspectRatio="xMidYMid slice"/>
+          ${NOITE?`<rect width="1024" height="572" fill="#1e1b4b" opacity=".32" pointer-events="none"/>`:""}
+          ${tag(505,30,"🛗 ELEVADOR")}${tag(160,178,"🖥️ OPERAÇÕES")}${tag(228,42,"🗂️ RH")}${tag(748,34,"💼 COMERCIAL")}${tag(886,224,"📊 DIRETORIA")}${tag(876,422,"🤝 REUNIÃO")}${tag(330,320,"☕ LOUNGE & CAFÉ")}${tag(120,400,"🌳 JARDIM")}${tag(560,556,"🚪 RECEPÇÃO · ENTRADA")}
+          ${hud(150,"hq-tv1")}${hud(874,"hq-tv2")}
+          ${jarvis}
+          ${bubble}
           <g id="hq-chars"></g>
         </svg>
       </div>
@@ -5206,8 +5182,9 @@ function hqSync(first){
       const salaK=hqSala(pres[k].presence_page);
       const sala=HQ_SALAS.find(s=>s.k===salaK)||HQ_SALAS[0];
       const idx=Math.max(0,(porSala[salaK]||[]).indexOf(k));
-      const o=HQ_SLOTS[idx%HQ_SLOTS.length];
-      const alvo={x:sala.cx+o[0],y:sala.cy+o[1]+(salaK==="lounge"||salaK==="recep"?20:12)};
+      const mesas=HQ_MESAS[salaK]||[[HQ_HALL.x,HQ_HALL.y]];
+      const m=mesas[idx%mesas.length];
+      const alvo={x:m[0],y:m[1]};
       const dot=el.querySelector(".hq-dot");if(dot)dot.setAttribute("fill","#22c55e");
       el.style.display="";
       const eraOff=c.off;c.off=false;c.offT=null;
@@ -5398,24 +5375,24 @@ function hqConfetti(){
   }
 }
 /* ── zoom e pan no cenário ── */
-let HQ_VB={x:0,y:0,w:1200,h:680},HQ_PAN=null;
+let HQ_VB={x:0,y:0,w:1024,h:572},HQ_PAN=null;
 function hqVBApply(){const svg=document.getElementById("hq-svg");if(svg)svg.setAttribute("viewBox",`${HQ_VB.x.toFixed(0)} ${HQ_VB.y.toFixed(0)} ${HQ_VB.w.toFixed(0)} ${HQ_VB.h.toFixed(0)}`);}
 function hqZoom(f){
-  const nw=Math.max(300,Math.min(1200,HQ_VB.w/f));
-  const nh=nw*680/1200;
-  HQ_VB.x=Math.max(0,Math.min(1200-nw,HQ_VB.x+(HQ_VB.w-nw)/2));
-  HQ_VB.y=Math.max(0,Math.min(680-nh,HQ_VB.y+(HQ_VB.h-nh)/2));
+  const nw=Math.max(260,Math.min(1024,HQ_VB.w/f));
+  const nh=nw*572/1024;
+  HQ_VB.x=Math.max(0,Math.min(1024-nw,HQ_VB.x+(HQ_VB.w-nw)/2));
+  HQ_VB.y=Math.max(0,Math.min(572-nh,HQ_VB.y+(HQ_VB.h-nh)/2));
   HQ_VB.w=nw;HQ_VB.h=nh;hqVBApply();
 }
-function hqZoomReset(){HQ_VB={x:0,y:0,w:1200,h:680};hqVBApply();}
+function hqZoomReset(){HQ_VB={x:0,y:0,w:1024,h:572};hqVBApply();}
 function hqWheel(e){e.preventDefault();hqZoom(e.deltaY<0?1.18:0.85);}
 function hqPanIni(e){HQ_PAN={mx:e.clientX,my:e.clientY,x:HQ_VB.x,y:HQ_VB.y};}
 function hqPanMov(e){
   if(!HQ_PAN)return;
   const svg=document.getElementById("hq-svg");if(!svg)return;
   const esc=HQ_VB.w/svg.getBoundingClientRect().width;
-  HQ_VB.x=Math.max(0,Math.min(1200-HQ_VB.w,HQ_PAN.x-(e.clientX-HQ_PAN.mx)*esc));
-  HQ_VB.y=Math.max(0,Math.min(680-HQ_VB.h,HQ_PAN.y-(e.clientY-HQ_PAN.my)*esc));
+  HQ_VB.x=Math.max(0,Math.min(1024-HQ_VB.w,HQ_PAN.x-(e.clientX-HQ_PAN.mx)*esc));
+  HQ_VB.y=Math.max(0,Math.min(572-HQ_VB.h,HQ_PAN.y-(e.clientY-HQ_PAN.my)*esc));
   hqVBApply();
 }
 function hqPanFim(){HQ_PAN=null;}
