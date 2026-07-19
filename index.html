@@ -582,6 +582,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-lbl">Equipe</div>
     <div class="ni" onclick="navTo('sede',this)" style="position:relative"><span class="ni-ic">🏢</span><span>Base Virtual</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">AO VIVO</span></div>
   </div>
+  <div class="nav-sec" id="navSecPRJ" style="display:none">
+    <div class="nav-lbl">Evolução / Inovação</div>
+    <div class="ni" onclick="navTo('prj',this)" style="position:relative"><span class="ni-ic">🚀</span><span>Projetos</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
+  </div>
   <div class="nav-sec" id="navSecCFG" style="display:none">
     <div class="nav-lbl">Sistema</div>
     <div class="ni" onclick="navTo('config',this)"><span class="ni-ic">⚙️</span><span>Configurações</span></div>
@@ -1323,6 +1327,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="sec-hdr"><span class="sec-hdr-ic">🏢</span><div><div class="sec-hdr-t">Base Virtual — Grupo ServCamp</div><div class="sec-hdr-sub">Cada sala é um módulo do JARVIS: seu personagem anda até onde você está trabalhando</div></div></div>
     <div id="hq-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Abrindo a base…</div></div>
   </div>
+  <div class="page" id="pg-prj">
+    <div class="sec-hdr"><span class="sec-hdr-ic">🚀</span><div><div class="sec-hdr-t">Projetos — Evolução &amp; Inovação</div><div class="sec-hdr-sub">Da ideia à implantação: pipeline, kanban, checklist e insights do JARVIS</div></div></div>
+    <div id="prj-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando projetos…</div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1531,6 +1539,9 @@ function applyUserUI(){
   // Configurações: SOMENTE admin
   const cfgSec=document.getElementById("navSecCFG");
   if(cfgSec)cfgSec.style.display=isAdmin?"":"none";
+  // Projetos (Evolução/Inovação): SOMENTE admin até liberar
+  const prjSec=document.getElementById("navSecPRJ");
+  if(prjSec)prjSec.style.display=isAdmin?"":"none";
   // Módulos de cadastro RH: admin + responsável de RH (Sandra)
   const rhSec=document.getElementById("navSecRH");
   if(rhSec)rhSec.style.display=(isAdmin||isRh)?"":"none";
@@ -1713,7 +1724,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação"};
 
 function navTo(p,btn){
   ST.pg=p;
@@ -1739,6 +1750,7 @@ function navTo(p,btn){
   else if(p==="comdash"){comDashLoad();}
   else if(p==="config"){cfgLoad();}
   else if(p==="sede"){hqLoad();}
+  else if(p==="prj"){prjLoad();}
   else{updVGCharts();}
   if(p!=="sede"&&typeof HQ_TIMER!=="undefined"&&HQ_TIMER){clearInterval(HQ_TIMER);HQ_TIMER=null;}
   if(typeof hqBeat==="function")hqBeat(); // presença: avisa em qual sala estou
@@ -5020,6 +5032,7 @@ function hqRoupa(u){
 function hqSala(p){
   if(!p)return"oper";
   if(p==="sede")return"lounge";
+  if(p==="prj")return"reuniao";
   if(p==="rhdash"||p==="comdash")return"dir";
   if(p==="compro")return"com";
   if(String(p).indexOf("rh")===0)return"rh";
@@ -5437,6 +5450,409 @@ function hqEnviar(e){
   hqRenderChat();
   fetch("/api/hq",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"msg",userKey:u,nome:nome,texto:texto,para:HQ_DM||null})}).then(()=>hqFetch()).catch(()=>{});
   return false;
+}
+/* ═════════ PROJETOS — Evolução & Inovação ═════════
+   Da ideia à implantação: pipeline de ideias, kanban DnD, checklist com
+   progresso automático, tarefas, histórico e insights do JARVIS. */
+const PRJ_ST=[
+  {k:"PLANEJAMENTO",lbl:"💡 Planejamento",cor:"#2e8fef"},
+  {k:"ANÁLISE",lbl:"📋 Em Análise",cor:"#eab308"},
+  {k:"APROVADO",lbl:"✅ Aprovado",cor:"#22c55e"},
+  {k:"DESENVOLVIMENTO",lbl:"🚀 Desenvolvimento",cor:"#7c3aed"},
+  {k:"TESTES",lbl:"🧪 Testes",cor:"#f97316"},
+  {k:"IMPLANTAÇÃO",lbl:"📦 Implantação",cor:"#0d9488"},
+  {k:"CONCLUÍDO",lbl:"🏆 Concluído",cor:"#16a34a"}
+];
+const PRJ_PRIOR={BAIXA:"#94a3b8","MÉDIA":"#2e8fef",ALTA:"#f97316","CRÍTICA":"#dc2626"};
+const PRJ_IDST=[["IDEIA","💡 Ideia"],["AVALIAÇÃO","📋 Em Avaliação"],["VIABILIDADE","📊 Viabilidade"],["APROVAÇÃO","💰 Aprovação"],["PROMOVIDA","🚀 Virou Projeto"],["ARQUIVADA","🗄️ Arquivada"]];
+let PRJ_P=[],PRJ_T=[],PRJ_I=[],PRJ_L=[],PRJ_VIEW="kanban",PRJ_BUSCA="",PRJ_FST="TODOS",PRJ_FAREA="",PRJ_FRESP="",PRJ_FPRIOR="";
+function prjChecklist(p){try{const c=typeof p.checklist==="string"?JSON.parse(p.checklist):p.checklist;return Array.isArray(c)?c:[];}catch(e){return[];}}
+function prjPct(p){const c=prjChecklist(p);if(!c.length)return 0;return Math.round(c.filter(x=>x.d).length/c.length*100);}
+function prjAtrasado(p){return !!(p.data_prevista&&String(p.data_prevista).slice(0,10)<ymd(new Date())&&p.status!=="CONCLUÍDO"&&p.status!=="CANCELADO");}
+function prjCritico(p){return p.prioridade==="CRÍTICA"||(prjAtrasado(p)&&p.prioridade==="ALTA");}
+function prjStCor(s){const o=PRJ_ST.find(x=>x.k===s);return o?o.cor:"#64748b";}
+function prjStLbl(s){const o=PRJ_ST.find(x=>x.k===s);return o?o.lbl:(s==="CANCELADO"?"⚫ Cancelado":s);}
+function prjLoad(){
+  const el=document.getElementById("prj-content");
+  if(el&&!PRJ_P.length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando projetos…</div>';
+  prjFetchAll().then(prjRenderAll).catch(err=>{console.error("Erro projetos:",err);if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.85rem">Erro ao carregar. Verifique a conexão.</div>';});
+}
+function prjFetchAll(){
+  const g=t=>fetch("/api/projetos?t="+t).then(r=>r.json()).then(j=>(j&&j.rows)||[]);
+  return Promise.all([g("projetos"),g("tarefas"),g("ideias"),g("log")]).then(a=>{PRJ_P=a[0];PRJ_T=a[1];PRJ_I=a[2];PRJ_L=a[3];});
+}
+function prjLog(pid,detalhe,tipo){
+  fetch("/api/projetos?t=log",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({projeto_id:pid,tipo:tipo||"evento",detalhe:detalhe,autor:sessionStorage.getItem("userNome")||null})}).catch(()=>{});
+}
+function prjFiltrados(){
+  const b=PRJ_BUSCA.toLowerCase();
+  return PRJ_P.filter(p=>{
+    if(p.status==="CANCELADO"&&PRJ_FST!=="CANCELADO")return false;
+    if(PRJ_FST!=="TODOS"&&(PRJ_FST==="ATRASADO"?!prjAtrasado(p):p.status!==PRJ_FST))return false;
+    if(PRJ_FAREA&&p.area!==PRJ_FAREA)return false;
+    if(PRJ_FRESP&&p.responsavel!==PRJ_FRESP)return false;
+    if(PRJ_FPRIOR&&p.prioridade!==PRJ_FPRIOR)return false;
+    if(b&&[p.nome,p.codigo,p.responsavel,p.area,p.cliente,p.solicitante,p.equipe,p.status].join(" ").toLowerCase().indexOf(b)<0)return false;
+    return true;
+  });
+}
+function prjRenderAll(){
+  const el=document.getElementById("prj-content");if(!el)return;
+  const P=PRJ_P.filter(p=>p.status!=="CANCELADO");
+  const hoje=new Date(),mesKey=ymd(hoje).slice(0,7);
+  const mAnt=new Date(hoje.getFullYear(),hoje.getMonth()-1,1),mAntKey=ymd(mAnt).slice(0,7);
+  const atras=P.filter(prjAtrasado),crit=P.filter(prjCritico),conc=P.filter(p=>p.status==="CONCLUÍDO");
+  const prox7=P.filter(p=>{if(!p.data_prevista||p.status==="CONCLUÍDO")return false;const d=(new Date(String(p.data_prevista).slice(0,10)+"T12:00:00")-hoje)/86400000;return d>=0&&d<=7;});
+  const taxa=P.length?Math.round(conc.length/P.length*100):0;
+  const tempoM=(function(){const c=conc.filter(p=>p.concluido_em);if(!c.length)return"—";return Math.round(c.reduce((s,p)=>s+(new Date(p.concluido_em)-new Date(p.criado_em))/86400000,0)/c.length)+"d";})();
+  const criadosMes=P.filter(p=>String(p.criado_em).slice(0,7)===mesKey).length;
+  const criadosAnt=P.filter(p=>String(p.criado_em).slice(0,7)===mAntKey).length;
+  const sCri=comSerieMensal(P,p=>p.criado_em,()=>1,6),sCon=comSerieMensal(conc,p=>p.concluido_em,()=>1,6);
+  const kpi=(ic,lbl,v,sub,cor,spark,click)=>`<div class="cvk" style="border-top:3px solid ${cor}${click?";cursor:pointer":""}"${click?` onclick="${click}"`:""}><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:4px">${lbl}</div><div class="cvk-v" style="font-size:1.35rem">${v}</div><div style="font-size:.62rem;color:#94a3b8">${sub}</div>${spark||""}</div>`;
+  const cnt=s=>P.filter(p=>p.status===s).length;
+  let h='';
+  h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:12px">`;
+  h+=kpi("🗂️","Total de Projetos",P.length,`${criadosMes} novos no mês ${criadosAnt?`(mês ant.: ${criadosAnt})`:""}`,"#2e8fef",comSpark(sCri,"#2e8fef"),"prjSetSt('TODOS')");
+  h+=kpi("💡","Planejamento",cnt("PLANEJAMENTO")+cnt("ANÁLISE"),"planejamento + análise","#eab308","","prjSetSt('PLANEJAMENTO')");
+  h+=kpi("🚀","Em Desenvolvimento",cnt("DESENVOLVIMENTO"),"construção em andamento","#7c3aed","","prjSetSt('DESENVOLVIMENTO')");
+  h+=kpi("🧪","Em Testes",cnt("TESTES"),"validação e homologação","#f97316","","prjSetSt('TESTES')");
+  h+=kpi("⏰","Atrasados",atras.length,atras.length?"exigem atenção":"tudo no prazo",atras.length?"#dc2626":"#16a34a","","prjSetSt('ATRASADO')");
+  h+=kpi("🏆","Finalizados",conc.length,"implantados e encerrados","#16a34a",comSpark(sCon,"#16a34a"),"prjSetSt('CONCLUÍDO')");
+  h+=kpi("🎯","Taxa de Conclusão",taxa+"%","concluídos ÷ total","#0d9488","");
+  h+=kpi("⏱️","Tempo Médio",tempoM,"criação → conclusão","#64748b","");
+  h+=kpi("🚨","Críticos",crit.length,crit.length?"prioridade máxima":"sob controle",crit.length?"#dc2626":"#16a34a","");
+  h+=kpi("📅","Vencem em 7 dias",prox7.length,prox7.length?prox7.slice(0,2).map(p=>p.nome).join(", ").slice(0,34):"nada vencendo","#b45309","");
+  h+=`</div>`;
+  /* insights JARVIS */
+  const ins=prjInsights(P,atras,crit,conc,prox7);
+  h+=`<div style="display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:12px">
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px"><div style="font-size:.78rem;font-weight:800;color:#0d1f35;margin-bottom:8px">🤖 JARVIS observa <span style="font-size:.58rem;color:#94a3b8;font-weight:700">análise automática dos projetos</span></div>
+      ${ins.map((i,ix)=>`<div class="cv-ins" style="animation-delay:${ix*50}ms;padding:8px 12px"><div style="font-size:.95rem">${i.ic}</div><div style="font-size:.72rem;color:#334155;line-height:1.45">${i.t}</div></div>`).join("")}</div>
+    <div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);border-radius:14px;padding:14px 18px;color:#fff"><div style="font-size:.78rem;font-weight:800;margin-bottom:6px">✨ Resumo Executivo por IA</div>
+      <div style="font-size:.66rem;color:#c7d6ec;margin-bottom:10px">O JARVIS analisa a carteira de projetos e gera destaques, riscos e recomendações.</div>
+      <button class="rh-btn" style="background:#fff;color:#1e4d8c" id="prj-ia-btn" onclick="prjResumoIA()">✨ Gerar análise</button>
+      <div id="prj-ia-out" style="margin-top:10px;font-size:.72rem;line-height:1.5;white-space:pre-wrap"></div></div>
+  </div>`;
+  /* toolbar */
+  const areas=[...new Set(PRJ_P.map(p=>p.area).filter(Boolean))],resps=[...new Set(PRJ_P.map(p=>p.responsavel).filter(Boolean))];
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+    <button class="rh-btn" onclick="prjForm()">➕ Novo Projeto</button>
+    <button class="rh-btn" style="background:#eab308" onclick="prjFormIdeia()">💡 Nova Ideia</button>
+    <input class="rhf-i" placeholder="🔎 Buscar por nome, código, responsável, área, cliente…" style="flex:1;min-width:200px" value="${_esc(PRJ_BUSCA)}" oninput="PRJ_BUSCA=this.value;prjRenderTroca()">
+    <select class="rhf-i" style="width:130px" onchange="PRJ_FAREA=this.value;prjRenderTroca()"><option value="">Área: todas</option>${areas.map(a=>`<option ${PRJ_FAREA===a?"selected":""}>${_esc(a)}</option>`).join("")}</select>
+    <select class="rhf-i" style="width:140px" onchange="PRJ_FRESP=this.value;prjRenderTroca()"><option value="">Resp.: todos</option>${resps.map(a=>`<option ${PRJ_FRESP===a?"selected":""}>${_esc(a)}</option>`).join("")}</select>
+    <select class="rhf-i" style="width:130px" onchange="PRJ_FPRIOR=this.value;prjRenderTroca()"><option value="">Prior.: todas</option>${Object.keys(PRJ_PRIOR).map(a=>`<option ${PRJ_FPRIOR===a?"selected":""}>${a}</option>`).join("")}</select>
+    <div style="display:flex;gap:4px;background:#eef2f7;border-radius:12px;padding:3px">
+      ${[["kanban","🗂️ Kanban"],["tabela","📋 Tabela"],["ideias","💡 Ideias ("+PRJ_I.filter(i=>i.status!=="PROMOVIDA"&&i.status!=="ARQUIVADA").length+")"]].map(v=>`<button onclick="PRJ_VIEW='${v[0]}';prjRenderTroca()" style="border:none;border-radius:10px;padding:6px 12px;font-size:.68rem;font-weight:800;cursor:pointer;background:${PRJ_VIEW===v[0]?"#0d1f35":"transparent"};color:${PRJ_VIEW===v[0]?"#fff":"#475569"}">${v[1]}</button>`).join("")}
+    </div>
+  </div>`;
+  h+=`<div id="prj-vista"></div>`;
+  el.innerHTML=h;
+  prjRenderVista();
+}
+function prjRenderTroca(){const foco=document.activeElement;const ehBusca=foco&&foco.tagName==="INPUT"&&foco.placeholder&&foco.placeholder.indexOf("Buscar")>=0;if(ehBusca){prjRenderVista();}else prjRenderAll();}
+function prjSetSt(s){PRJ_FST=s;prjRenderAll();}
+function prjInsights(P,atras,crit,conc,prox7){
+  const ins=[];
+  if(atras.length){const pior=atras.map(p=>({p,d:Math.floor((Date.now()-new Date(String(p.data_prevista).slice(0,10)+"T12:00:00"))/86400000)})).sort((a,b)=>b.d-a.d)[0];ins.push({ic:"⏰",t:`Existem <b>${atras.length} projeto(s) atrasado(s)</b> — o pior é <b>${_esc(pior.p.nome)}</b>, com ${pior.d} dia(s) de atraso.`});}
+  if(crit.length)ins.push({ic:"🚨",t:`<b>${crit.length} projeto(s) crítico(s)</b>: ${crit.slice(0,3).map(p=>_esc(p.nome)).join(", ")}.`});
+  const parados=P.filter(p=>p.status!=="CONCLUÍDO"&&(Date.now()-new Date(p.atualizado_em||p.criado_em))/86400000>=14);
+  if(parados.length)ins.push({ic:"⏸️",t:`<b>${parados.length} projeto(s)</b> sem atualização há 14+ dias — vale revisar.`});
+  const porArea={};P.filter(p=>p.status!=="CONCLUÍDO").forEach(p=>{if(p.area)porArea[p.area]=(porArea[p.area]||0)+1;});
+  const topArea=Object.entries(porArea).sort((a,b)=>b[1]-a[1])[0];
+  if(topArea&&topArea[1]>=2)ins.push({ic:"📊",t:`A área <b>${_esc(topArea[0])}</b> concentra <b>${topArea[1]}</b> projetos ativos — a maior carga da empresa.`});
+  if(prox7.length)ins.push({ic:"📅",t:`<b>${prox7.length} entrega(s) nos próximos 7 dias</b>: ${prox7.slice(0,3).map(p=>_esc(p.nome)).join(", ")}.`});
+  const tPend=PRJ_T.filter(t=>t.status!=="CONCLUÍDA").length;
+  if(tPend)ins.push({ic:"📝",t:`<b>${tPend} tarefa(s)</b> em aberto no total dos projetos.`});
+  if(!ins.length)ins.push({ic:"✅",t:P.length?"Carteira saudável: nenhum atraso, nada crítico e nenhuma entrega apertada.":"Cadastre o primeiro projeto (ou uma 💡 Ideia) para o JARVIS começar a analisar."});
+  return ins;
+}
+function prjRenderVista(){
+  const el=document.getElementById("prj-vista");if(!el)return;
+  if(PRJ_VIEW==="ideias")return prjRenderIdeias(el);
+  const lista=prjFiltrados();
+  if(PRJ_VIEW==="tabela"){
+    el.innerHTML=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.74rem;min-width:900px"><thead><tr style="background:#f8fafc">${["Projeto","Área","Responsável","Prioridade","Status","Progresso","Prazo","Atualizado",""].map(c=>`<th style="padding:9px 12px;text-align:left;color:#64748b;font-size:.6rem;text-transform:uppercase;border-bottom:1px solid #e5e9f0">${c}</th>`).join("")}</tr></thead><tbody>
+    ${lista.map(p=>{const pct=prjPct(p),atr=prjAtrasado(p);return `<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="prjDet(${p.id})">
+      <td style="padding:9px 12px"><b style="color:#0d1f35">${_esc(p.nome)}</b><div style="font-size:.6rem;color:#94a3b8">${_esc(p.codigo||"")}${p.cliente?" · "+_esc(p.cliente):""}</div></td>
+      <td style="padding:9px 12px">${_esc(p.area||"—")}</td><td style="padding:9px 12px">${_esc((p.responsavel||"—").split(" ")[0])}</td>
+      <td style="padding:9px 12px"><span style="color:${PRJ_PRIOR[p.prioridade]||"#64748b"};font-weight:800">${p.prioridade||"—"}</span></td>
+      <td style="padding:9px 12px"><span class="rh-badge" style="background:${prjStCor(p.status)}18;color:${prjStCor(p.status)}">${prjStLbl(p.status)}</span>${atr?' <span style="color:#dc2626;font-weight:900">⏰</span>':""}</td>
+      <td style="padding:9px 12px;min-width:110px"><div style="background:#eef2f7;border-radius:6px;height:8px"><div style="width:${pct}%;height:8px;border-radius:6px;background:${prjStCor(p.status)};transition:width .5s"></div></div><span style="font-size:.6rem;color:#64748b">${pct}%</span></td>
+      <td style="padding:9px 12px;color:${atr?"#dc2626":"#334155"};font-weight:${atr?"800":"400"}">${rhFmt(p.data_prevista)}</td>
+      <td style="padding:9px 12px;font-size:.64rem;color:#94a3b8">${rhFmt(String(p.atualizado_em||"").slice(0,10))}</td>
+      <td style="padding:9px 12px" onclick="event.stopPropagation()"><span class="rh-act" onclick="prjExcluir(${p.id})" title="Excluir">🗑️</span></td></tr>`;}).join("")||`<tr><td colspan="9" style="padding:30px;text-align:center;color:#94a3b8">Nenhum projeto encontrado.</td></tr>`}
+    </tbody></table></div>`;
+    return;
+  }
+  /* kanban */
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:8px;overflow-x:auto">${PRJ_ST.map(s=>{
+    const cards=lista.filter(p=>p.status===s.k);
+    return `<div style="background:#f4f6fa;border-radius:12px;padding:8px;min-height:150px" ondragover="event.preventDefault()" ondrop="prjDrop(event,'${s.k}')">
+      <div style="font-size:.64rem;font-weight:800;color:${s.cor};padding:2px 4px 8px;display:flex;justify-content:space-between">${s.lbl}<span style="color:#94a3b8">${cards.length||""}</span></div>
+      ${cards.map(p=>{const pct=prjPct(p),atr=prjAtrasado(p);return `<div draggable="true" ondragstart="prjDrag(event,${p.id})" onclick="prjDet(${p.id})" style="background:#fff;border:1px solid #e5e9f0;border-left:3px solid ${PRJ_PRIOR[p.prioridade]||"#94a3b8"};border-radius:10px;padding:9px 10px;margin-bottom:7px;cursor:grab;animation:cvFadeUp .3s ease both">
+        <div style="font-size:.7rem;font-weight:800;color:#0d1f35;line-height:1.25">${_esc(p.nome)}</div>
+        <div style="font-size:.56rem;color:#94a3b8;margin:2px 0 6px">${_esc(p.codigo||"")}${p.area?" · "+_esc(p.area):""}</div>
+        <div style="background:#eef2f7;border-radius:5px;height:6px;margin-bottom:5px"><div style="width:${pct}%;height:6px;border-radius:5px;background:${s.cor};transition:width .5s"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:.58rem;color:#64748b">
+          <span>${_esc((p.responsavel||"—").split(" ")[0])}</span>
+          <span style="${atr?"color:#dc2626;font-weight:900":""}">${p.data_prevista?rhFmt(p.data_prevista):""}${atr?" ⏰":""}</span>
+        </div></div>`;}).join("")||'<div style="font-size:.6rem;color:#cbd5e1;text-align:center;padding:14px 0">vazio</div>'}
+    </div>`;}).join("")}</div>`;
+}
+let PRJ_DRAG=null;
+function prjDrag(ev,id){PRJ_DRAG=id;ev.dataTransfer.effectAllowed="move";}
+function prjDrop(ev,st){
+  ev.preventDefault();
+  const p=PRJ_P.find(x=>x.id===PRJ_DRAG);if(!p||p.status===st)return;
+  const de=p.status;p.status=st;
+  const body={id:p.id,status:st};
+  if(st==="CONCLUÍDO")body.concluido_em=new Date().toISOString();
+  prjRenderAll();
+  fetch("/api/projetos?t=projetos",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(()=>{prjLog(p.id,`Status: ${de} → ${st}`,"status");})
+    .catch(()=>{});
+}
+function prjExcluir(id){
+  const p=PRJ_P.find(x=>x.id===id);
+  if(!confirm("Excluir o projeto \""+(p?p.nome:id)+"\"? As tarefas e o histórico vão junto."))return;
+  fetch("/api/projetos?t=projetos&id="+id,{method:"DELETE"}).then(()=>prjLoad());
+}
+/* ── formulário criar/editar projeto ── */
+function prjForm(id){
+  const p=id?PRJ_P.find(x=>x.id===id):null;
+  const f=(l,html)=>`<div><label class="rhf-l">${l}</label>${html}</div>`;
+  const ov=document.createElement("div");ov.id="prj-form";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px";
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  ov.innerHTML=`<div style="background:#fff;border-radius:16px;padding:22px 26px;max-width:680px;width:100%;max-height:90vh;overflow:auto">
+    <div style="font-size:.9rem;font-weight:900;color:#0d1f35;margin-bottom:14px">${p?"✏️ Editar":"➕ Novo"} Projeto</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      ${f("Nome *",`<input class="rhf-i" id="pf-nome" value="${_esc(p&&p.nome||"")}" style="grid-column:1/-1">`)}
+      ${f("Área",`<input class="rhf-i" id="pf-area" list="pf-areas" value="${_esc(p&&p.area||"")}"><datalist id="pf-areas"><option>Operações</option><option>RH</option><option>Comercial</option><option>Financeiro</option><option>TI / Inovação</option><option>Diretoria</option></datalist>`)}
+      ${f("Cliente",`<input class="rhf-i" id="pf-cliente" value="${_esc(p&&p.cliente||"")}">`)}
+      ${f("Tipo",`<input class="rhf-i" id="pf-tipo" placeholder="Ex: Sistema, Processo…" value="${_esc(p&&p.tipo||"")}">`)}
+      ${f("Solicitante",`<input class="rhf-i" id="pf-sol" value="${_esc(p&&p.solicitante||"")}">`)}
+      ${f("Responsável",`<input class="rhf-i" id="pf-resp" value="${_esc(p&&p.responsavel||sessionStorage.getItem("userNome")||"")}">`)}
+      ${f("Equipe",`<input class="rhf-i" id="pf-eq" placeholder="Nomes separados por vírgula" value="${_esc(p&&p.equipe||"")}">`)}
+      ${f("Prioridade",`<select class="rhf-i" id="pf-prior">${Object.keys(PRJ_PRIOR).map(x=>`<option ${p&&p.prioridade===x?"selected":(!p&&x==="MÉDIA"?"selected":"")}>${x}</option>`).join("")}</select>`)}
+      ${f("Complexidade",`<select class="rhf-i" id="pf-comp">${["BAIXA","MÉDIA","ALTA"].map(x=>`<option ${p&&p.complexidade===x?"selected":(!p&&x==="MÉDIA"?"selected":"")}>${x}</option>`).join("")}</select>`)}
+      ${f("Prazo",`<input class="rhf-i" id="pf-prazo" type="date" value="${p&&p.data_prevista?String(p.data_prevista).slice(0,10):""}">`)}
+      ${f("Horas previstas",`<input class="rhf-i" id="pf-hp" type="number" min="0" value="${p&&p.horas_previstas||""}">`)}
+      ${f("Orçamento (R$)",`<input class="rhf-i" id="pf-orc" type="number" min="0" step="0.01" value="${p&&p.orcamento||""}">`)}
+      ${f("ROI esperado",`<input class="rhf-i" id="pf-roi" value="${_esc(p&&p.roi_esperado||"")}">`)}
+      ${f("Objetivo",`<input class="rhf-i" id="pf-obj" value="${_esc(p&&p.objetivo||"")}" style="grid-column:1/-1">`)}
+      ${f("Descrição",`<textarea class="rhf-i" id="pf-desc" rows="2" style="grid-column:1/-1">${_esc(p&&p.descricao||"")}</textarea>`)}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="rh-btn" style="background:#64748b" onclick="document.getElementById('prj-form').remove()">Cancelar</button>
+      <button class="rh-btn" onclick="prjSalvar(${p?p.id:"null"})">💾 Salvar</button>
+    </div><div id="pf-msg" style="font-size:.7rem;font-weight:700;margin-top:6px"></div></div>`;
+  document.body.appendChild(ov);
+}
+function prjSalvar(id){
+  const v=x=>{const e=document.getElementById(x);return e?e.value.trim():"";};
+  const nome=v("pf-nome");
+  const msg=document.getElementById("pf-msg");
+  if(!nome){msg.style.color="#dc2626";msg.textContent="O nome é obrigatório.";return;}
+  const body={nome:nome,area:v("pf-area"),cliente:v("pf-cliente"),tipo:v("pf-tipo"),solicitante:v("pf-sol"),responsavel:v("pf-resp"),equipe:v("pf-eq"),prioridade:v("pf-prior"),complexidade:v("pf-comp"),data_prevista:v("pf-prazo")||null,horas_previstas:v("pf-hp")||null,orcamento:v("pf-orc")||null,roi_esperado:v("pf-roi"),objetivo:v("pf-obj"),descricao:v("pf-desc")};
+  if(id)body.id=id;else body.codigo="PRJ-"+String(PRJ_P.length+1).padStart(3,"0");
+  msg.style.color="#64748b";msg.textContent="Salvando…";
+  fetch("/api/projetos?t=projetos",{method:id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{
+      if(!ok)throw new Error((j&&j.error)||"");
+      const novoId=!id&&j.rows&&j.rows[0]&&j.rows[0].id;
+      if(novoId)prjLog(novoId,"Projeto criado por "+(sessionStorage.getItem("userNome")||"—"),"criacao");
+      else if(id)prjLog(id,"Projeto atualizado","edicao");
+      document.getElementById("prj-form").remove();
+      prjLoad();
+    }).catch(()=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar.";});
+}
+/* ── tela interna do projeto ── */
+function prjDet(id){
+  const p=PRJ_P.find(x=>x.id===id);if(!p)return;
+  const pct=prjPct(p),chk=prjChecklist(p),atr=prjAtrasado(p);
+  const tarefas=PRJ_T.filter(t=>t.projeto_id===id);
+  const logs=PRJ_L.filter(l=>l.projeto_id===id).slice(0,30);
+  const equipe=(p.equipe||"").split(",").map(s=>s.trim()).filter(Boolean);
+  const li=(l,vv)=>`<div style="background:#f8fafc;border-radius:9px;padding:7px 10px"><div style="color:#94a3b8;font-size:.54rem;text-transform:uppercase">${l}</div><b style="font-size:.7rem;color:#0d1f35">${vv||"—"}</b></div>`;
+  const ov=document.createElement("div");ov.id="prj-det";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:18px";
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  ov.innerHTML=`<div style="background:#fff;border-radius:18px;max-width:900px;width:100%;max-height:92vh;overflow:auto">
+    <div style="position:sticky;top:0;background:linear-gradient(135deg,#0d1f35,#1e4d8c);color:#fff;padding:16px 22px;border-radius:18px 18px 0 0;z-index:2">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px">
+        <div><div style="font-size:.6rem;color:#9ec5f5;font-weight:800">${_esc(p.codigo||"PROJETO")}</div>
+        <div style="font-size:1.05rem;font-weight:900">${_esc(p.nome)}</div>
+        <div style="font-size:.64rem;color:#c7d6ec;margin-top:2px">${_esc(p.objetivo||p.descricao||"")}</div></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select class="rhf-i" style="width:auto;font-size:.66rem" onchange="prjMudaStatus(${id},this.value)">${PRJ_ST.map(s=>`<option value="${s.k}" ${p.status===s.k?"selected":""}>${s.lbl}</option>`).join("")}<option value="CANCELADO" ${p.status==="CANCELADO"?"selected":""}>⚫ Cancelado</option></select>
+          <span class="rh-act" style="background:rgba(255,255,255,.15);border-radius:8px;padding:6px 9px" onclick="document.getElementById('prj-det').remove();prjForm(${id})" title="Editar">✏️</span>
+          <span class="rh-act" style="background:rgba(255,255,255,.15);border-radius:8px;padding:6px 9px" onclick="document.getElementById('prj-det').remove()" title="Fechar">✖</span>
+        </div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+        <div style="flex:1;background:rgba(255,255,255,.15);border-radius:8px;height:12px"><div style="width:${pct}%;height:12px;border-radius:8px;background:${pct===100?"#4ade80":"#38bdf8"};transition:width .6s"></div></div>
+        <b style="font-size:.8rem">${pct}%</b>${atr?'<span style="background:#dc2626;font-size:.56rem;font-weight:900;padding:2px 8px;border-radius:8px">⏰ ATRASADO</span>':""}
+      </div></div>
+    <div style="padding:16px 22px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px">
+        ${li("Área",_esc(p.area))}${li("Cliente",_esc(p.cliente))}${li("Solicitante",_esc(p.solicitante))}${li("Responsável",_esc(p.responsavel))}
+        ${li("Prioridade",`<span style="color:${PRJ_PRIOR[p.prioridade]||"#64748b"}">${p.prioridade||"—"}</span>`)}${li("Complexidade",p.complexidade)}${li("Prazo",rhFmt(p.data_prevista))}${li("Criado em",rhFmt(String(p.criado_em).slice(0,10)))}
+        ${li("Orçamento",p.orcamento?Number(p.orcamento).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}):"—")}${li("ROI esperado",_esc(p.roi_esperado))}${li("Horas prev.",p.horas_previstas||"—")}${li("Horas exec.",p.horas_executadas||"—")}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div style="font-size:.74rem;font-weight:800;color:#0d1f35;margin-bottom:6px">☑️ Checklist <span style="font-size:.56rem;color:#94a3b8">clique para marcar — o progresso atualiza sozinho</span></div>
+          ${chk.map((c,i)=>`<div onclick="prjCheck(${id},${i})" style="display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:8px;cursor:pointer;margin-bottom:3px;background:${c.d?"#ecfdf5":"#f8fafc"}"><span style="font-size:.85rem">${c.d?"☑️":"⬜"}</span><span style="font-size:.72rem;color:${c.d?"#16a34a":"#334155"};font-weight:${c.d?"700":"500"};${c.d?"text-decoration:line-through":""}">${_esc(c.t)}</span></div>`).join("")}
+          <div style="font-size:.74rem;font-weight:800;color:#0d1f35;margin:14px 0 6px">👥 Equipe</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">${[p.responsavel,...equipe].filter(Boolean).map(n=>{const c=hqCor(n);return `<div style="display:flex;align-items:center;gap:6px;background:#f8fafc;border-radius:12px;padding:4px 10px 4px 4px"><span style="width:26px;height:26px;border-radius:50%;background:${c[0]};color:${c[1]};display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:.62rem">${_esc(n.split(" ").map(x=>x[0]).slice(0,2).join("").toUpperCase())}</span><span style="font-size:.68rem;font-weight:700;color:#334155">${_esc(n.split(" ")[0])}</span></div>`;}).join("")||'<span style="font-size:.66rem;color:#94a3b8">Sem equipe definida</span>'}</div>
+          <div style="font-size:.74rem;font-weight:800;color:#0d1f35;margin:14px 0 6px">🔗 Links & Arquivos</div>
+          <div style="font-size:.68rem;color:#334155;line-height:1.6">${p.links?_esc(p.links).split("\n").map(l=>l.match(/^https?:\/\//)?`<a href="${_esc(l)}" target="_blank" style="color:#2e8fef">${_esc(l)}</a>`:_esc(l)).join("<br>"):'<span style="color:#94a3b8">Nenhum link — edite o projeto para adicionar (um por linha).</span>'}</div>
+        </div>
+        <div>
+          <div style="font-size:.74rem;font-weight:800;color:#0d1f35;margin-bottom:6px">📝 Tarefas <span style="font-size:.56rem;color:#94a3b8">${tarefas.filter(t=>t.status==="CONCLUÍDA").length}/${tarefas.length} concluídas</span></div>
+          ${tarefas.map(t=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:8px;margin-bottom:3px;background:${t.status==="CONCLUÍDA"?"#ecfdf5":"#f8fafc"}">
+            <span onclick="prjTarefaToggle(${t.id})" style="cursor:pointer;font-size:.85rem">${t.status==="CONCLUÍDA"?"☑️":"⬜"}</span>
+            <div style="flex:1"><span style="font-size:.7rem;font-weight:700;color:${t.status==="CONCLUÍDA"?"#16a34a":"#334155"};${t.status==="CONCLUÍDA"?"text-decoration:line-through":""}">${_esc(t.titulo)}</span>
+            <div style="font-size:.56rem;color:#94a3b8">${_esc((t.responsavel||"").split(" ")[0])}${t.prazo?" · "+rhFmt(t.prazo):""}</div></div>
+            <span class="rh-act" onclick="prjTarefaExcluir(${t.id})" title="Excluir">🗑️</span></div>`).join("")||'<div style="font-size:.66rem;color:#94a3b8;padding:6px 0">Nenhuma tarefa ainda.</div>'}
+          <form onsubmit="return prjAddTarefa(event,${id})" style="display:flex;gap:5px;margin-top:6px">
+            <input class="rhf-i" id="pt-titulo" placeholder="Nova tarefa…" style="flex:1">
+            <input class="rhf-i" id="pt-resp" placeholder="Resp." style="width:90px">
+            <input class="rhf-i" id="pt-prazo" type="date" style="width:125px">
+            <button class="rh-btn" type="submit">➕</button>
+          </form>
+          <div style="font-size:.74rem;font-weight:800;color:#0d1f35;margin:14px 0 6px">🕐 Histórico & Comentários</div>
+          <div style="max-height:190px;overflow-y:auto">${logs.map(l=>`<div style="display:flex;gap:7px;padding:5px 0;border-bottom:1px solid #f1f5f9;align-items:baseline"><span>${l.tipo==="comentario"?"💬":l.tipo==="status"?"🔀":l.tipo==="criacao"?"✨":"⚙️"}</span><div style="flex:1;font-size:.66rem;color:#334155">${_esc(l.detalhe)}<span style="color:#94a3b8;font-size:.56rem"> — ${_esc((l.autor||"").split(" ")[0])} · ${new Date(l.criado_em).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} ${new Date(l.criado_em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span></div></div>`).join("")||'<div style="font-size:.62rem;color:#94a3b8">Sem eventos.</div>'}</div>
+          <form onsubmit="return prjComentar(event,${id})" style="display:flex;gap:5px;margin-top:6px">
+            <input class="rhf-i" id="pc-txt" placeholder="Escreva um comentário…" style="flex:1" maxlength="400">
+            <button class="rh-btn" type="submit">💬</button>
+          </form>
+        </div>
+      </div>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
+function prjReabrirDet(id){const d=document.getElementById("prj-det");if(d)d.remove();prjDet(id);}
+function prjMudaStatus(id,st){
+  const p=PRJ_P.find(x=>x.id===id);if(!p||p.status===st)return;
+  const de=p.status;p.status=st;
+  const body={id:id,status:st};if(st==="CONCLUÍDO")body.concluido_em=new Date().toISOString();
+  fetch("/api/projetos?t=projetos",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(()=>{prjLog(id,`Status: ${de} → ${st}`,"status");prjFetchAll().then(()=>{prjRenderAll();prjReabrirDet(id);});});
+}
+function prjCheck(id,idx){
+  const p=PRJ_P.find(x=>x.id===id);if(!p)return;
+  const chk=prjChecklist(p);if(!chk[idx])return;
+  chk[idx].d=!chk[idx].d;p.checklist=chk;
+  fetch("/api/projetos?t=projetos",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:id,checklist:chk})}).then(()=>{if(chk[idx].d)prjLog(id,`Etapa concluída: ${chk[idx].t}`,"checklist");});
+  prjRenderAll();prjReabrirDet(id);
+}
+function prjAddTarefa(e,pid){
+  e.preventDefault();
+  const t=document.getElementById("pt-titulo").value.trim();if(!t)return false;
+  const body={projeto_id:pid,titulo:t,responsavel:document.getElementById("pt-resp").value.trim()||null,prazo:document.getElementById("pt-prazo").value||null};
+  fetch("/api/projetos?t=tarefas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(()=>{prjLog(pid,`Tarefa criada: ${t}`,"tarefa");prjFetchAll().then(()=>prjReabrirDet(pid));});
+  return false;
+}
+function prjTarefaToggle(tid){
+  const t=PRJ_T.find(x=>x.id===tid);if(!t)return;
+  const novo=t.status==="CONCLUÍDA"?"PENDENTE":"CONCLUÍDA";t.status=novo;
+  fetch("/api/projetos?t=tarefas",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:tid,status:novo,concluido_em:novo==="CONCLUÍDA"?new Date().toISOString():null})}).then(()=>{if(novo==="CONCLUÍDA")prjLog(t.projeto_id,`Tarefa concluída: ${t.titulo}`,"tarefa");});
+  prjReabrirDet(t.projeto_id);
+}
+function prjTarefaExcluir(tid){
+  const t=PRJ_T.find(x=>x.id===tid);if(!t)return;
+  fetch("/api/projetos?t=tarefas&id="+tid,{method:"DELETE"}).then(()=>prjFetchAll().then(()=>prjReabrirDet(t.projeto_id)));
+}
+function prjComentar(e,pid){
+  e.preventDefault();
+  const txt=document.getElementById("pc-txt").value.trim();if(!txt)return false;
+  fetch("/api/projetos?t=log",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({projeto_id:pid,tipo:"comentario",detalhe:txt,autor:sessionStorage.getItem("userNome")||null})}).then(()=>prjFetchAll().then(()=>prjReabrirDet(pid)));
+  return false;
+}
+/* ── pipeline de ideias ── */
+function prjRenderIdeias(el){
+  const fluxo=PRJ_IDST.slice(0,4).map(s=>s[1]).join(" → ")+" → 🚀 Projeto";
+  const grupos=PRJ_IDST.map(([k,lbl])=>({k,lbl,itens:PRJ_I.filter(i=>i.status===k)}));
+  el.innerHTML=`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 16px;margin-bottom:10px;font-size:.68rem;color:#9a3412"><b>Pipeline de Evolução:</b> ${fluxo} — toda solicitação nasce como ideia e só vira projeto depois de avaliada.</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px">
+  ${grupos.map(g=>`<div style="background:#f4f6fa;border-radius:12px;padding:9px">
+    <div style="font-size:.64rem;font-weight:800;color:#475569;margin-bottom:7px">${g.lbl} <span style="color:#94a3b8">${g.itens.length||""}</span></div>
+    ${g.itens.map(i=>`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:10px;padding:9px 10px;margin-bottom:6px">
+      <div style="font-size:.7rem;font-weight:800;color:#0d1f35">${_esc(i.titulo)}</div>
+      <div style="font-size:.56rem;color:#94a3b8;margin:2px 0 5px">${_esc(i.area||"—")} · ${_esc((i.solicitante||"—").split(" ")[0])} · impacto ${i.impacto||"—"}</div>
+      ${i.problema?`<div style="font-size:.6rem;color:#64748b;margin-bottom:5px">${_esc(String(i.problema).slice(0,90))}</div>`:""}
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        ${g.k!=="PROMOVIDA"&&g.k!=="ARQUIVADA"?`
+          ${PRJ_IDST.findIndex(s=>s[0]===g.k)<3?`<button class="rh-btn" style="padding:3px 8px;font-size:.56rem" onclick="prjIdeiaAvanca(${i.id})">Avançar ➡️</button>`:""}
+          <button class="rh-btn" style="padding:3px 8px;font-size:.56rem;background:#16a34a" onclick="prjPromover(${i.id})">🚀 Virar Projeto</button>
+          <button class="rh-btn" style="padding:3px 8px;font-size:.56rem;background:#64748b" onclick="prjIdeiaArquiva(${i.id})">🗄️</button>`
+        :g.k==="PROMOVIDA"&&i.projeto_id?`<button class="rh-btn" style="padding:3px 8px;font-size:.56rem" onclick="prjDet(${i.projeto_id})">Abrir projeto</button>`:""}
+      </div></div>`).join("")||'<div style="font-size:.6rem;color:#cbd5e1;text-align:center;padding:10px 0">vazio</div>'}
+  </div>`).join("")}</div>`;
+}
+function prjFormIdeia(){
+  const f=(l,html)=>`<div><label class="rhf-l">${l}</label>${html}</div>`;
+  const ov=document.createElement("div");ov.id="prj-fideia";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px";
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  ov.innerHTML=`<div style="background:#fff;border-radius:16px;padding:22px 26px;max-width:620px;width:100%;max-height:90vh;overflow:auto">
+    <div style="font-size:.9rem;font-weight:900;color:#0d1f35;margin-bottom:12px">💡 Nova Ideia <span style="font-size:.6rem;color:#94a3b8;font-weight:700">entra no Pipeline de Evolução</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${f("Título *",`<input class="rhf-i" id="pi-titulo" style="grid-column:1/-1">`)}
+      ${f("Problema que resolve",`<textarea class="rhf-i" id="pi-prob" rows="2" style="grid-column:1/-1"></textarea>`)}
+      ${f("Solução proposta",`<textarea class="rhf-i" id="pi-sol" rows="2" style="grid-column:1/-1"></textarea>`)}
+      ${f("Benefícios",`<input class="rhf-i" id="pi-ben">`)}
+      ${f("Área solicitante",`<input class="rhf-i" id="pi-area">`)}
+      ${f("Impacto",`<select class="rhf-i" id="pi-imp"><option>BAIXO</option><option selected>MÉDIO</option><option>ALTO</option></select>`)}
+      ${f("Esforço",`<select class="rhf-i" id="pi-esf"><option>BAIXO</option><option selected>MÉDIO</option><option>ALTO</option></select>`)}
+      ${f("ROI esperado",`<input class="rhf-i" id="pi-roi">`)}
+      ${f("Custo estimado (R$)",`<input class="rhf-i" id="pi-custo" type="number" min="0">`)}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="rh-btn" style="background:#64748b" onclick="document.getElementById('prj-fideia').remove()">Cancelar</button>
+      <button class="rh-btn" style="background:#eab308" onclick="prjSalvarIdeia()">💡 Registrar</button>
+    </div><div id="pi-msg" style="font-size:.7rem;font-weight:700;margin-top:6px"></div></div>`;
+  document.body.appendChild(ov);
+}
+function prjSalvarIdeia(){
+  const v=x=>{const e=document.getElementById(x);return e?e.value.trim():"";};
+  const t=v("pi-titulo");const msg=document.getElementById("pi-msg");
+  if(!t){msg.style.color="#dc2626";msg.textContent="O título é obrigatório.";return;}
+  const body={titulo:t,problema:v("pi-prob"),solucao:v("pi-sol"),beneficios:v("pi-ben"),area:v("pi-area"),impacto:v("pi-imp"),esforco:v("pi-esf"),roi_esperado:v("pi-roi"),custo_estimado:v("pi-custo")||null,solicitante:sessionStorage.getItem("userNome")||null};
+  fetch("/api/projetos?t=ideias",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>{if(!r.ok)throw 0;document.getElementById("prj-fideia").remove();PRJ_VIEW="ideias";prjLoad();})
+    .catch(()=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar.";});
+}
+function prjIdeiaAvanca(id){
+  const i=PRJ_I.find(x=>x.id===id);if(!i)return;
+  const ordem=PRJ_IDST.map(s=>s[0]);const pos=ordem.indexOf(i.status);
+  const novo=ordem[Math.min(pos+1,3)];i.status=novo;
+  fetch("/api/projetos?t=ideias",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:id,status:novo})}).then(()=>prjLoad());
+}
+function prjIdeiaArquiva(id){
+  fetch("/api/projetos?t=ideias",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:id,status:"ARQUIVADA"})}).then(()=>prjLoad());
+}
+function prjPromover(id){
+  const i=PRJ_I.find(x=>x.id===id);if(!i)return;
+  const body={nome:i.titulo,descricao:[i.problema?"Problema: "+i.problema:"",i.solucao?"Solução: "+i.solucao:"",i.beneficios?"Benefícios: "+i.beneficios:""].filter(Boolean).join("\n"),area:i.area,solicitante:i.solicitante,prioridade:i.impacto==="ALTO"?"ALTA":"MÉDIA",roi_esperado:i.roi_esperado,orcamento:i.custo_estimado,codigo:"PRJ-"+String(PRJ_P.length+1).padStart(3,"0"),responsavel:sessionStorage.getItem("userNome")||null};
+  fetch("/api/projetos?t=projetos",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json()).then(j=>{
+      const novoId=j.rows&&j.rows[0]&&j.rows[0].id;
+      if(novoId){prjLog(novoId,`Projeto nascido da ideia: ${i.titulo}`,"criacao");
+        return fetch("/api/projetos?t=ideias",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:id,status:"PROMOVIDA",projeto_id:novoId})});}
+    }).then(()=>{PRJ_VIEW="kanban";prjLoad();});
+}
+function prjResumoIA(){
+  const btn=document.getElementById("prj-ia-btn"),out=document.getElementById("prj-ia-out");
+  btn.disabled=true;btn.textContent="🧠 Analisando…";out.textContent="";
+  const dados=PRJ_P.filter(p=>p.status!=="CANCELADO").map(p=>`${p.codigo||""} ${p.nome} | ${p.area||"?"} | resp: ${p.responsavel||"?"} | ${p.status} | ${prjPct(p)}% | prioridade ${p.prioridade}${prjAtrasado(p)?" | ATRASADO (prazo "+p.data_prevista+")":p.data_prevista?" | prazo "+p.data_prevista:""}`).join("\n");
+  const ideias=PRJ_I.filter(i=>i.status!=="PROMOVIDA"&&i.status!=="ARQUIVADA").map(i=>`${i.titulo} (${i.status}, impacto ${i.impacto})`).join("; ");
+  fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:"Você é o JARVIS, gestor de portfólio de projetos do Grupo ServCamp. Gere uma análise executiva em até 9 linhas: 1) panorama, 2) riscos e atrasos, 3) recomendações práticas de priorização. Direto e específico.",context:"PROJETOS:\n"+dados+"\n\nIDEIAS NO PIPELINE: "+(ideias||"nenhuma")})})
+    .then(r=>r.json()).then(j=>{out.textContent=j.answer||j.error||"Sem resposta.";})
+    .catch(()=>{out.textContent="Erro ao gerar análise.";})
+    .finally(()=>{btn.disabled=false;btn.textContent="✨ Gerar análise";});
 }
 function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
