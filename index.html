@@ -4980,15 +4980,33 @@ function cfgRender(){
    Cada sala = um módulo do JARVIS. O personagem ANDA até a sala da guia
    que a pessoa está usando; offline descansa no sofá. Clique = DM. */
 const HQ_SALAS=[
-  {k:"oper",lbl:"Operações",ic:"🖥️",cor:"#2e8fef",piso:"#dbe7f7",cx:250,cy:330,w:170,desc:"Visão Geral, faltas, coberturas, OS…"},
-  {k:"rh",lbl:"RH",ic:"🗂️",cor:"#7c3aed",piso:"#eae2f8",cx:300,cy:185,w:150,desc:"Vagas, entrevistas, desligamentos"},
-  {k:"com",lbl:"Comercial",ic:"💼",cor:"#f97316",piso:"#f9e5d2",cx:660,cy:185,w:150,desc:"Propostas & Cadência"},
-  {k:"dir",lbl:"Diretoria",ic:"📊",cor:"#0d9488",piso:"#d8efe9",cx:710,cy:330,w:160,desc:"Painéis executivos RH e Comercial"},
-  {k:"lounge",lbl:"Lounge",ic:"☕",cor:"#a16207",piso:"#f4e9cd",cx:480,cy:300,w:95,desc:"Quem está aqui na Base, de papo"}
+  {k:"oper",lbl:"Operações",ic:"🖥️",cor:"#2e8fef",piso:"#dce7f5",cx:310,cy:285,w:150,desc:"Visão Geral, faltas, coberturas, OS…"},
+  {k:"rh",lbl:"RH",ic:"🗂️",cor:"#7c3aed",piso:"#e9e2f7",cx:430,cy:168,w:125,desc:"Vagas, entrevistas, desligamentos"},
+  {k:"com",lbl:"Comercial",ic:"💼",cor:"#f97316",piso:"#f8e6d4",cx:700,cy:168,w:125,desc:"Propostas & Cadência"},
+  {k:"dir",lbl:"Diretoria",ic:"📊",cor:"#0d9488",piso:"#d9efe8",cx:830,cy:285,w:140,desc:"Painéis executivos"},
+  {k:"lounge",lbl:"Lounge & Café",ic:"☕",cor:"#a16207",piso:"#f4ead2",cx:410,cy:398,w:115,desc:"Café, papo e descanso"},
+  {k:"reuniao",lbl:"Reunião",ic:"🤝",cor:"#64748b",piso:"#e8e6f0",cx:722,cy:400,w:112,desc:"Sala de reunião com mesa oval"},
+  {k:"recep",lbl:"Recepção",ic:"🛎️",cor:"#b45309",piso:"#f1e7d6",cx:560,cy:478,w:92,desc:"Boas-vindas — o JARVIS atende aqui"}
 ];
-const HQ_SLOTS=[[-46,-10],[22,-24],[-8,18],[50,6],[-62,16],[64,28]];
-const HQ_DESCANSO=[[788,492],[832,478],[876,492],[766,516],[810,530],[854,516],[898,530],[832,552]];
-const HQ_PORTA={x:480,y:462},HQ_HALL={x:480,y:300};
+const HQ_SLOTS=[[-42,-8],[20,-22],[-6,18],[46,6],[-56,14],[58,24]];
+/* pontos de descanso dos offline: sofá (dormindo), café (em pé) e banco do jardim (celular) */
+const HQ_OFF=[
+  {x:372,y:420,t:"sofa"},{x:446,y:428,t:"sofa"},{x:452,y:372,t:"cafe"},{x:378,y:378,t:"cafe"},
+  {x:128,y:520,t:"banco"},{x:186,y:548,t:"banco"},{x:236,y:516,t:"banco"},{x:170,y:496,t:"banco"},
+  {x:690,y:428,t:"sofa"},{x:756,y:420,t:"banco"},{x:722,y:378,t:"cafe"},{x:560,y:508,t:"banco"}
+];
+const HQ_PORTA={x:560,y:530},HQ_HALL={x:560,y:300};
+/* roupa por cargo: diretor terno escuro, gerência azul, RH social, comercial moderno, admin premium, resto uniforme */
+function hqRoupa(u){
+  const cg=String((u&&u.cargo)||"").toUpperCase();
+  if(u&&u.admin)return{corpo:"#6d28d9",grav:"#fbbf24"};
+  if(cg.indexOf("DIRET")>=0)return{corpo:"#1e293b",grav:"#dc2626"};
+  if(cg.indexOf("GEREN")>=0||cg.indexOf("SUPERV")>=0||cg.indexOf("COORDEN")>=0)return{corpo:"#1d4ed8",grav:"#93c5fd"};
+  if(cg.indexOf("RH")>=0)return{corpo:"#60a5fa",grav:null};
+  if(cg.indexOf("COMERC")>=0)return{corpo:"#0f172a",grav:"#f97316"};
+  if(cg.indexOf("FINANC")>=0)return{corpo:"#0d9488",grav:"#a7f3d0"};
+  return{corpo:"#475569",grav:null};
+}
 function hqSala(p){
   if(!p)return"oper";
   if(p==="sede")return"lounge";
@@ -5015,6 +5033,7 @@ function hqLoad(){
   if(HQ_TIMER)clearInterval(HQ_TIMER);
   HQ_TIMER=setInterval(hqFetch,12000);
   if(!HQ_ANIM){HQ_T0=0;HQ_ANIM=setInterval(hqStep,40);}
+  setTimeout(hqIntroCheck,1500);
 }
 function hqFetch(){
   const me=sessionStorage.getItem("userKey")||"";
@@ -5022,70 +5041,122 @@ function hqFetch(){
     if(j&&j.presenca){hqStep();HQ_STATE=j;hqSync(HQ_FIRST);HQ_FIRST=false;hqRenderChat();}
   }).catch(()=>{});
 }
-/* ── monta o cenário isométrico (uma vez) ── */
+/* ── monta o cenário isométrico premium (uma vez) ── */
 function hqShell(){
   const el=document.getElementById("hq-content");if(!el||el.dataset.pronto==="1")return;
   el.dataset.pronto="1";
+  const NOITE=(function(){const hr=new Date().getHours();return hr<6||hr>=18;})();
   const zona=s=>{const h=s.w/2;
-    return `<polygon points="${s.cx},${s.cy-h} ${s.cx+s.w},${s.cy} ${s.cx},${s.cy+h} ${s.cx-s.w},${s.cy}" fill="${s.piso}" stroke="#c9b795" stroke-width="1"/>`+
-      `<text x="${s.cx}" y="${s.cy-h+15}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#7c6f57" style="letter-spacing:.6px">${s.ic} ${s.lbl.toUpperCase()}</text>`;};
-  const mesa=(x,y)=>`<polygon points="${x-16},${y} ${x},${y-8} ${x+16},${y} ${x},${y+8}" fill="#b07c46"/><polygon points="${x-16},${y} ${x},${y+8} ${x},${y+15} ${x-16},${y+7}" fill="#8a5c2f"/><polygon points="${x},${y+8} ${x+16},${y} ${x+16},${y+7} ${x},${y+15}" fill="#754e26"/><rect x="${x-5}" y="${y-15}" width="10" height="7" rx="1" fill="#0f172a"/><rect x="${x-1}" y="${y-8}" width="2" height="3" fill="#334155"/>`;
+    return `<polygon points="${s.cx},${s.cy-h} ${s.cx+s.w},${s.cy} ${s.cx},${s.cy+h} ${s.cx-s.w},${s.cy}" fill="${s.piso}" stroke="#cfc2a4" stroke-width="1"/>`+
+      `<polygon points="${s.cx},${s.cy-h} ${s.cx+s.w},${s.cy} ${s.cx+s.w},${s.cy-14} ${s.cx},${s.cy-h-14}" fill="rgba(190,215,240,.30)" stroke="rgba(255,255,255,.55)" stroke-width="1"/>`+
+      `<polygon points="${s.cx},${s.cy-h} ${s.cx-s.w},${s.cy} ${s.cx-s.w},${s.cy-14} ${s.cx},${s.cy-h-14}" fill="rgba(190,215,240,.22)" stroke="rgba(255,255,255,.45)" stroke-width="1"/>`+
+      `<text x="${s.cx}" y="${s.cy-h+16}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#77694e" style="letter-spacing:.6px">${s.ic} ${s.lbl.toUpperCase()}</text>`;};
+  const mesa=(x,y)=>`<rect x="${x-8}" y="${y+8}" width="16" height="13" rx="4" fill="#3b475e"/><polygon points="${x-16},${y} ${x},${y-8} ${x+16},${y} ${x},${y+8}" fill="#b07c46"/><polygon points="${x-16},${y} ${x},${y+8} ${x},${y+15} ${x-16},${y+7}" fill="#8a5c2f"/><polygon points="${x},${y+8} ${x+16},${y} ${x+16},${y+7} ${x},${y+15}" fill="#754e26"/><rect x="${x-5}" y="${y-15}" width="10" height="7" rx="1" fill="#0f172a"/><rect x="${x-4}" y="${y-14}" width="8" height="5" fill="${NOITE?"#7dd3fc":"#38bdf8"}" opacity=".85"/><rect x="${x-1}" y="${y-8}" width="2" height="3" fill="#334155"/>`;
   const sofa=(x,y)=>`<polygon points="${x-20},${y} ${x},${y-10} ${x+20},${y} ${x},${y+10}" fill="#5b6bb0"/><polygon points="${x-20},${y} ${x},${y+10} ${x},${y+16} ${x-20},${y+6}" fill="#47549a"/><polygon points="${x},${y+10} ${x+20},${y} ${x+20},${y+6} ${x},${y+16}" fill="#3d4787"/>`;
   const planta=(x,y)=>`<rect x="${x-4}" y="${y-6}" width="8" height="8" rx="2" fill="#8a5c2f"/><circle cx="${x}" cy="${y-12}" r="8" fill="#3f9e5f"/><circle cx="${x-6}" cy="${y-8}" r="5" fill="#2f7d49"/><circle cx="${x+6}" cy="${y-8}" r="5" fill="#2f7d49"/>`;
-  let mob="";HQ_SALAS.forEach(s=>{if(s.k!=="lounge")HQ_SLOTS.slice(0,4).forEach(o=>{mob+=mesa(s.cx+o[0],s.cy+o[1]-14);});});
-  mob+=`<ellipse cx="480" cy="294" rx="26" ry="13" fill="#9b6b3c"/><ellipse cx="480" cy="289" rx="26" ry="13" fill="#b07c46"/><rect x="473" y="279" width="5" height="6" rx="1" fill="#f8fafc"/><rect x="483" y="281" width="4" height="5" rx="1" fill="#fbbf24"/>`;
-  let rest="";HQ_DESCANSO.forEach(p=>{rest+=sofa(p[0],p[1]+6);});
+  const arvore=(x,y)=>`<ellipse cx="${x}" cy="${y+4}" rx="14" ry="5" fill="rgba(0,0,0,.15)"/><rect x="${x-3}" y="${y-16}" width="6" height="18" rx="2" fill="#7c4a24"/><circle cx="${x}" cy="${y-26}" r="13" fill="#3f9e5f"/><circle cx="${x-10}" cy="${y-18}" r="9" fill="#2f7d49"/><circle cx="${x+10}" cy="${y-18}" r="9" fill="#2f7d49"/>`;
+  const tv=(x,y,id)=>`<rect x="${x-46}" y="${y-26}" width="92" height="52" rx="6" fill="#0f172a" stroke="#334155" stroke-width="2"/><rect x="${x-40}" y="${y-20}" width="80" height="34" rx="3" fill="#0d1f35"/><text id="${id}" x="${x}" y="${y-6}" text-anchor="middle" font-size="8.5" font-weight="800" fill="#7dd3fc"></text><text id="${id}b" x="${x}" y="${y+7}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#94a3b8"></text>`;
+  /* mesas + cadeiras nas salas de trabalho */
+  let mob="";["oper","rh","com","dir"].forEach(k=>{const s=HQ_SALAS.find(z=>z.k===k);HQ_SLOTS.slice(0,4).forEach(o=>{mob+=mesa(s.cx+o[0],s.cy+o[1]-14);});});
+  /* lounge: café + sofás | reunião: mesa oval + cadeiras | recepção: balcão */
+  mob+=`<rect x="404" y="352" width="18" height="26" rx="3" fill="#7c3f2c"/><rect x="407" y="356" width="12" height="8" rx="2" fill="#0f172a"/><circle cx="410" cy="372" r="2" fill="#ef4444"/><rect x="416" y="368" width="5" height="5" rx="1" fill="#f8fafc"/>${sofa(372,426)}${sofa(446,434)}`;
+  mob+=`<ellipse cx="722" cy="404" rx="36" ry="17" fill="#6b4a26"/><ellipse cx="722" cy="399" rx="36" ry="17" fill="#8a5c2f"/>`+[[-46,2],[46,2],[-24,-18],[24,-18],[-24,20],[24,20]].map(o=>`<rect x="${722+o[0]-6}" y="${399+o[1]}" width="12" height="10" rx="3" fill="#3b475e"/>`).join("");
+  mob+=`<polygon points="530,470 560,455 590,470 560,485" fill="#9b6b3c"/><polygon points="530,470 560,485 560,492 530,477" fill="#7a5330"/><polygon points="560,485 590,470 590,477 560,492" fill="#6b4826"/>`;
+  /* JARVIS, o recepcionista-robô */
+  mob+=`<g id="hq-jarvis" transform="translate(596,462)"><ellipse cx="0" cy="2" rx="9" ry="3.5" fill="rgba(0,0,0,.25)"/><rect x="-8" y="-20" width="16" height="17" rx="6" fill="#94a3b8"/><circle cx="0" cy="-26" r="7" fill="#cbd5e1"/><circle cx="-2.5" cy="-27" r="1.6" fill="#0ea5e9"/><circle cx="2.5" cy="-27" r="1.6" fill="#0ea5e9"/><line x1="0" y1="-33" x2="0" y2="-38" stroke="#64748b" stroke-width="1.5"/><circle cx="0" cy="-39" r="2" fill="#22d3ee"><animate attributeName="opacity" values="1;.3;1" dur="2s" repeatCount="indefinite"/></circle></g>`;
+  /* balão de fala do JARVIS */
+  mob+=`<g id="hq-bubble" style="display:none"><rect id="hq-bubble-r" x="430" y="392" width="260" height="26" rx="9" fill="#0d1f35" opacity=".94"/><polygon points="590,418 600,428 606,418" fill="#0d1f35" opacity=".94"/><text id="hq-bubble-t" x="560" y="409" text-anchor="middle" font-size="10" font-weight="700" fill="#e0f2fe"></text></g>`;
+  const ceu=NOITE
+    ?`<rect width="1200" height="680" fill="#141026"/>${[[90,40],[210,72],[330,30],[500,58],[640,26],[760,64],[900,38],[1030,70],[1120,34],[170,110],[980,108],[560,96]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="1.4" fill="#e2e8f0" opacity=".8"/>`).join("")}<circle cx="1096" cy="70" r="22" fill="#fef9c3" opacity=".92"/><circle cx="1088" cy="62" r="20" fill="#141026"/>${[0,1,2,3,4,5,6,7,8,9].map(i=>`<rect x="${60+i*118}" y="${96+(i%3)*14}" width="34" height="${70-(i%3)*14}" fill="#241a3d"/><rect x="${68+i*118}" y="${106+(i%3)*14}" width="5" height="5" fill="#fbbf24" opacity=".8"/><rect x="${78+i*118}" y="${118+(i%3)*14}" width="5" height="5" fill="#fbbf24" opacity=".6"/>`).join("")}`
+    :`<rect width="1200" height="680" fill="#dbeafe"/><circle cx="1080" cy="78" r="30" fill="#fde047" opacity=".9"/><ellipse cx="220" cy="70" rx="60" ry="16" fill="#fff" opacity=".7"/><ellipse cx="820" cy="52" rx="76" ry="18" fill="#fff" opacity=".6"/>`;
+  const janelas=NOITE?[[640,132],[700,162],[760,192],[820,222],[880,252],[480,132],[420,162],[360,192],[300,222],[240,252]].map(p=>`<rect x="${p[0]-6}" y="${p[1]-30}" width="12" height="9" fill="#fde047" opacity=".75"/>`).join(""):"";
   el.innerHTML=`<style>
     .hqc{cursor:pointer}
     .hqc .hqc-fig,.hqc .hq-zzz{transform-box:fill-box;transform-origin:50% 85%}
     .hqc.hq-walk .hqc-fig{animation:hqStep .32s ease-in-out infinite alternate}
     @keyframes hqStep{from{transform:translateY(0)}to{transform:translateY(-3.5px)}}
-    .hqc.hq-off .hqc-fig{transform:rotate(-62deg) translate(2px,-2px)}
+    .hq-chair{display:none}
+    .hqc.hq-sit .hqc-fig{transform:translateY(3px) scaleY(.9)}
+    .hqc.hq-sit .hq-chair{display:block}
+    .hqc.hq-dorme .hqc-fig{transform:rotate(-62deg) translate(2px,-2px)}
     .hqc .hq-zzz{display:none}
-    .hqc.hq-off .hq-zzz{display:block;animation:hqZzz 2.4s ease-in-out infinite}
+    .hqc.hq-dorme .hq-zzz{display:block;animation:hqZzz 2.4s ease-in-out infinite}
     @keyframes hqZzz{0%{opacity:0;transform:translateY(0)}25%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+    .hq-st{animation:hqStPulse 2.6s ease-in-out infinite}
+    @keyframes hqStPulse{0%,100%{opacity:.95}50%{opacity:.5}}
     .hq-chip{display:inline-flex;align-items:center;gap:6px;background:#141022;border:1px solid #2c2450;border-radius:16px;padding:4px 10px;font-size:.62rem;font-weight:800;color:#e2e8f0;cursor:pointer;transition:border-color .15s}
     .hq-chip:hover{border-color:#7c3aed}
     .hq-tab{border:none;border-radius:12px;padding:5px 11px;font-size:.64rem;font-weight:800;cursor:pointer;background:#f1f5f9;color:#475569;position:relative}
     .hq-tab.on{background:#0d1f35;color:#fff}
     .hq-badge{position:absolute;top:-5px;right:-4px;background:#dc2626;color:#fff;font-size:.5rem;font-weight:900;border-radius:8px;padding:1px 5px}
+    .hq-zbtn{width:30px;height:30px;border-radius:9px;border:1px solid #2c2450;background:rgba(20,16,34,.92);color:#e2e8f0;font-weight:900;cursor:pointer;font-size:.85rem}
+    .hq-zbtn:hover{border-color:#7c3aed}
+    @media(max-width:1100px){#hq-grid{grid-template-columns:1fr!important}}
   </style>
-  <div style="display:grid;grid-template-columns:minmax(0,1.62fr) minmax(0,1fr);gap:14px;align-items:start">
+  <div id="hq-grid" style="display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:14px;align-items:start">
     <div>
       <div id="hq-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
-      <div style="background:linear-gradient(160deg,#241a3d,#0f0b1d 70%);border-radius:16px;overflow:hidden;border:1px solid #2c2450">
-        <svg id="hq-svg" viewBox="0 0 960 600" style="width:100%;display:block">
-          <polygon points="480,42 920,262 920,270 480,50" fill="#cbbb9c"/>
-          <polygon points="480,42 40,262 40,270 480,50" fill="#d8c9ab"/>
-          <polygon points="480,50 920,270 480,490 40,270" fill="#e8dcc8"/>
+      <div id="hq-cena" style="position:relative;background:${NOITE?"linear-gradient(160deg,#1b1430,#0e0b18 70%)":"linear-gradient(160deg,#bfdbfe,#e0f2fe 70%)"};border-radius:16px;overflow:hidden;border:1px solid ${NOITE?"#2c2450":"#93c5fd"}">
+        <div style="position:absolute;top:10px;right:10px;z-index:5;display:flex;gap:5px">
+          <button class="hq-zbtn" onclick="hqZoom(1.3)" title="Aproximar">＋</button>
+          <button class="hq-zbtn" onclick="hqZoom(0.77)" title="Afastar">－</button>
+          <button class="hq-zbtn" onclick="hqZoomReset()" title="Visão geral">⌂</button>
+        </div>
+        <svg id="hq-svg" viewBox="0 0 1200 680" style="width:100%;display:block;cursor:grab;touch-action:none">
+          ${ceu}
+          <polygon points="300,540 560,524 560,538 300,554" fill="${NOITE?"#3a3152":"#cfd8c9"}" opacity=".85"/>
+          <polygon points="180,447 330,522 180,597 30,522" fill="${NOITE?"#1e3a2c":"#b7e2b9"}" stroke="${NOITE?"#2f5c44":"#8fcf96"}" stroke-width="1.5"/>
+          <text x="180" y="452" text-anchor="middle" font-size="9" font-weight="800" fill="${NOITE?"#86efac":"#3e7a4b"}">🌳 JARDIM</text>
+          ${arvore(112,540)}${arvore(212,568)}${arvore(238,502)}
+          <polygon points="560,42 1040,282 1040,300 560,60" fill="${NOITE?"#4c4370":"#b9c8d8"}"/>
+          <polygon points="560,42 80,282 80,300 560,60" fill="${NOITE?"#5a5180":"#c9d6e3"}"/>
+          <polygon points="560,60 1040,300 560,540 80,300" fill="#eadfc9"/>
+          ${janelas}
+          <polygon points="560,96 592,300 560,504 528,300" fill="#f3ebd7" opacity=".95"/>
+          <polygon points="130,300 560,258 990,300 560,342" fill="#f3ebd7" opacity=".8"/>
           ${HQ_SALAS.map(zona).join("")}
+          <polygon points="560,50 598,69 560,88 522,69" fill="#b6c0cc"/>
+          <polygon points="522,69 560,88 560,124 522,105" fill="#8b95a3"/>
+          <polygon points="560,88 598,69 598,105 560,124" fill="#77808d"/>
+          <line x1="579" y1="80" x2="579" y2="113" stroke="#5b6472" stroke-width="1.5"/>
+          <circle cx="590" cy="76" r="2" fill="#22d3ee"/>
+          <text x="560" y="42" text-anchor="middle" font-size="9" font-weight="800" fill="${NOITE?"#a5b4fc":"#475569"}">🛗 ELEVADOR</text>
+          ${tv(238,140,"hq-tv1")}${tv(886,140,"hq-tv2")}
           ${mob}
-          <polygon points="440,478 480,498 520,478 480,458" fill="#c9b795"/>
-          <text x="480" y="516" text-anchor="middle" font-size="9" font-weight="800" fill="#8d81a8">🚪 ENTRADA</text>
-          <polygon points="830,468 945,522 830,576 715,522" fill="#d9d2e8" stroke="#b9aed2" stroke-width="1"/>
-          <text x="830" y="462" text-anchor="middle" font-size="9" font-weight="800" fill="#8d81a8">😴 DESCANSO</text>
-          ${rest}
-          ${planta(96,270)}${planta(864,262)}${planta(480,118)}
+          <text x="560" y="562" text-anchor="middle" font-size="9.5" font-weight="800" fill="${NOITE?"#a5b4fc":"#64748b"}">🚪 ENTRADA PRINCIPAL</text>
+          ${HQ_OFF.filter(p=>p.t==="banco").map(p=>`<rect x="${p.x-13}" y="${p.y+2}" width="26" height="6" rx="2" fill="#9b6b3c"/><rect x="${p.x-11}" y="${p.y+8}" width="3" height="5" fill="#7a5330"/><rect x="${p.x+8}" y="${p.y+8}" width="3" height="5" fill="#7a5330"/>`).join("")}
+          ${planta(150,296)}${planta(962,296)}${planta(560,222)}${planta(620,468)}
           <g id="hq-chars"></g>
         </svg>
       </div>
-      <div style="font-size:.62rem;color:#94a3b8;margin-top:6px">🖱️ Clique num personagem (ou num chip) para conversa particular · o personagem anda sozinho até a sala da guia que a pessoa está usando · offline descansa no sofá</div>
+      <div style="font-size:.62rem;color:#94a3b8;margin-top:6px">🖱️ Clique num personagem para conversar ou ver o perfil · roda do mouse dá zoom, arraste para mover · o personagem levanta, atravessa o corredor e senta na sala da guia em uso</div>
     </div>
     <div id="hq-chat"></div>
   </div>`;
+  const svg=document.getElementById("hq-svg");
+  if(svg){
+    svg.addEventListener("wheel",hqWheel,{passive:false});
+    svg.addEventListener("pointerdown",hqPanIni);
+    window.addEventListener("pointermove",hqPanMov);
+    window.addEventListener("pointerup",hqPanFim);
+  }
 }
-/* ── personagem SVG ── */
+/* ── personagem SVG: roupa por cargo, cadeira p/ sentar, status sobre a cabeça ── */
 function hqChar(k){
-  const u=USERS[k]||{nome:k};const c=hqCor(k);
+  const u=USERS[k]||{nome:k};const c=hqCor(k);const r=hqRoupa(u);
   const nome=_esc(String((u.nome||k)).split(" ")[0]).slice(0,10);
-  return `<g id="hqch-${k}" class="hqc" transform="translate(${HQ_PORTA.x},${HQ_PORTA.y})" onclick="hqAbrirDM('${k}')">
+  return `<g id="hqch-${k}" class="hqc" transform="translate(${HQ_PORTA.x},${HQ_PORTA.y})" onclick="hqMenu(event,'${k}')">
+    <title>${_esc(u.nome||k)} · ${_esc(u.cargo||"")}</title>
+    <rect class="hq-chair" x="-9" y="-16" width="18" height="17" rx="5" fill="#3b475e"/>
     <g class="hqc-fig">
       <ellipse cx="0" cy="1" rx="9" ry="3.5" fill="rgba(0,0,0,.28)"/>
-      <rect x="-7" y="-20" width="14" height="16" rx="5" fill="${c[0]}" stroke="${c[1]}" stroke-width="1"/>
+      <rect x="-7" y="-20" width="14" height="16" rx="5" fill="${r.corpo}" stroke="rgba(0,0,0,.25)" stroke-width="1"/>
+      ${r.grav?`<polygon points="0,-18 2.4,-14 0,-7 -2.4,-14" fill="${r.grav}"/><rect x="-4.5" y="-19" width="9" height="3.4" rx="1.6" fill="#f8fafc"/>`:""}
       <circle cx="0" cy="-25" r="6.5" fill="#f2c9a4"/>
       <path d="M -6.5 -26 a 6.5 6.5 0 0 1 13 0 z" fill="${c[1]}"/>
     </g>
     <text class="hq-zzz" x="9" y="-28" font-size="10">💤</text>
+    <text class="hq-st" x="0" y="-58" text-anchor="middle" font-size="11"></text>
     <g class="hq-tag">
       <rect x="-28" y="-48" width="56" height="14" rx="7" fill="#0d1f35" opacity=".9"/>
       <circle class="hq-dot" cx="-20" cy="-41" r="3" fill="#22c55e"/>
@@ -5093,6 +5164,27 @@ function hqChar(k){
     </g>
   </g>`;
 }
+/* ── poses e status sobre a cabeça ── */
+function hqSt(el,t){const s=el.querySelector(".hq-st");if(s)s.textContent=t||"";}
+function hqPoseIdle(k){
+  const c=HQ_CH[k];if(!c||!c.el)return;const el=c.el;
+  el.classList.remove("hq-walk");el.classList.remove("hq-sit");el.classList.remove("hq-dorme");
+  if(c.off){
+    if(c.offT==="sofa"){el.classList.add("hq-dorme");hqSt(el,"");}
+    else if(c.offT==="banco"){el.classList.add("hq-sit");hqSt(el,"📱");}
+    else hqSt(el,"☕");
+    return;
+  }
+  if(c.sala==="lounge")hqSt(el,"☕");
+  else if(c.sala==="recep")hqSt(el,"🛎️");
+  else if(c.sala==="reuniao"){el.classList.add("hq-sit");hqSt(el,"🤝");}
+  else{el.classList.add("hq-sit");hqSt(el,"💻");}
+}
+function hqAndando(c){
+  c.el.classList.remove("hq-sit");c.el.classList.remove("hq-dorme");
+  hqSt(c.el,"🚶");
+}
+let HQ_ONLINE_N=0;
 /* ── sincroniza presença → posições/estados (a cada poll) ── */
 function hqSync(first){
   const layer=document.getElementById("hq-chars");if(!layer)return;
@@ -5103,43 +5195,62 @@ function hqSync(first){
   const meu=sessionStorage.getItem("userKey")||"";
   const porSala={};keys.filter(online).forEach(k=>{const s=hqSala(pres[k].presence_page);(porSala[s]=porSala[s]||[]).push(k);});
   Object.keys(porSala).forEach(s=>porSala[s].sort());
+  const vistoTxt=k=>{const p=pres[k];if(!p||!p.presence_at)return"nunca entrou";const m=Math.floor((agora-new Date(p.presence_at).getTime())/60000);return m<1?"agora":m<60?("há "+m+" min"):("há "+Math.floor(m/60)+"h");};
   let offIdx=0;
   keys.forEach(k=>{
     let c=HQ_CH[k];
-    if(!c){layer.insertAdjacentHTML("beforeend",hqChar(k));c=HQ_CH[k]={x:HQ_PORTA.x,y:HQ_PORTA.y,tx:0,ty:0,path:[],el:document.getElementById("hqch-"+k),sala:null,novo:true};}
+    if(!c){layer.insertAdjacentHTML("beforeend",hqChar(k));c=HQ_CH[k]={x:HQ_PORTA.x,y:HQ_PORTA.y,tx:0,ty:0,path:[],el:document.getElementById("hqch-"+k),sala:null,novo:true,off:false,offT:null};}
     const el=c.el;if(!el)return;
+    const u=USERS[k]||{};
     if(online(k)){
       const salaK=hqSala(pres[k].presence_page);
       const sala=HQ_SALAS.find(s=>s.k===salaK)||HQ_SALAS[0];
       const idx=Math.max(0,(porSala[salaK]||[]).indexOf(k));
       const o=HQ_SLOTS[idx%HQ_SLOTS.length];
-      const alvo={x:sala.cx+o[0],y:sala.cy+o[1]+(salaK==="lounge"?20:12)};
-      el.classList.remove("hq-off");
+      const alvo={x:sala.cx+o[0],y:sala.cy+o[1]+(salaK==="lounge"||salaK==="recep"?20:12)};
       const dot=el.querySelector(".hq-dot");if(dot)dot.setAttribute("fill","#22c55e");
       el.style.display="";
+      const eraOff=c.off;c.off=false;c.offT=null;
       if(c.novo){
         c.novo=false;
         if(first){c.x=alvo.x;c.y=alvo.y;c.path=[];}
-        else{c.x=HQ_PORTA.x;c.y=HQ_PORTA.y;c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];hqToast("🚪 "+String((USERS[k]||{}).nome||k).split(" ")[0]+" chegou na Base");}
+        else{c.x=HQ_PORTA.x;c.y=HQ_PORTA.y;c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];hqAndando(c);hqToast("🚪 "+String(u.nome||k).split(" ")[0]+" chegou na Base");hqConfetti();}
       }
-      else if(c.sala==="off"){c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];if(!first)hqToast("☀️ "+String((USERS[k]||{}).nome||k).split(" ")[0]+" entrou na Base");}
-      else if(c.sala!==salaK){c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];}
-      else if(Math.abs(c.tx-alvo.x)>1||Math.abs(c.ty-alvo.y)>1){c.path=[alvo];}
+      else if(eraOff){c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];hqAndando(c);if(!first){hqToast("☀️ "+String(u.nome||k).split(" ")[0]+" entrou na Base");hqConfetti();}}
+      else if(c.sala!==salaK){c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];hqAndando(c);}
+      else if(Math.abs(c.tx-alvo.x)>1||Math.abs(c.ty-alvo.y)>1){c.path=[alvo];hqAndando(c);}
       c.sala=salaK;c.tx=alvo.x;c.ty=alvo.y;
-      if(!c.path.length){c.x=alvo.x;c.y=alvo.y;}
+      if(!c.path.length){c.x=alvo.x;c.y=alvo.y;hqPoseIdle(k);}
+      const tt=el.querySelector("title");
+      if(tt)tt.textContent=`${u.nome||k} · ${u.cargo||""}\nSetor: ${sala.ic} ${sala.lbl}\nPainel: ${PTITLES[pres[k].presence_page]||pres[k].presence_page||"—"}\nStatus: ${c.path.length?"🚶 caminhando":(salaK==="lounge"?"☕ no café":"💻 trabalhando")}\nVisto: ${vistoTxt(k)}`;
     }else{
-      c.novo=false;c.sala="off";c.path=[];el.classList.remove("hq-walk");
-      if(offIdx<HQ_DESCANSO.length){const p=HQ_DESCANSO[offIdx++];c.x=p[0];c.y=p[1];c.tx=p[0];c.ty=p[1];el.style.display="";el.classList.add("hq-off");const dot=el.querySelector(".hq-dot");if(dot)dot.setAttribute("fill","#94a3b8");}
-      else{el.style.display="none";}
+      c.novo=false;c.path=[];
+      const spot=offIdx<HQ_OFF.length?HQ_OFF[offIdx++]:null;
+      if(spot){
+        c.off=true;c.offT=spot.t;c.sala="off";
+        c.x=spot.x;c.y=spot.y;c.tx=spot.x;c.ty=spot.y;
+        el.style.display="";hqPoseIdle(k);
+        const dot=el.querySelector(".hq-dot");if(dot)dot.setAttribute("fill","#94a3b8");
+        const tt=el.querySelector("title");
+        if(tt)tt.textContent=`${u.nome||k} · ${u.cargo||""}\nStatus: ${spot.t==="sofa"?"😴 descansando":spot.t==="banco"?"📱 no jardim":"☕ no café"} (offline)\nÚltimo acesso: ${vistoTxt(k)}`;
+      }else{c.off=true;c.sala="off";el.style.display="none";}
     }
     el.setAttribute("transform","translate("+c.x+","+c.y+")");
   });
   keys.slice().sort((a,b)=>(((HQ_CH[a]||{}).y)||0)-(((HQ_CH[b]||{}).y)||0)).forEach(k=>{const c=HQ_CH[k];if(c&&c.el)layer.appendChild(c.el);});
+  const on=keys.filter(online);HQ_ONLINE_N=on.length;
   const chips=document.getElementById("hq-chips");
-  if(chips){const on=keys.filter(online);
-    chips.innerHTML=on.length?on.map(k=>{const c2=hqCor(k);const n=_esc(String((USERS[k]||{}).nome||k).split(" ")[0]);
-      return `<span class="hq-chip" onclick="hqAbrirDM('${k}')"><span style="width:9px;height:9px;border-radius:50%;background:${c2[0]};display:inline-block"></span>${n}${k===meu?" (você)":""}<span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span></span>`;}).join("")
-      :'<span style="font-size:.62rem;color:#94a3b8">Ninguém online agora…</span>';}
+  if(chips){
+    chips.innerHTML=`<span style="font-size:.64rem;font-weight:800;color:#16a34a;align-self:center;margin-right:2px">🟢 ${on.length} online</span>`+(on.length?on.map(k=>{const c2=hqCor(k);const n=_esc(String((USERS[k]||{}).nome||k).split(" ")[0]);const st=HQ_CH[k]&&HQ_CH[k].path&&HQ_CH[k].path.length?"🚶":(HQ_CH[k]&&HQ_CH[k].sala==="lounge"?"☕":"💻");
+      return `<span class="hq-chip" onclick="hqMenu(event,'${k}')"><span style="width:9px;height:9px;border-radius:50%;background:${c2[0]};display:inline-block"></span>${n}${k===meu?" (você)":""} ${st}</span>`;}).join("")
+      :'<span style="font-size:.62rem;color:#94a3b8">Ninguém online agora…</span>');
+  }
+  /* telões ao vivo */
+  const agoraD=new Date();
+  const t1=document.getElementById("hq-tv1"),t1b=document.getElementById("hq-tv1b");
+  if(t1){t1.textContent="🟢 "+on.length+" ONLINE NA BASE";t1b.textContent=(HQ_STATE.mensagens||[]).length+" mensagens no chat";}
+  const t2=document.getElementById("hq-tv2"),t2b=document.getElementById("hq-tv2b");
+  if(t2){t2.textContent=agoraD.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})+" · "+agoraD.toLocaleDateString("pt-BR",{weekday:"short"}).toUpperCase();t2b.textContent=(typeof COM_P!=="undefined"&&COM_P.length?COM_P.length+" propostas no CRM":"JARVIS · Grupo ServCamp");}
 }
 /* ── loop de animação (setInterval: funciona mesmo com a aba em segundo
       plano, onde requestAnimationFrame congela): anda até o destino ── */
@@ -5153,7 +5264,7 @@ function hqStep(){
     const c=HQ_CH[k];if(!c||!c.el)return;
     if(c.path&&c.path.length){
       const t=c.path[0];const dx=t.x-c.x,dy=t.y-c.y;const d=Math.hypot(dx,dy);const passo=0.095*dt;
-      if(d<=passo){c.x=t.x;c.y=t.y;c.path.shift();if(!c.path.length)c.el.classList.remove("hq-walk");}
+      if(d<=passo){c.x=t.x;c.y=t.y;c.path.shift();if(!c.path.length)hqPoseIdle(k);}
       else{c.x+=dx/d*passo;c.y+=dy/d*passo;c.el.classList.add("hq-walk");}
       c.el.setAttribute("transform","translate("+c.x.toFixed(1)+","+c.y.toFixed(1)+")");
     }
@@ -5168,7 +5279,15 @@ function hqToast(txt){
   d.textContent=txt;document.body.appendChild(d);
   setTimeout(()=>{d.style.transition="opacity .4s";d.style.opacity="0";setTimeout(()=>d.remove(),400);},3800);
 }
-/* ── chat: Geral + conversas particulares (DM) ── */
+/* ── chat: canais por setor + conversas particulares (DM) ── */
+const HQ_CANAIS=[
+  {k:null,lbl:"# Geral"},
+  {k:"canal_com",lbl:"💼 Comercial"},
+  {k:"canal_rh",lbl:"🗂️ RH"},
+  {k:"canal_oper",lbl:"🖥️ Operações"},
+  {k:"canal_dir",lbl:"📊 Diretoria",restrito:true}
+];
+function hqEhCanal(v){return typeof v==="string"&&v.indexOf("canal_")===0;}
 function hqAbrirDM(k){
   const meu=sessionStorage.getItem("userKey")||"";
   if(k===meu)return;
@@ -5176,46 +5295,159 @@ function hqAbrirDM(k){
   hqRenderChat();
   const inp=document.getElementById("hq-input");if(inp)inp.focus();
 }
+function hqEmoji(e){const inp=document.getElementById("hq-input");if(inp){inp.value+=e;inp.focus();}}
 function hqRenderChat(){
   const box=document.getElementById("hq-chat");if(!box)return;
   const meu=sessionStorage.getItem("userKey")||"";
+  const podeDir=sessionStorage.getItem("userAdmin")==="1"||sessionStorage.getItem("userRhDash")==="1"||sessionStorage.getItem("userComDash")==="1";
   const msgs=HQ_STATE.mensagens||[];
   const ehDM=(m,k)=>((m.user_key===meu&&m.para===k)||(m.user_key===k&&m.para===meu));
-  const parceiros={};msgs.forEach(m=>{if(m.para){const outro=m.user_key===meu?m.para:m.user_key;if(outro&&outro!==meu)parceiros[outro]=true;}});
-  if(HQ_DM)parceiros[HQ_DM]=true;
-  const lista=HQ_DM?msgs.filter(m=>ehDM(m,HQ_DM)):msgs.filter(m=>!m.para);
-  const badge=k=>{const seen=HQ_SEEN[k||"geral"]||0;const arr=k?msgs.filter(m=>ehDM(m,k)&&m.user_key!==meu):msgs.filter(m=>!m.para&&m.user_key!==meu);return arr.filter(m=>new Date(m.criado_em).getTime()>seen).length;};
-  const bG=HQ_DM?badge(null):0;
+  const parceiros={};msgs.forEach(m=>{if(m.para&&!hqEhCanal(m.para)){const outro=m.user_key===meu?m.para:m.user_key;if(outro&&outro!==meu)parceiros[outro]=true;}});
+  if(HQ_DM&&!hqEhCanal(HQ_DM))parceiros[HQ_DM]=true;
+  const filtro=t=>t===null?msgs.filter(m=>!m.para):hqEhCanal(t)?msgs.filter(m=>m.para===t):msgs.filter(m=>ehDM(m,t));
+  const lista=filtro(HQ_DM);
+  const badge=t=>{if(t===HQ_DM)return 0;const seen=HQ_SEEN[t||"geral"]||0;return filtro(t).filter(m=>m.user_key!==meu&&new Date(m.criado_em).getTime()>seen).length;};
   const nomeDe=k=>String(((USERS[k]||{}).nome||k)).split(" ")[0];
   HQ_SEEN[HQ_DM||"geral"]=Date.now();
-  const tabs=`<div style="display:flex;gap:6px;flex-wrap:wrap;padding:9px 12px;border-bottom:1px solid #e5e9f0">
-    <button class="hq-tab ${HQ_DM?"":"on"}" onclick="hqAbrirDM(null)"># Geral${bG?`<span class="hq-badge">${bG}</span>`:""}</button>
-    ${Object.keys(parceiros).map(k=>{const b=HQ_DM===k?0:badge(k);return `<button class="hq-tab ${HQ_DM===k?"on":""}" onclick="hqAbrirDM('${k}')">🔒 ${_esc(nomeDe(k))}${b?`<span class="hq-badge">${b}</span>`:""}</button>`;}).join("")}
+  const tabs=`<div style="display:flex;gap:5px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid #e5e9f0">
+    ${HQ_CANAIS.filter(cn=>!cn.restrito||podeDir).map(cn=>{const b=badge(cn.k);const on=(HQ_DM===cn.k)||(cn.k===null&&HQ_DM===null);
+      return `<button class="hq-tab ${on?"on":""}" onclick="hqAbrirDM(${cn.k?`'${cn.k}'`:"null"})">${cn.lbl}${b?`<span class="hq-badge">${b}</span>`:""}</button>`;}).join("")}
+    ${Object.keys(parceiros).map(k=>{const b=badge(k);const onl=HQ_CH[k]&&!HQ_CH[k].off?"🟢":"";
+      return `<button class="hq-tab ${HQ_DM===k?"on":""}" onclick="hqAbrirDM('${k}')">🔒 ${_esc(nomeDe(k))}${onl}${b?`<span class="hq-badge">${b}</span>`:""}</button>`;}).join("")}
   </div>`;
-  const cab=HQ_DM
+  const canalAtual=HQ_CANAIS.find(cn=>cn.k===HQ_DM);
+  const cab=HQ_DM&&!hqEhCanal(HQ_DM)
     ?`🔒 Particular com <b>${_esc(nomeDe(HQ_DM))}</b> <span style="font-size:.56rem;color:#94a3b8;font-weight:700">só vocês dois veem</span>`
-    :`💬 Chat da Equipe <span style="font-size:.56rem;color:#94a3b8;font-weight:700">todos os usuários veem</span>`;
+    :canalAtual&&canalAtual.k
+      ?`${canalAtual.lbl} <span style="font-size:.56rem;color:#94a3b8;font-weight:700">canal do setor${canalAtual.restrito?" · restrito à diretoria":""}</span>`
+      :`💬 Chat da Equipe <span style="font-size:.56rem;color:#94a3b8;font-weight:700">todos os usuários veem</span>`;
   const inpAntigo=document.getElementById("hq-input");const digitado=inpAntigo?inpAntigo.value:"";const focado=document.activeElement===inpAntigo;
   const msgsAntigo=document.getElementById("hq-msgs");const noFim=!msgsAntigo||msgsAntigo.scrollTop+msgsAntigo.clientHeight>=msgsAntigo.scrollHeight-30;
+  const ehPart=HQ_DM&&!hqEhCanal(HQ_DM);
   box.innerHTML=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;display:flex;flex-direction:column;overflow:hidden">
     <div style="padding:10px 14px;border-bottom:1px solid #e5e9f0;font-size:.76rem;font-weight:800;color:#0d1f35">${cab}</div>
     ${tabs}
-    <div id="hq-msgs" style="height:352px;overflow-y:auto;padding:10px 14px">${
+    <div id="hq-msgs" style="height:322px;overflow-y:auto;padding:10px 14px">${
       lista.length?lista.map(m=>{const c=hqCor(m.user_key||"");const dt=new Date(m.criado_em);const eu=m.user_key===meu;
         return `<div style="margin-bottom:9px${eu?";text-align:right":""}">
-          <span style="font-size:.6rem;font-weight:800;color:${c[1]}">${_esc(m.nome)}</span>
+          <span style="font-size:.6rem;font-weight:800;color:${c[1]};cursor:pointer" onclick="hqAbrirDM('${_esc(m.user_key||"")}')">${_esc(m.nome)}</span>
           <span style="font-size:.54rem;color:#94a3b8"> ${dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} ${dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
-          <div style="display:inline-block;max-width:92%;background:${eu?(m.para?"#fef3c7":"#dbeafe"):(m.para?"#fef9c3":"#f1f5f9")};border-radius:10px;padding:6px 10px;font-size:.7rem;color:#0f172a;margin-top:2px;text-align:left;word-break:break-word">${_esc(m.texto)}</div>
+          <div style="display:inline-block;max-width:92%;background:${eu?(ehPart?"#fef3c7":"#dbeafe"):(ehPart?"#fef9c3":"#f1f5f9")};border-radius:10px;padding:6px 10px;font-size:.7rem;color:#0f172a;margin-top:2px;text-align:left;word-break:break-word">${_esc(m.texto)}</div>
         </div>`;}).join("")
-      :(HQ_DM?'<div style="color:#94a3b8;font-size:.7rem;text-align:center;padding:30px 0">Comece a conversa particular 🔒</div>':'<div style="color:#94a3b8;font-size:.7rem;text-align:center;padding:30px 0">Nenhuma mensagem ainda — diga oi! 👋</div>')
+      :(ehPart?'<div style="color:#94a3b8;font-size:.7rem;text-align:center;padding:30px 0">Comece a conversa particular 🔒</div>':'<div style="color:#94a3b8;font-size:.7rem;text-align:center;padding:30px 0">Nenhuma mensagem ainda — diga oi! 👋</div>')
     }</div>
-    <form onsubmit="return hqEnviar(event)" style="display:flex;gap:6px;padding:9px 10px;border-top:1px solid #e5e9f0">
-      <input id="hq-input" class="rhf-i" maxlength="500" placeholder="${HQ_DM?"Mensagem para "+_esc(nomeDe(HQ_DM))+"… (particular)":"Mensagem para a equipe…"}" style="flex:1" autocomplete="off">
+    <div style="display:flex;gap:2px;padding:4px 10px 0">${["😀","👍","❤️","😂","🎉","👏","✅","🔥"].map(e=>`<span onclick="hqEmoji('${e}')" style="cursor:pointer;font-size:.9rem;padding:2px 4px;border-radius:6px" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">${e}</span>`).join("")}</div>
+    <form onsubmit="return hqEnviar(event)" style="display:flex;gap:6px;padding:6px 10px 9px">
+      <input id="hq-input" class="rhf-i" maxlength="500" placeholder="${ehPart?"Mensagem para "+_esc(nomeDe(HQ_DM))+"… (particular)":canalAtual&&canalAtual.k?"Mensagem no canal "+canalAtual.lbl.replace(/^[^ ]+ /,"")+"…":"Mensagem para a equipe…"}" style="flex:1" autocomplete="off">
       <button class="rh-btn" style="padding:8px 14px" type="submit">➤</button>
     </form>
   </div>`;
   const inpNovo=document.getElementById("hq-input");if(inpNovo){if(digitado)inpNovo.value=digitado;if(focado)inpNovo.focus();}
   const b2=document.getElementById("hq-msgs");if(b2&&noFim)b2.scrollTop=b2.scrollHeight;
+}
+/* ── menu de interação ao clicar num personagem ── */
+function hqMenu(ev,k){
+  ev.stopPropagation();
+  const antigo=document.getElementById("hq-menu");if(antigo)antigo.remove();
+  const meu=sessionStorage.getItem("userKey")||"";
+  const u=USERS[k]||{nome:k};
+  const d=document.createElement("div");d.id="hq-menu";
+  d.style.cssText=`position:fixed;left:${Math.min(ev.clientX,window.innerWidth-190)}px;top:${Math.min(ev.clientY,window.innerHeight-150)}px;z-index:100001;background:#fff;border:1px solid #e5e9f0;border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.22);overflow:hidden;min-width:175px;font-size:.74rem`;
+  const it=(ic,txt,fn)=>`<div onclick="${fn}" style="padding:9px 14px;cursor:pointer;display:flex;gap:8px;align-items:center;color:#0d1f35;font-weight:700" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">${ic} ${txt}</div>`;
+  d.innerHTML=`<div style="padding:9px 14px;background:#0d1f35;color:#fff;font-weight:800">${_esc(String(u.nome||k).split(" ")[0])}<div style="font-size:.58rem;color:#9ec5f5;font-weight:700">${_esc(u.cargo||"")}</div></div>`+
+    (k!==meu?it("💬","Conversar em particular",`hqFecharMenu();hqAbrirDM('${k}')`):"")+
+    it("👤","Ver perfil",`hqFecharMenu();hqPerfil('${k}')`)+
+    it("✖","Fechar","hqFecharMenu()");
+  document.body.appendChild(d);
+  setTimeout(()=>document.addEventListener("click",hqFecharMenu,{once:true}),0);
+}
+function hqFecharMenu(){const d=document.getElementById("hq-menu");if(d)d.remove();}
+function hqPerfil(k){
+  const u=USERS[k]||{nome:k};const c=hqCor(k);const ch=HQ_CH[k];
+  const p=(HQ_STATE.presenca||[]).find(x=>x.user_key===k);
+  const ini=String(u.nome||k).split(" ").map(x=>x[0]).slice(0,2).join("").toUpperCase();
+  const st=ch&&!ch.off?(ch.path&&ch.path.length?"🚶 Caminhando":ch.sala==="lounge"?"☕ No café":"🟢 Trabalhando"):"🔴 Offline";
+  const sala=ch&&ch.sala&&ch.sala!=="off"?(HQ_SALAS.find(s=>s.k===ch.sala)||{}).lbl||"—":"—";
+  const visto=p&&p.presence_at?new Date(p.presence_at).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"nunca entrou";
+  const ov=document.createElement("div");ov.id="hq-perfil";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.55);z-index:100002;display:flex;align-items:center;justify-content:center";
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  ov.innerHTML=`<div style="background:#fff;border-radius:18px;padding:26px 30px;max-width:320px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="width:64px;height:64px;border-radius:50%;background:${c[0]};color:${c[1]};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.3rem;margin:0 auto 10px">${ini}</div>
+    <div style="font-weight:900;color:#0d1f35;font-size:1.02rem">${_esc(u.nome||k)}</div>
+    <div style="font-size:.72rem;color:#64748b;margin-bottom:12px">${_esc(u.cargo||"")}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.7rem;text-align:left">
+      <div style="background:#f8fafc;border-radius:10px;padding:8px 10px"><div style="color:#94a3b8;font-size:.56rem;text-transform:uppercase">Status</div><b>${st}</b></div>
+      <div style="background:#f8fafc;border-radius:10px;padding:8px 10px"><div style="color:#94a3b8;font-size:.56rem;text-transform:uppercase">Setor</div><b>${_esc(sala)}</b></div>
+      <div style="background:#f8fafc;border-radius:10px;padding:8px 10px;grid-column:1/-1"><div style="color:#94a3b8;font-size:.56rem;text-transform:uppercase">Última atividade</div><b>${visto}</b></div>
+    </div>
+    <button class="rh-btn" style="margin-top:14px;width:100%" onclick="document.getElementById('hq-perfil').remove();hqAbrirDM('${k}')">💬 Conversar</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+/* ── confete de chegada ── */
+function hqConfetti(){
+  const cena=document.getElementById("hq-cena");if(!cena)return;
+  for(let i=0;i<16;i++){
+    const p=document.createElement("div");
+    const cor=["#f97316","#7c3aed","#16a34a","#2e8fef","#fbbf24","#ec4899"][i%6];
+    p.style.cssText=`position:absolute;top:-10px;left:${8+Math.random()*84}%;width:7px;height:11px;background:${cor};border-radius:2px;z-index:4;pointer-events:none;transform:rotate(${Math.random()*360}deg);transition:transform 1.4s ease-in,top 1.4s ease-in,opacity 1.4s`;
+    cena.appendChild(p);
+    setTimeout(()=>{p.style.top="105%";p.style.transform=`rotate(${360+Math.random()*360}deg)`;p.style.opacity="0";},30);
+    setTimeout(()=>p.remove(),1600);
+  }
+}
+/* ── zoom e pan no cenário ── */
+let HQ_VB={x:0,y:0,w:1200,h:680},HQ_PAN=null;
+function hqVBApply(){const svg=document.getElementById("hq-svg");if(svg)svg.setAttribute("viewBox",`${HQ_VB.x.toFixed(0)} ${HQ_VB.y.toFixed(0)} ${HQ_VB.w.toFixed(0)} ${HQ_VB.h.toFixed(0)}`);}
+function hqZoom(f){
+  const nw=Math.max(300,Math.min(1200,HQ_VB.w/f));
+  const nh=nw*680/1200;
+  HQ_VB.x=Math.max(0,Math.min(1200-nw,HQ_VB.x+(HQ_VB.w-nw)/2));
+  HQ_VB.y=Math.max(0,Math.min(680-nh,HQ_VB.y+(HQ_VB.h-nh)/2));
+  HQ_VB.w=nw;HQ_VB.h=nh;hqVBApply();
+}
+function hqZoomReset(){HQ_VB={x:0,y:0,w:1200,h:680};hqVBApply();}
+function hqWheel(e){e.preventDefault();hqZoom(e.deltaY<0?1.18:0.85);}
+function hqPanIni(e){HQ_PAN={mx:e.clientX,my:e.clientY,x:HQ_VB.x,y:HQ_VB.y};}
+function hqPanMov(e){
+  if(!HQ_PAN)return;
+  const svg=document.getElementById("hq-svg");if(!svg)return;
+  const esc=HQ_VB.w/svg.getBoundingClientRect().width;
+  HQ_VB.x=Math.max(0,Math.min(1200-HQ_VB.w,HQ_PAN.x-(e.clientX-HQ_PAN.mx)*esc));
+  HQ_VB.y=Math.max(0,Math.min(680-HQ_VB.h,HQ_PAN.y-(e.clientY-HQ_PAN.my)*esc));
+  hqVBApply();
+}
+function hqPanFim(){HQ_PAN=null;}
+/* ── JARVIS: fala, boas-vindas do 1º acesso e dicas ── */
+function hqFala(txt,ms){
+  const b=document.getElementById("hq-bubble"),t=document.getElementById("hq-bubble-t"),r=document.getElementById("hq-bubble-r");
+  if(!b||!t)return;
+  t.textContent=txt;
+  const w=Math.min(430,Math.max(150,txt.length*5.4+30));
+  if(r){r.setAttribute("width",w);r.setAttribute("x",560-w/2);}
+  b.style.display="";
+  clearTimeout(hqFala._t);
+  if(ms)hqFala._t=setTimeout(()=>{b.style.display="none";},ms);
+}
+let HQ_DICA=false;
+function hqIntroCheck(){
+  const meu=sessionStorage.getItem("userKey")||"";
+  const c=HQ_CH[meu];
+  if(!c){setTimeout(hqIntroCheck,1200);return;}
+  if(localStorage.getItem("hq_intro_v2")){
+    if(!HQ_DICA){HQ_DICA=true;setTimeout(()=>{const nMsg=(HQ_STATE.mensagens||[]).length;hqFala(`Olá! 🟢 ${HQ_ONLINE_N} online · 💬 ${nMsg} mensagens no chat`,4200);},1600);}
+    return;
+  }
+  localStorage.setItem("hq_intro_v2","1");
+  /* recém-chegado: começa na recepção, JARVIS dá as boas-vindas e o leva à mesa */
+  const alvo={x:c.tx||HQ_HALL.x,y:c.ty||HQ_HALL.y};
+  c.path=[];c.x=560;c.y=512;c.el&&c.el.setAttribute("transform","translate(560,512)");
+  hqSt(c.el,"");c.el&&c.el.classList.remove("hq-sit");
+  hqFala("Bem-vindo à Base Virtual! 👋 Eu sou o JARVIS.",3000);
+  setTimeout(()=>hqFala("Cada sala é um setor do sistema — seu personagem anda sozinho até onde você estiver trabalhando.",4200),3200);
+  setTimeout(()=>hqFala("Vou te levar à sua mesa. Bom trabalho! 🚀",2800),7700);
+  setTimeout(()=>{c.path=[{x:HQ_HALL.x,y:HQ_HALL.y},alvo];hqAndando(c);},8200);
 }
 function hqEnviar(e){
   e.preventDefault();

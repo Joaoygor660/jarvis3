@@ -15,9 +15,10 @@ module.exports = async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const me = String((req.query && req.query.me) || "").slice(0, 60);
+      // volta: geral (null) + canais de setor (canal_*) + DMs do usuário
       const filtro = me
-        ? `&or=(para.is.null,para.eq.${encodeURIComponent(me)},and(user_key.eq.${encodeURIComponent(me)},para.not.is.null))`
-        : `&para=is.null`;
+        ? `&or=(para.is.null,para.like.canal_*,para.eq.${encodeURIComponent(me)},and(user_key.eq.${encodeURIComponent(me)},para.not.is.null))`
+        : `&or=(para.is.null,para.like.canal_*)`;
       const [pr, mr] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/app_users?select=user_key,presence_page,presence_at`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,para,criado_em&order=criado_em.desc&limit=80${filtro}`, { headers })
