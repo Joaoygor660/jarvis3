@@ -1414,6 +1414,15 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     @keyframes v3dFloat{0%,100%{transform:rotateX(7deg) rotateY(-6deg) translateY(0)}50%{transform:rotateX(3deg) rotateY(6deg) translateY(-8px)}}
     @keyframes v3dGlow{0%,100%{box-shadow:0 8px 26px rgba(124,58,237,.16)}50%{box-shadow:0 16px 46px rgba(124,58,237,.55),0 0 0 1px rgba(196,181,253,.28)}}
     .v3d-cta{margin-top:18px;background:rgba(124,58,237,.16);border:1px dashed rgba(196,181,253,.55);border-radius:12px;padding:12px 18px;font-size:.74rem;color:#ddd6fe;line-height:1.55}
+    /* ── Projetos: cards interativos ── */
+    .prj-card{position:relative;transition:transform .16s,box-shadow .16s,border-color .16s}
+    .prj-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(13,31,53,.15);border-color:#93c5fd!important}
+    .prj-acts{display:flex;gap:4px;margin-top:7px;justify-content:flex-end;opacity:0;max-height:0;overflow:hidden;transition:opacity .18s,max-height .18s}
+    .prj-card:hover .prj-acts{opacity:1;max-height:30px}
+    .prj-act{border:none;background:#eef2f7;border-radius:7px;padding:3px 7px;font-size:.68rem;cursor:pointer;transition:background .12s,transform .12s}
+    .prj-act:hover{background:#dbeafe;transform:scale(1.14)}
+    #prj-vista tbody tr{transition:background .12s}
+    #prj-vista tbody tr:hover td{background:#f0f7ff}
     .cv-gauge{position:relative;width:120px;height:120px;margin:0 auto}
     @media(max-width:768px){.kb-col{min-width:200px;max-width:200px}}
     /* ===== MOBILE — módulos RH e Painel RH (sobrepõe os grids inline) ===== */
@@ -1446,7 +1455,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 const USERS={
   "joaoygor":{nome:"João Ygor",cargo:"Analista Operacional",senha:"Joaoygor1",admin:true},
   "paulocampana":{nome:"Paulo Campana",cargo:"Diretor",senha:"servcamp2026",admin:false,rhDash:true},
-  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true,com:true,comDash:true},
+  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true,com:true,comDash:true,prj:true},
   "amauriantonio":{nome:"Amauri Antônio",cargo:"Gerente",senha:"servcamp2026",admin:false},
   "eduardocipriano":{nome:"Eduardo Cipriano",cargo:"Diretora RH",senha:"servcamp2026",admin:false},
   "sirleimodesto":{nome:"Sirlei Modesto",cargo:"Diretor RH",senha:"servcamp2026",admin:false},
@@ -1488,6 +1497,7 @@ async function doLogin(e){
   sessionStorage.setItem("userRhDash",usr.rhDash?"1":"0");
   sessionStorage.setItem("userCom",usr.com?"1":"0");
   sessionStorage.setItem("userComDash",usr.comDash?"1":"0");
+  sessionStorage.setItem("userPrj",usr.prj?"1":"0");
   applyUserUI();
   // registra o último acesso (auditoria) — não bloqueia a entrada se falhar
   fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"login",userKey:u})}).catch(()=>{});
@@ -1539,9 +1549,10 @@ function applyUserUI(){
   // Configurações: SOMENTE admin
   const cfgSec=document.getElementById("navSecCFG");
   if(cfgSec)cfgSec.style.display=isAdmin?"":"none";
-  // Projetos (Evolução/Inovação): SOMENTE admin até liberar
+  // Projetos (Evolução/Inovação): admin + usuários liberados (prj:true — hoje Ingridy)
+  const isPrj=sessionStorage.getItem("userPrj")==="1";
   const prjSec=document.getElementById("navSecPRJ");
-  if(prjSec)prjSec.style.display=isAdmin?"":"none";
+  if(prjSec)prjSec.style.display=(isAdmin||isPrj)?"":"none";
   // Módulos de cadastro RH: admin + responsável de RH (Sandra)
   const rhSec=document.getElementById("navSecRH");
   if(rhSec)rhSec.style.display=(isAdmin||isRh)?"":"none";
@@ -5590,13 +5601,29 @@ function prjRenderVista(){
     const cards=lista.filter(p=>p.status===s.k);
     return `<div style="background:#f4f6fa;border-radius:12px;padding:8px;min-height:150px" ondragover="event.preventDefault()" ondrop="prjDrop(event,'${s.k}')">
       <div style="font-size:.64rem;font-weight:800;color:${s.cor};padding:2px 4px 8px;display:flex;justify-content:space-between">${s.lbl}<span style="color:#94a3b8">${cards.length||""}</span></div>
-      ${cards.map(p=>{const pct=prjPct(p),atr=prjAtrasado(p);return `<div draggable="true" ondragstart="prjDrag(event,${p.id})" onclick="prjDet(${p.id})" style="background:#fff;border:1px solid #e5e9f0;border-left:3px solid ${PRJ_PRIOR[p.prioridade]||"#94a3b8"};border-radius:10px;padding:9px 10px;margin-bottom:7px;cursor:grab;animation:cvFadeUp .3s ease both">
+      ${cards.map(p=>{
+        const pct=prjPct(p),atr=prjAtrasado(p),chk=prjChecklist(p);
+        const feitas=chk.filter(x=>x.d).length,prox=chk.find(x=>!x.d);
+        const time=[p.responsavel,...(p.equipe||"").split(",")].map(x=>String(x||"").trim()).filter(Boolean).slice(0,3);
+        const dias=p.data_prevista?Math.ceil((new Date(String(p.data_prevista).slice(0,10)+"T12:00:00")-Date.now())/86400000):null;
+        const prazoBadge=dias===null?"":atr
+          ?`<span style="background:#fef2f2;color:#dc2626;font-weight:900;padding:1px 7px;border-radius:8px">⏰ ${Math.abs(dias)}d atraso</span>`
+          :`<span style="background:${dias<=7?"#fff7ed":"#f1f5f9"};color:${dias<=7?"#c2410c":"#64748b"};font-weight:800;padding:1px 7px;border-radius:8px">D-${dias}</span>`;
+        const stIdx=PRJ_ST.findIndex(x=>x.k===p.status);
+        return `<div draggable="true" class="prj-card" ondragstart="prjDrag(event,${p.id})" onclick="prjDet(${p.id})" title="${_esc(p.nome)} — clique para abrir" style="background:#fff;border:1px solid #e5e9f0;border-left:3px solid ${PRJ_PRIOR[p.prioridade]||"#94a3b8"};border-radius:10px;padding:9px 10px;margin-bottom:7px;cursor:grab;animation:cvFadeUp .3s ease both">
         <div style="font-size:.7rem;font-weight:800;color:#0d1f35;line-height:1.25">${_esc(p.nome)}</div>
         <div style="font-size:.56rem;color:#94a3b8;margin:2px 0 6px">${_esc(p.codigo||"")}${p.area?" · "+_esc(p.area):""}</div>
-        <div style="background:#eef2f7;border-radius:5px;height:6px;margin-bottom:5px"><div style="width:${pct}%;height:6px;border-radius:5px;background:${s.cor};transition:width .5s"></div></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:.58rem;color:#64748b">
-          <span>${_esc((p.responsavel||"—").split(" ")[0])}</span>
-          <span style="${atr?"color:#dc2626;font-weight:900":""}">${p.data_prevista?rhFmt(p.data_prevista):""}${atr?" ⏰":""}</span>
+        <div style="background:#eef2f7;border-radius:5px;height:6px;margin-bottom:4px"><div style="width:${pct}%;height:6px;border-radius:5px;background:${s.cor};transition:width .5s"></div></div>
+        <div style="font-size:.54rem;color:#94a3b8;margin-bottom:6px">☑️ ${feitas}/${chk.length} etapas${prox?` · próxima: <b style="color:#475569">${_esc(prox.t)}</b>`:" · tudo concluído 🎉"}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:.56rem">
+          <span style="display:flex">${time.map((n,i)=>{const c=hqCor(n);return `<span title="${_esc(n)}" style="width:20px;height:20px;border-radius:50%;background:${c[0]};color:${c[1]};display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:.52rem;border:1.5px solid #fff;margin-left:${i?-6:0}px">${_esc(n.split(" ").map(x=>x[0]).slice(0,2).join("").toUpperCase())}</span>`;}).join("")||'<span style="color:#cbd5e1">—</span>'}</span>
+          ${prazoBadge}
+        </div>
+        <div class="prj-acts" onclick="event.stopPropagation()">
+          ${prox?`<button class="prj-act" title="Concluir etapa: ${_esc(prox.t)}" onclick="prjProxEtapa(${p.id})">☑️</button>`:""}
+          ${stIdx>=0&&stIdx<PRJ_ST.length-1?`<button class="prj-act" title="Avançar para ${PRJ_ST[stIdx+1].lbl}" onclick="prjAvancar(${p.id})">➡️</button>`:""}
+          <button class="prj-act" title="Editar" onclick="prjForm(${p.id})">✏️</button>
+          <button class="prj-act" title="Excluir" onclick="prjExcluir(${p.id})">🗑️</button>
         </div></div>`;}).join("")||'<div style="font-size:.6rem;color:#cbd5e1;text-align:center;padding:14px 0">vazio</div>'}
     </div>`;}).join("")}</div>`;
 }
@@ -5734,7 +5761,18 @@ function prjDet(id){
     </div></div>`;
   document.body.appendChild(ov);
 }
-function prjReabrirDet(id){const d=document.getElementById("prj-det");if(d)d.remove();prjDet(id);}
+function prjReabrirDet(id){const d=document.getElementById("prj-det");if(!d)return;d.remove();prjDet(id);}
+/* ações rápidas dos cards */
+function prjAvancar(id){
+  const p=PRJ_P.find(x=>x.id===id);if(!p)return;
+  const i=PRJ_ST.findIndex(s=>s.k===p.status);
+  if(i>=0&&i<PRJ_ST.length-1)prjMudaStatus(id,PRJ_ST[i+1].k);
+}
+function prjProxEtapa(id){
+  const p=PRJ_P.find(x=>x.id===id);if(!p)return;
+  const i=prjChecklist(p).findIndex(x=>!x.d);
+  if(i>=0)prjCheck(id,i);
+}
 function prjMudaStatus(id,st){
   const p=PRJ_P.find(x=>x.id===id);if(!p||p.status===st)return;
   const de=p.status;p.status=st;
