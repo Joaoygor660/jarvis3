@@ -123,6 +123,26 @@ body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--g50);display:f
 .ni-alert{color:#fc8181!important;}
 .ni-alert:hover,.ni-alert.active{color:#fff!important;background:rgba(220,38,38,.25)!important;border-left-color:#ef4444!important;}
 .ni-ic{font-size:.85rem;width:16px;text-align:center;}
+/* ── Sidebar 2.0: categorias recolhíveis + busca + badges padronizados ── */
+.nav-busca{padding:10px 12px 2px;}
+.nav-busca input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:var(--sbta);font-size:.7rem;padding:7px 10px;outline:none;transition:border-color .15s,background .15s;}
+.nav-busca input::placeholder{color:var(--sbs);}
+.nav-busca input:focus{border-color:var(--b5);background:rgba(255,255,255,.1);}
+.nav-cat{margin-top:5px;}
+.nav-cat-h{display:flex;justify-content:space-between;align-items:center;padding:7px 14px 5px;cursor:pointer;user-select:none;}
+.nav-cat-t{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--sbs);transition:color .15s;}
+.nav-cat-h:hover .nav-cat-t{color:var(--sbta);}
+.nav-cat-ar{font-size:.6rem;color:var(--sbs);transition:transform .22s;}
+.nav-cat.fechada .nav-cat-ar{transform:rotate(-90deg);}
+.nav-cat-b{overflow:hidden;max-height:520px;transition:max-height .28s ease;}
+.nav-cat.fechada .nav-cat-b{max-height:0;}
+#navRoot .ni{border-radius:0 9px 9px 0;margin-right:8px;position:relative;}
+#navRoot .ni:hover{transform:translateX(2px);}
+.nib{position:absolute;right:8px;top:50%;transform:translateY(-50%);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px;}
+.nib-novo{background:linear-gradient(135deg,#f97316,#fbbf24);}
+.nib-exec{background:linear-gradient(135deg,#7c3aed,#a78bfa);}
+.nib-vivo{background:linear-gradient(135deg,#16a34a,#4ade80);}
+.busca-oculta{display:none!important;}
 .sb-foot{margin-top:auto;padding:12px;border-top:1px solid rgba(255,255,255,.06);}
 .btn-up{width:100%;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--sbt);font-size:.71rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;}
 .btn-up:hover{background:rgba(255,255,255,.12);color:#fff;}
@@ -536,60 +556,78 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <text x="88" y="39" font-family="Segoe UI,sans-serif" font-size="7" fill="#5a6a80" font-style="italic">terceirizações</text>
     </svg>
   </div>
-  <div class="nav-sec">
-    <div class="nav-lbl">Dashboard</div>
-    <div class="ni active" onclick="navTo('visao',this)"><span class="ni-ic">📊</span><span>Visão Geral</span></div>
-    <div class="ni" onclick="navTo('clientes',this)"><span class="ni-ic">🤝</span><span>Clientes</span></div>
+  <nav id="navRoot">
+  <div class="nav-busca"><input id="navBusca" placeholder="🔎 Buscar módulo…" oninput="navBuscar(this.value)" autocomplete="off"></div>
+  <div class="nav-cat" data-cat="dash">
+    <div class="nav-cat-h" onclick="navCatToggle('dash')"><span class="nav-cat-t">🏠 Dashboard</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni active" data-pg="visao" onclick="navTo('visao',this)"><span class="ni-ic">📊</span><span>Visão Geral</span></div>
+      <div class="ni" data-pg="clientes" onclick="navTo('clientes',this)"><span class="ni-ic">🤝</span><span>Clientes</span></div>
+    </div>
   </div>
-  <div class="nav-sec">
-    <div class="nav-lbl">Quadro de Pessoal</div>
-    <div class="ni" onclick="navTo('ativos',this)"><span class="ni-ic">👤</span><span>Funcionários Ativos</span></div>
+  <div class="nav-cat" data-cat="pessoal">
+    <div class="nav-cat-h" onclick="navCatToggle('pessoal')"><span class="nav-cat-t">👥 Quadro de Pessoal</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni" data-pg="ativos" onclick="navTo('ativos',this)"><span class="ni-ic">👤</span><span>Funcionários Ativos</span></div>
+      <div class="ni" data-pg="restec" onclick="navTo('restec',this)"><span class="ni-ic">🔧</span><span>Reservas Técnicas</span></div>
+      <div class="ni ni-alert" data-pg="dispo" onclick="navTo('dispo',this)"><span class="ni-ic">🔴</span><span>Sem Alocação</span></div>
+    </div>
   </div>
-  <div class="nav-sec">
-    <div class="nav-lbl">Operações</div>
-    <div class="ni" onclick="navTo('faltas',this)"><span class="ni-ic">🚫</span><span>Faltas &amp; Top 10</span></div>
-    <div class="ni" onclick="navTo('coberturas',this)"><span class="ni-ic">🛡️</span><span>Coberturas</span></div>
-    <div class="ni" onclick="navTo('postos',this)"><span class="ni-ic">⚠️</span><span>Justif. Postos Desc.</span></div>
-    <div class="ni" onclick="navTo('os',this)"><span class="ni-ic">📋</span><span>OS Avulsos</span></div>
-    <div class="ni" onclick="navTo('fts',this)"><span class="ni-ic">🔄</span><span>FTS</span></div>
-    <div class="ni ni-alert" onclick="navTo('dispo',this)"><span class="ni-ic">🔴</span><span>Sem Alocação</span></div>
-    <div class="ni" onclick="navTo('restec',this)"><span class="ni-ic">🔧</span><span>Reservas Técnicas</span></div>
-    <div class="ni" onclick="navTo('hrextra',this)"><span class="ni-ic">⏰</span><span>Horas Extras</span></div>
-    <div class="ni" onclick="navTo('checklist',this)"><span class="ni-ic">📝</span><span>Check List</span></div>
-    <div class="ni" onclick="navTo('painelacomp',this)" style="position:relative"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
+  <div class="nav-cat" data-cat="oper">
+    <div class="nav-cat-h" onclick="navCatToggle('oper')"><span class="nav-cat-t">📋 Operação</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni" data-pg="faltas" onclick="navTo('faltas',this)"><span class="ni-ic">🚫</span><span>Faltas &amp; Top 10</span></div>
+      <div class="ni" data-pg="coberturas" onclick="navTo('coberturas',this)"><span class="ni-ic">🛡️</span><span>Coberturas</span></div>
+      <div class="ni" data-pg="postos" onclick="navTo('postos',this)"><span class="ni-ic">⚠️</span><span>Justif. Postos Desc.</span></div>
+      <div class="ni" data-pg="os" onclick="navTo('os',this)"><span class="ni-ic">📋</span><span>OS Avulsos</span></div>
+      <div class="ni" data-pg="fts" onclick="navTo('fts',this)"><span class="ni-ic">🔄</span><span>FTS</span></div>
+      <div class="ni" data-pg="hrextra" onclick="navTo('hrextra',this)"><span class="ni-ic">⏰</span><span>Horas Extras</span></div>
+      <div class="ni" data-pg="checklist" onclick="navTo('checklist',this)"><span class="ni-ic">📝</span><span>Check List</span></div>
+    </div>
   </div>
-  <div class="nav-sec" id="navSecRH" style="display:none">
-    <div class="nav-lbl">RH</div>
-    <div class="ni" onclick="navTo('rhvagas',this)" style="position:relative"><span class="ni-ic">📋</span><span>Controle de Vagas</span></div>
-    <div class="ni" onclick="navTo('rhentrev',this)" style="position:relative"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span></div>
-    <div class="ni" onclick="navTo('rhdesl',this)" style="position:relative"><span class="ni-ic">🚪</span><span>Desligamentos</span></div>
-    <div class="ni" onclick="navTo('rhres',this)" style="position:relative"><span class="ni-ic">🔄</span><span>Reservas → Efetivação</span></div>
-    <div class="ni" onclick="navTo('rhtrein',this)" style="position:relative"><span class="ni-ic">🎓</span><span>Treinamentos</span></div>
+  <div class="nav-cat" data-cat="gestao">
+    <div class="nav-cat-h" onclick="navCatToggle('gestao')"><span class="nav-cat-t">📊 Gestão</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni" data-pg="painelacomp" onclick="navTo('painelacomp',this)"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
+    </div>
   </div>
-  <div class="nav-sec" id="navSecRHDash" style="display:none">
-    <div class="nav-lbl">Diretoria</div>
-    <div class="ni" onclick="navTo('rhdash',this)" style="position:relative"><span class="ni-ic">📈</span><span>Painel RH</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">EXEC</span></div>
+  <div class="nav-cat" data-cat="rh">
+    <div class="nav-cat-h" onclick="navCatToggle('rh')"><span class="nav-cat-t">🗂️ RH</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni" data-pg="rhvagas" data-perm="rh" onclick="navTo('rhvagas',this)"><span class="ni-ic">📋</span><span>Controle de Vagas</span></div>
+      <div class="ni" data-pg="rhentrev" data-perm="rh" onclick="navTo('rhentrev',this)"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span></div>
+      <div class="ni" data-pg="rhdesl" data-perm="rh" onclick="navTo('rhdesl',this)"><span class="ni-ic">🚪</span><span>Desligamentos</span></div>
+      <div class="ni" data-pg="rhres" data-perm="rh" onclick="navTo('rhres',this)"><span class="ni-ic">🔄</span><span>Reservas → Efetivação</span></div>
+      <div class="ni" data-pg="rhtrein" data-perm="rh" onclick="navTo('rhtrein',this)"><span class="ni-ic">🎓</span><span>Treinamentos</span></div>
+    </div>
   </div>
-  <div class="nav-sec" id="navSecCOMOP" style="display:none">
-    <div class="nav-lbl">Comercial</div>
-    <div class="ni" onclick="navTo('compro',this)" style="position:relative"><span class="ni-ic">💼</span><span>Propostas &amp; Cadência</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
+  <div class="nav-cat" data-cat="com">
+    <div class="nav-cat-h" onclick="navCatToggle('com')"><span class="nav-cat-t">💼 Comercial</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni" data-pg="compro" data-perm="com" onclick="navTo('compro',this)"><span class="ni-ic">💼</span><span>Propostas &amp; Cadência</span><span class="nib nib-novo">NOVO</span></div>
+    </div>
   </div>
-  <div class="nav-sec" id="navSecCOMDASH" style="display:none">
-    <div class="nav-lbl">Comercial — Diretoria</div>
-    <div class="ni" onclick="navTo('comdash',this)" style="position:relative"><span class="ni-ic">📊</span><span>Painel Comercial</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">EXEC</span></div>
+  <div class="nav-cat" data-cat="dir">
+    <div class="nav-cat-h" onclick="navCatToggle('dir')"><span class="nav-cat-t">📈 Diretoria</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni" data-pg="rhdash" data-perm="rhdash" onclick="navTo('rhdash',this)"><span class="ni-ic">📈</span><span>Painel RH</span><span class="nib nib-exec">EXEC</span></div>
+      <div class="ni" data-pg="comdash" data-perm="comdash" onclick="navTo('comdash',this)"><span class="ni-ic">📊</span><span>Painel Comercial</span><span class="nib nib-exec">EXEC</span></div>
+    </div>
   </div>
-  <div class="nav-sec">
-    <div class="nav-lbl">Equipe</div>
-    <div class="ni" onclick="navTo('sede',this)" style="position:relative"><span class="ni-ic">🏢</span><span>Base Virtual</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#16a34a,#4ade80);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">AO VIVO</span></div>
+  <div class="nav-cat" data-cat="inov">
+    <div class="nav-cat-h" onclick="navCatToggle('inov')"><span class="nav-cat-t">🚀 Inovação</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni" data-pg="sede" onclick="navTo('sede',this)"><span class="ni-ic">🏢</span><span>Base Virtual</span><span class="nib nib-vivo">AO VIVO</span></div>
+      <div class="ni" data-pg="prj" data-perm="prj" onclick="navTo('prj',this)"><span class="ni-ic">🚀</span><span>Projetos</span><span class="nib nib-novo">NOVO</span></div>
+    </div>
   </div>
-  <div class="nav-sec" id="navSecPRJ" style="display:none">
-    <div class="nav-lbl">Evolução / Inovação</div>
-    <div class="ni" onclick="navTo('prj',this)" style="position:relative"><span class="ni-ic">🚀</span><span>Projetos</span><span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff;font-size:.5rem;font-weight:900;padding:2px 6px;border-radius:8px;letter-spacing:.3px">NOVO</span></div>
+  <div class="nav-cat" data-cat="sys">
+    <div class="nav-cat-h" onclick="navCatToggle('sys')"><span class="nav-cat-t">⚙️ Sistema</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b">
+      <div class="ni" data-pg="config" data-perm="admin" onclick="navTo('config',this)"><span class="ni-ic">⚙️</span><span>Configurações</span></div>
+    </div>
   </div>
-  <div class="nav-sec" id="navSecCFG" style="display:none">
-    <div class="nav-lbl">Sistema</div>
-    <div class="ni" onclick="navTo('config',this)"><span class="ni-ic">⚙️</span><span>Configurações</span></div>
-  </div>
+  </nav>
   <div class="sb-foot upload-btn" id="btnNovoExcel">
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
     <input type="file" id="fu" accept=".xlsx,.xls" onchange="handleUp(event)">
@@ -1546,29 +1584,15 @@ function applyUserUI(){
   const isRhDash=sessionStorage.getItem("userRhDash")==="1";
   // Upload de Excel continua SOMENTE para admin
   document.querySelectorAll(".upload-btn,#btnNovoExcel").forEach(function(el){el.style.display=isAdmin?"":"none";});
-  // Configurações: SOMENTE admin
-  const cfgSec=document.getElementById("navSecCFG");
-  if(cfgSec)cfgSec.style.display=isAdmin?"":"none";
-  // Projetos (Evolução/Inovação): admin + usuários liberados (prj:true — hoje Ingridy)
-  const isPrj=sessionStorage.getItem("userPrj")==="1";
-  const prjSec=document.getElementById("navSecPRJ");
-  if(prjSec)prjSec.style.display=(isAdmin||isPrj)?"":"none";
-  // Módulos de cadastro RH: admin + responsável de RH (Sandra)
-  const rhSec=document.getElementById("navSecRH");
-  if(rhSec)rhSec.style.display=(isAdmin||isRh)?"":"none";
-  // Painel RH executivo: admin + responsável de RH + diretoria liberada (rhDash:true —
-  // hoje Paulo Campana e Ingridy Campana). Estes NÃO veem os módulos de cadastro acima.
-  const rhDashSec=document.getElementById("navSecRHDash");
-  if(rhDashSec)rhDashSec.style.display=(isAdmin||isRh||isRhDash)?"":"none";
-  // Módulo Comercial: admin + usuários liberados
+  // Permissões do menu agora são por ITEM (data-perm) — MESMAS regras de antes:
+  // rh: Sandra+admin · rhdash: +diretoria (Paulo/Ingridy) · com: Gabriela/Ingridy+admin ·
+  // comdash: Ingridy+admin · prj: Ingridy+admin · admin: só João.
   const isCom=sessionStorage.getItem("userCom")==="1";
   const isComDash=sessionStorage.getItem("userComDash")==="1";
-  // Propostas & Cadência (operacional): admin + com:true (Gabriela + Ingridy)
-  const comOpSec=document.getElementById("navSecCOMOP");
-  if(comOpSec)comOpSec.style.display=(isAdmin||isCom)?"":"none";
-  // Painel Comercial (diretoria): admin + comDash:true (apenas Ingridy)
-  const comDashSec=document.getElementById("navSecCOMDASH");
-  if(comDashSec)comDashSec.style.display=(isAdmin||isComDash)?"":"none";
+  const isPrj=sessionStorage.getItem("userPrj")==="1";
+  const navOk={rh:isAdmin||isRh,rhdash:isAdmin||isRh||isRhDash,com:isAdmin||isCom,comdash:isAdmin||isComDash,prj:isAdmin||isPrj,admin:isAdmin};
+  document.querySelectorAll('#navRoot [data-perm]').forEach(function(el){el.style.display=navOk[el.dataset.perm]?"":"none";});
+  if(typeof navCatsAtualiza==="function")navCatsAtualiza(); // categoria sem itens visíveis some
 }
 function showWelcome(){
   const nome=sessionStorage.getItem("userNome")||"";
@@ -1737,11 +1761,43 @@ function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
 const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação"};
 
+/* ── Sidebar 2.0: accordion com estado salvo + busca de módulos ── */
+function navCatToggle(k){
+  const c=document.querySelector('.nav-cat[data-cat="'+k+'"]');if(!c)return;
+  c.classList.toggle("fechada");
+  const st={};document.querySelectorAll(".nav-cat").forEach(x=>{st[x.dataset.cat]=!x.classList.contains("fechada");});
+  try{localStorage.setItem("svc_navcats",JSON.stringify(st));}catch(e){}
+}
+function navCatsRestaura(){
+  let st=null;try{st=JSON.parse(localStorage.getItem("svc_navcats")||"null");}catch(e){}
+  if(!st)return;
+  document.querySelectorAll(".nav-cat").forEach(x=>{x.classList.toggle("fechada",st[x.dataset.cat]===false);});
+}
+function navCatsAtualiza(){
+  document.querySelectorAll(".nav-cat").forEach(c=>{
+    const tem=[...c.querySelectorAll(".ni")].some(n=>n.style.display!=="none"&&!n.classList.contains("busca-oculta"));
+    c.style.display=tem?"":"none";
+  });
+}
+function navBuscar(q){
+  q=(q||"").trim().toLowerCase();
+  document.querySelectorAll("#navRoot .ni").forEach(n=>{
+    n.classList.toggle("busca-oculta",!!q&&n.textContent.toLowerCase().indexOf(q)<0);
+  });
+  if(q)document.querySelectorAll(".nav-cat").forEach(c=>c.classList.remove("fechada"));
+  else navCatsRestaura();
+  navCatsAtualiza();
+}
+navCatsRestaura();navCatsAtualiza();
 function navTo(p,btn){
   ST.pg=p;
   document.querySelectorAll(".ni").forEach(n=>n.classList.remove("active"));
-  if(btn){btn.classList.add("active");}
-  else{const keys=["visao","clientes","ativos","faltas","coberturas","postos","os","fts","dispo","restec","hrextra","checklist","painelacomp"];document.querySelectorAll(".ni")[keys.indexOf(p)]?.classList.add("active");}
+  const alvoNi=btn||document.querySelector('.ni[data-pg="'+p+'"]');
+  if(alvoNi){
+    alvoNi.classList.add("active");
+    const cat=alvoNi.closest(".nav-cat");
+    if(cat)cat.classList.remove("fechada"); // categoria do item ativo sempre visível
+  }
   document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
   document.getElementById("pg-"+p)?.classList.add("active");
   document.getElementById("pgTitle").textContent=PTITLES[p]||p;
