@@ -143,6 +143,29 @@ body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--g50);display:f
 .nib-exec{background:linear-gradient(135deg,#7c3aed,#a78bfa);}
 .nib-vivo{background:linear-gradient(135deg,#16a34a,#4ade80);}
 .busca-oculta{display:none!important;}
+/* ── Sidebar 2.1: perfil, favoritos e modo compacto ── */
+.sb-perfil{display:flex;gap:10px;align-items:center;padding:12px 14px 4px;}
+.sb-perfil-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.8rem;flex-shrink:0;border:2px solid rgba(255,255,255,.18);}
+.sb-perfil-n{font-size:.74rem;font-weight:800;color:var(--sbta);line-height:1.2;}
+.sb-perfil-c{font-size:.58rem;color:var(--sbs);}
+.sb-perfil-on{font-size:.56rem;color:#4ade80;font-weight:700;display:flex;align-items:center;gap:4px;}
+.sb-perfil-on::before{content:"";width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;animation:pulse 2s infinite;}
+.ni .fav{margin-left:auto;font-size:.68rem;opacity:0;transition:opacity .15s,transform .15s;padding:0 2px;}
+.ni:hover .fav{opacity:.85;}
+.ni .fav:hover{transform:scale(1.3);}
+.ni .fav.on{opacity:.95;}
+#navFavCat .nav-cat-t{color:#fbbf24;}
+.sb-mini{width:64px!important;min-width:64px!important;}
+.sb-mini .sb-logo svg{display:none;}
+.sb-mini .sb-perfil{justify-content:center;padding:12px 0 4px;}
+.sb-mini .sb-perfil>div:last-child{display:none;}
+.sb-mini .nav-busca,.sb-mini .nav-cat-h,.sb-mini .nib,.sb-mini .fav,.sb-mini .sb-credit span{display:none!important;}
+.sb-mini .nav-cat-b{max-height:none!important;}
+.sb-mini .ni{justify-content:center;padding:9px 0;margin-right:0;border-radius:0;}
+.sb-mini .ni span:not(.ni-ic){display:none;}
+.sb-mini .upload-btn .btn-up span{display:none;}
+.sb-recolher{margin:6px 10px;padding:7px;border:1px solid rgba(255,255,255,.12);border-radius:9px;background:transparent;color:var(--sbs);font-size:.62rem;font-weight:700;cursor:pointer;width:calc(100% - 20px);transition:color .15s,border-color .15s;}
+.sb-recolher:hover{color:var(--sbta);border-color:var(--b5);}
 .sb-foot{margin-top:auto;padding:12px;border-top:1px solid rgba(255,255,255,.06);}
 .btn-up{width:100%;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--sbt);font-size:.71rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;}
 .btn-up:hover{background:rgba(255,255,255,.12);color:#fff;}
@@ -556,8 +579,20 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <text x="88" y="39" font-family="Segoe UI,sans-serif" font-size="7" fill="#5a6a80" font-style="italic">terceirizações</text>
     </svg>
   </div>
+  <div class="sb-perfil" id="sbPerfil" style="display:none">
+    <div class="sb-perfil-av" id="sbPerfilAv">?</div>
+    <div>
+      <div class="sb-perfil-n" id="sbPerfilNome">—</div>
+      <div class="sb-perfil-c" id="sbPerfilCargo"></div>
+      <div class="sb-perfil-on">Sistema Online</div>
+    </div>
+  </div>
   <nav id="navRoot">
-  <div class="nav-busca"><input id="navBusca" placeholder="🔎 Buscar módulo…" oninput="navBuscar(this.value)" autocomplete="off"></div>
+  <div class="nav-busca"><input id="navBusca" placeholder="🔎 Buscar módulo…  (Ctrl K)" oninput="navBuscar(this.value)" autocomplete="off"></div>
+  <div class="nav-cat" id="navFavCat" data-cat="fav" style="display:none">
+    <div class="nav-cat-h" onclick="navCatToggle('fav')"><span class="nav-cat-t">⭐ Favoritos</span><span class="nav-cat-ar">▾</span></div>
+    <div class="nav-cat-b" id="navFavBody"></div>
+  </div>
   <div class="nav-cat" data-cat="dash">
     <div class="nav-cat-h" onclick="navCatToggle('dash')"><span class="nav-cat-t">🏠 Dashboard</span><span class="nav-cat-ar">▾</span></div>
     <div class="nav-cat-b">
@@ -632,6 +667,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <label class="btn-up" for="fu">📤 <span>Novo arquivo Excel</span></label>
     <input type="file" id="fu" accept=".xlsx,.xls" onchange="handleUp(event)">
   </div>
+  <button class="sb-recolher" id="sbRecolher" onclick="navMiniToggle()">⬅ Recolher menu</button>
   <div class="sb-credit"><span>Desenvolvido por <b>Convert Vision</b></span></div>
 </aside>
 <div class="main">
@@ -1593,6 +1629,8 @@ function applyUserUI(){
   const navOk={rh:isAdmin||isRh,rhdash:isAdmin||isRh||isRhDash,com:isAdmin||isCom,comdash:isAdmin||isComDash,prj:isAdmin||isPrj,admin:isAdmin};
   document.querySelectorAll('#navRoot [data-perm]').forEach(function(el){el.style.display=navOk[el.dataset.perm]?"":"none";});
   if(typeof navCatsAtualiza==="function")navCatsAtualiza(); // categoria sem itens visíveis some
+  if(typeof sbPerfilRender==="function")sbPerfilRender();
+  if(typeof navFavRender==="function")navFavRender(); // favoritos respeitam as permissões
 }
 function showWelcome(){
   const nome=sessionStorage.getItem("userNome")||"";
@@ -1788,16 +1826,93 @@ function navBuscar(q){
   else navCatsRestaura();
   navCatsAtualiza();
 }
-navCatsRestaura();navCatsAtualiza();
+/* perfil no topo do menu: saudação + avatar de iniciais + cargo */
+function sbPerfilRender(){
+  const box=document.getElementById("sbPerfil");if(!box)return;
+  const nome=sessionStorage.getItem("userNome");
+  if(!nome||sessionStorage.getItem("logged")!=="1"){box.style.display="none";return;}
+  const h=new Date().getHours();
+  const sauda=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
+  const c=hqCor(sessionStorage.getItem("userKey")||nome);
+  const av=document.getElementById("sbPerfilAv");
+  av.textContent=nome.split(" ").map(x=>x[0]).slice(0,2).join("").toUpperCase();
+  av.style.background=c[0];av.style.color=c[1];
+  document.getElementById("sbPerfilNome").textContent=sauda+", "+nome.split(" ")[0];
+  document.getElementById("sbPerfilCargo").textContent=sessionStorage.getItem("userCargo")||"";
+  box.style.display="";
+}
+/* favoritos ⭐ com persistência */
+function navFavGet(){try{return JSON.parse(localStorage.getItem("svc_navfav")||"[]");}catch(e){return[];}}
+function navFavToggle(pg,ev){
+  if(ev){ev.stopPropagation();}
+  let f=navFavGet();
+  f=f.includes(pg)?f.filter(x=>x!==pg):f.concat([pg]);
+  try{localStorage.setItem("svc_navfav",JSON.stringify(f));}catch(e){}
+  navFavRender();
+}
+function navFavRender(){
+  const favs=navFavGet();
+  document.querySelectorAll("#navRoot .nav-cat:not(#navFavCat) .ni").forEach(n=>{
+    const s=n.querySelector(".fav");if(!s)return;
+    const on=favs.includes(n.dataset.pg);
+    s.textContent=on?"⭐":"☆";s.classList.toggle("on",on);
+  });
+  const body=document.getElementById("navFavBody"),cat=document.getElementById("navFavCat");
+  if(!body||!cat)return;
+  let h="";
+  favs.forEach(pg=>{
+    const src=document.querySelector('#navRoot .nav-cat:not(#navFavCat) .ni[data-pg="'+pg+'"]');
+    if(!src||src.style.display==="none")return; // respeita permissões
+    const ic=(src.querySelector(".ni-ic")||{}).textContent||"•";
+    const spans=src.querySelectorAll("span");
+    const lbl=spans[1]?spans[1].textContent:pg;
+    h+=`<div class="ni" data-pg="${pg}" onclick="navTo('${pg}',this)"><span class="ni-ic">${ic}</span><span>${lbl}</span><span class="fav on" onclick="navFavToggle('${pg}',event)">⭐</span></div>`;
+  });
+  body.innerHTML=h;
+  cat.style.display=h?"":"none";
+}
+/* injeta a estrelinha em todos os itens (uma vez) */
+function navStarsInit(){
+  document.querySelectorAll("#navRoot .nav-cat:not(#navFavCat) .ni").forEach(n=>{
+    if(n.querySelector(".fav"))return;
+    const spans=n.querySelectorAll("span");
+    n.title=spans[1]?spans[1].textContent:""; // tooltip no modo compacto
+    const s=document.createElement("span");
+    s.className="fav";s.textContent="☆";
+    s.onclick=function(ev){navFavToggle(n.dataset.pg,ev);};
+    n.appendChild(s);
+  });
+}
+/* modo compacto (recolher para trilho de ícones) */
+function navMiniToggle(){
+  const sb=document.getElementById("sidebar");if(!sb)return;
+  sb.classList.toggle("sb-mini");
+  const mini=sb.classList.contains("sb-mini");
+  try{localStorage.setItem("svc_navmini",mini?"1":"0");}catch(e){}
+  const b=document.getElementById("sbRecolher");if(b)b.textContent=mini?"➡":"⬅ Recolher menu";
+}
+function navMiniRestaura(){
+  if(localStorage.getItem("svc_navmini")==="1"){
+    const sb=document.getElementById("sidebar");
+    if(sb&&!sb.classList.contains("sb-mini"))navMiniToggle();
+    else{const b=document.getElementById("sbRecolher");if(b)b.textContent="➡";}
+  }
+}
+document.addEventListener("keydown",function(e){
+  if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==="k"){
+    const inp=document.getElementById("navBusca");
+    if(inp){e.preventDefault();const sb=document.getElementById("sidebar");if(sb&&sb.classList.contains("sb-mini"))navMiniToggle();inp.focus();inp.select();}
+  }
+});
+navStarsInit();navCatsRestaura();navFavRender();navCatsAtualiza();navMiniRestaura();sbPerfilRender();
 function navTo(p,btn){
   ST.pg=p;
   document.querySelectorAll(".ni").forEach(n=>n.classList.remove("active"));
-  const alvoNi=btn||document.querySelector('.ni[data-pg="'+p+'"]');
-  if(alvoNi){
-    alvoNi.classList.add("active");
-    const cat=alvoNi.closest(".nav-cat");
+  document.querySelectorAll('.ni[data-pg="'+p+'"]').forEach(function(n){
+    n.classList.add("active");
+    const cat=n.closest(".nav-cat");
     if(cat)cat.classList.remove("fechada"); // categoria do item ativo sempre visível
-  }
+  });
   document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
   document.getElementById("pg-"+p)?.classList.add("active");
   document.getElementById("pgTitle").textContent=PTITLES[p]||p;
