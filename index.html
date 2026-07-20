@@ -495,6 +495,31 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   .oc-row{grid-template-columns:1fr!important;}
   .pg{flex-wrap:wrap;}
 }
+/* ── Mobile 2.0: módulos novos (Comercial, Projetos, Config, Base) ──
+   Os grids fixos inline de 3-5 colunas viram 2 (ou 1) no celular, e os
+   inputs deixam de forçar largura mínima — fim das sobreposições. */
+@media(max-width:768px){
+  input,select,textarea{min-width:0!important;}
+  .cvk{min-width:0;}
+  .cvk-v{font-size:1.05rem!important;}
+  [style*="grid-template-columns:repeat(5,1fr)"]{grid-template-columns:repeat(2,1fr)!important;}
+  [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important;}
+  [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:repeat(2,1fr)!important;}
+  [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:1.2fr 1fr"],[style*="grid-template-columns:1.35fr 1fr"],[style*="grid-template-columns:1.55fr 1fr"],[style*="grid-template-columns:1.62fr 1fr"],[style*="grid-template-columns:1.7fr 1fr"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)"],[style*="grid-template-columns:minmax(0,1.62fr) minmax(0,1fr)"],[style*="grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:150px 1fr"]{grid-template-columns:1fr!important;justify-items:center;}
+  [style*="grid-template-columns:repeat(7,minmax(150px,1fr))"]{grid-template-columns:repeat(7,170px)!important;}
+  .sec-hdr-t{font-size:.9rem;}
+  .sec-hdr-sub{font-size:.62rem;}
+  /* cards brancos com tabelas/conteúdo largo rolam por dentro, sem estourar a página */
+  .page [style*="border:1px solid #e5e9f0"][style*="border-radius:14px"]{overflow-x:auto;}
+  .v3d-grid{grid-template-columns:1fr!important;}
+}
+@media(max-width:420px){
+  [style*="grid-template-columns:repeat(5,1fr)"],[style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important;}
+}
 </style>
 </head>
 <body>
@@ -1904,7 +1929,8 @@ document.addEventListener("keydown",function(e){
     if(inp){e.preventDefault();const sb=document.getElementById("sidebar");if(sb&&sb.classList.contains("sb-mini"))navMiniToggle();inp.focus();inp.select();}
   }
 });
-navStarsInit();navCatsRestaura();navFavRender();navCatsAtualiza();navMiniRestaura();sbPerfilRender();
+/* roda após o script inteiro carregar (sbPerfilRender usa consts declaradas mais abaixo) */
+setTimeout(function(){navStarsInit();navCatsRestaura();navFavRender();navCatsAtualiza();navMiniRestaura();sbPerfilRender();},0);
 function navTo(p,btn){
   ST.pg=p;
   document.querySelectorAll(".ni").forEach(n=>n.classList.remove("active"));
