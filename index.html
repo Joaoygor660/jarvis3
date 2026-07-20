@@ -1144,6 +1144,11 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div><label class="rhf-l">Etapa</label><select class="rhf-i" id="ref-etapa"><option>ENTREVISTA</option><option>EXAME</option><option>INTEGRAÇÃO</option><option>CONTRATADO</option></select></div>
           <div><label class="rhf-l">Situação</label><select class="rhf-i" id="ref-situacao"><option>EM PROCESSO</option><option>CONTRATADO</option><option>REPROVADO</option><option>NÃO COMPARECEU</option><option>DESISTIU</option><option>RECUSOU A VAGA</option></select></div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:12px;margin-bottom:12px">
+          <div><label class="rhf-l">Cidade</label><input class="rhf-i" id="ref-cidade" type="text" value="Campinas" placeholder="Campinas"></div>
+          <div><label class="rhf-l">Bairro <span style="color:#94a3b8;font-weight:400">(origem do candidato)</span></label><input class="rhf-i" id="ref-bairro" type="text" list="dl-rh-bairro" placeholder="Digite para buscar…" autocomplete="off"><datalist id="dl-rh-bairro"></datalist></div>
+          <div><label class="rhf-l">CEP <span style="color:#94a3b8;font-weight:400">(opcional)</span></label><input class="rhf-i" id="ref-cep" type="text" inputmode="numeric" maxlength="9" placeholder="Ex: 13000-000" oninput="rhCepAuto(this)"></div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:14px">
           <div><label class="rhf-l">Motivo (se não passou) — escolha ou escreva</label><input class="rhf-i" id="ref-motivo" type="text" list="dl-rh-motivo" placeholder="Escolha da lista ou digite o motivo"><datalist id="dl-rh-motivo"><option>SEM EXPERIÊNCIA</option><option>PERFIL INADEQUADO</option><option>PRETENSÃO SALARIAL</option><option>NÃO ACEITOU A ESCALA</option><option>NÃO ACEITOU O LOCAL</option><option>REPROVADO NO EXAME</option><option>NÃO COMPARECEU</option><option>DESISTIU</option></datalist></div>
           <div><label class="rhf-l">Observação</label><input class="rhf-i" id="ref-obs" type="text" placeholder="Anotações da entrevista (opcional)"></div>
@@ -3700,6 +3705,7 @@ let RH_ENT=[];
 const RE_ETAPA_COLORS={"ENTREVISTA":"#4f46e5","EXAME":"#ca8a04","INTEGRAÇÃO":"#0369a1","CONTRATADO":"#16a34a"};
 const RE_SIT_COLORS={"EM PROCESSO":"#f97316","CONTRATADO":"#16a34a","REPROVADO":"#dc2626","NÃO COMPARECEU":"#6b7280","DESISTIU":"#6b7280","RECUSOU A VAGA":"#b45309"};
 function rhEntLoad(){
+  rhBairrosInit();
   const dt=document.getElementById("ref-data");
   if(dt&&!dt.value)dt.value=ymd(new Date());
   const tbl=document.getElementById("re-tbl");
@@ -3751,7 +3757,7 @@ function rhEntRenderTbl(){
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma entrevista registrada ainda. Use o formulário acima para registrar a primeira. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
-  ["Data","Candidato","Telefone","Sexo","Cargo","Vaga","Etapa","Situação","Motivo","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
+  ["Data","Candidato","Telefone","Sexo","Cargo","Vaga","Bairro","Etapa","Situação","Motivo","Obs.",""].forEach(c=>{h+=`<th style="padding:9px 10px;text-align:left;color:#64748b;font-size:.62rem;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`;});
   h+='</tr></thead><tbody>';
   rows.forEach(x=>{
     const ce=RE_ETAPA_COLORS[x.etapa]||"#64748b";
@@ -3763,6 +3769,7 @@ function rhEntRenderTbl(){
       <td style="padding:8px 10px">${x.sexo?x.sexo[0]:"—"}</td>
       <td style="padding:8px 10px">${x.cargo||"—"}</td>
       <td style="padding:8px 10px;font-weight:700">${x.vaga_numero||"—"}</td>
+      <td style="padding:8px 10px;white-space:nowrap">${x.bairro?"📍 "+x.bairro:'<span style="color:#cbd5e1">—</span>'}</td>
       <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${ce}18;color:${ce};border:1px solid ${ce}40">${x.etapa||"—"}</span></td>
       <td style="padding:8px 10px;white-space:nowrap"><span class="rh-badge" style="background:${cs}18;color:${cs};border:1px solid ${cs}40">${x.situacao||"—"}</span></td>
       <td style="padding:8px 10px">${x.motivo_reprovacao||"—"}</td>
@@ -3772,6 +3779,18 @@ function rhEntRenderTbl(){
   });
   h+='</tbody></table>';
   el.innerHTML=h;
+}
+/* Bairros de Campinas para o autocomplete (origem dos candidatos).
+   Lista prática cobrindo regiões centrais e periféricas de maior recrutamento. */
+const CAMPINAS_BAIRROS=["Centro","Cambuí","Botafogo","Bonfim","Guanabara","Ponte Preta","Vila Industrial","Taquaral","Nova Campinas","Cidade Universitária","Barão Geraldo","Jardim Chapadão","Jardim Proença","Jardim Guanabara","Jardim das Paineiras","Jardim Nova Europa","Vila Nova","Vila Marieta","Vila Teixeira","Swift","Jardim do Lago","Jardim Aurélia","Jardim Miriam","Parque Itália","Vila Formosa","Jardim Campos Elíseos","Campo Grande","Jardim Florence","Jardim Rossin","Jardim São José","Ouro Verde","Vila União","DIC I","DIC II","DIC III","DIC IV","DIC V","DIC VI","Jardim São Marcos","Jardim Santa Lúcia","Jardim Fernanda","Parque Universitário","Satélite Íris","Jardim Bassoli","Jardim Florestal","Jardim São Domingos","Jardim Icaraí","Vila Boa Vista","San Martin","Jardim San Martin","Parque Prado","Jardim Eulina","Vila Padre Manoel de Nóbrega","Jardim Garcia","Jardim Nova Aparecida","Amarais","Village Campinas","Jardim Santa Genebra","Mansões Santo Antônio","Nova Aparecida","Real Parque","Jardim Santana","Jardim Aeroporto","Parque das Universidades","Sousas","Joaquim Egídio","Jardim Conceição","Loteamento Country Ville","Parque Dom Pedro","Jardim Pauliceia","Vila Costa e Silva","Jardim Santa Odila","Jardim Novo Campos Elíseos","Jardim Itatinga","Jardim Melina","Cidade Satélite Íris","Jardim Marisa","Núcleo Residencial Vila Nova","Jardim Umuarama","Parque Via Norte","Jardim Anton Von Zuben","Vila Réggio","Jardim Santa Mônica","Recanto Fortuna","Jardim Roseira","Vila Ipê","Chácara Boa Vista","Outro / não informado"];
+function rhBairrosInit(){
+  const dl=document.getElementById("dl-rh-bairro");if(!dl||dl.dataset.pronto)return;
+  dl.dataset.pronto="1";
+  dl.innerHTML=CAMPINAS_BAIRROS.map(b=>`<option value="${b}">`).join("");
+}
+function rhCepAuto(el){
+  let v=el.value.replace(/\D/g,"").slice(0,8);
+  el.value=v.length>5?v.slice(0,5)+"-"+v.slice(5):v;
 }
 function rhEntSalvar(e){
   e.preventDefault();
@@ -3787,6 +3806,9 @@ function rhEntSalvar(e){
     situacao:document.getElementById("ref-situacao").value,
     motivo_reprovacao:document.getElementById("ref-motivo").value.trim().toUpperCase(),
     observacao:document.getElementById("ref-obs").value.trim(),
+    cidade:document.getElementById("ref-cidade").value.trim()||"Campinas",
+    bairro:document.getElementById("ref-bairro").value.trim(),
+    cep:document.getElementById("ref-cep").value.trim(),
     criado_por:sessionStorage.getItem("userNome")||null
   };
   if(body.situacao==="CONTRATADO")body.etapa="CONTRATADO";
@@ -3824,6 +3846,7 @@ function rhEntLimpar(keepMsg){
   document.getElementById("reForm").reset();
   document.getElementById("ref-id").value="";
   document.getElementById("ref-data").value=ymd(new Date());
+  document.getElementById("ref-cidade").value="Campinas"; // .reset() apaga; volta ao padrão
   document.getElementById("re-form-title").textContent="➕ Nova Entrevista";
   if(keepMsg!==true)document.getElementById("re-form-msg").textContent="";
 }
@@ -3840,6 +3863,9 @@ function rhEntEditar(id){
   document.getElementById("ref-situacao").value=x.situacao||"EM PROCESSO";
   document.getElementById("ref-motivo").value=x.motivo_reprovacao||"";
   document.getElementById("ref-obs").value=x.observacao||"";
+  document.getElementById("ref-cidade").value=x.cidade||"Campinas";
+  document.getElementById("ref-bairro").value=x.bairro||"";
+  document.getElementById("ref-cep").value=x.cep||"";
   document.getElementById("re-form-title").textContent="✏️ Editando — "+(x.candidato||"");
   document.querySelector(".main")?.scrollTo({top:0,behavior:"smooth"});
 }
