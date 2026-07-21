@@ -1,3 +1,10 @@
+# Segredos e ambiente — NUNCA versionar
+.env
+.env.*
+*.env
+
 node_modules/
 .claude/
 .vercel/
+.DS_Store
+Thumbs.db
