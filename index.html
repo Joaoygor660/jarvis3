@@ -650,6 +650,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-cat-b">
       <div class="ni" data-pg="painelacomp" onclick="navTo('painelacomp',this)"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="audqual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span><span class="nib nib-novo">NOVO</span></div>
+      <div class="ni" data-pg="ligacoes" onclick="navTo('ligacoes',this)"><span class="ni-ic">📞</span><span>Ligações &amp; Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
     </div>
   </div>
   <div class="nav-cat" data-cat="rh">
@@ -1441,6 +1442,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="sec-hdr"><span class="sec-hdr-ic">✅</span><div><div class="sec-hdr-t">Auditoria de Qualidade</div><div class="sec-hdr-sub">Vistorias de postos: checklist tri-pilar, cobertura e conformidade</div></div></div>
     <div id="aud-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando auditorias…</div></div>
   </div>
+  <div class="page" id="pg-ligacoes">
+    <div class="sec-hdr"><span class="sec-hdr-ic">📞</span><div><div class="sec-hdr-t">Ligações &amp; Acompanhamento</div><div class="sec-hdr-sub">Contato preventivo com quem faltou: pendências do dia, registro e painel</div></div></div>
+    <div id="lig-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando contatos…</div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1860,7 +1865,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade",ligacoes:"Ligações & Acompanhamento"};
 
 /* ── Sidebar 2.0: accordion com estado salvo + busca de módulos ── */
 function navCatToggle(k){
@@ -1998,6 +2003,7 @@ function navTo(p,btn){
   else if(p==="sede"){hqLoad();}
   else if(p==="prj"){prjLoad();}
   else if(p==="audqual"){audLoad();}
+  else if(p==="ligacoes"){ligLoad();}
   else{updVGCharts();}
   if(p!=="sede"&&typeof HQ_TIMER!=="undefined"&&HQ_TIMER){clearInterval(HQ_TIMER);HQ_TIMER=null;}
   if(typeof hqBeat==="function")hqBeat(); // presença: avisa em qual sala estou
@@ -6447,6 +6453,192 @@ function audSalvar(){
     .then(r=>r.json().then(j=>({ok:r.ok,j})))
     .then(({ok,j})=>{if(!ok)throw new Error((j&&j.error)||"");document.getElementById("aud-modal").remove();audLoad();})
     .catch(()=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar.";});
+}
+/* ═════════ LIGAÇÕES & ACOMPANHAMENTO — contato preventivo pós-falta ═════════
+   Puxa as faltas da planilha diária, aponta quem faltou e ainda não foi
+   contatado, e registra a tratativa. Fecha o ciclo antes da medida disciplinar. */
+const LIG_MOTIVOS=[["Saúde","🏥"],["Familiar","👨‍👩‍👧"],["Pessoal","🙍"],["Transporte","🚌"],["Conduta","⚠️"],["Financeiro","💰"],["Sem justificativa","❓"],["Outro","•"]];
+const LIG_JANELA=10; // dias para considerar falta "recente"
+let LIG_C=[],LIG_BUSCA="",LIG_FSUP="";
+function ligLoad(){
+  const el=document.getElementById("lig-content");
+  if(el&&!LIG_C.length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando contatos…</div>';
+  fetch("/api/ligacoes").then(r=>r.json()).then(j=>{LIG_C=(j&&j.rows)||[];ligRender();}).catch(err=>{console.error("Erro ligações:",err);if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.85rem">Erro ao carregar. Verifique a conexão.</div>';});
+}
+/* colaboradores que faltaram nos últimos LIG_JANELA dias (da planilha) */
+function ligFaltasRecentes(){
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  const lim=new Date();lim.setDate(lim.getDate()-LIG_JANELA);
+  const m={};
+  (D.faltas||[]).forEach(f=>{
+    const nome=(f.NOME||"").trim();if(!nome)return;
+    const dt=f.DATA?new Date(String(f.DATA).slice(0,10)+"T12:00:00"):null;if(!dt||dt<lim)return;
+    if(!m[nome])m[nome]={colaborador:nome,posto:(f.LOCAL||"").trim(),supervisor:(f.AREA||"").trim(),datas:[]};
+    m[nome].datas.push(String(f.DATA).slice(0,10));
+  });
+  Object.values(m).forEach(x=>{x.datas.sort();x.ultima=x.datas[x.datas.length-1];});
+  return Object.values(m);
+}
+function ligContatoDe(nome){return LIG_C.filter(c=>c.colaborador===nome).sort((a,b)=>new Date(b.criado_em)-new Date(a.criado_em))[0];}
+function ligTelefoneDe(nome){const c=LIG_C.find(c=>c.colaborador===nome&&c.telefone);return c?c.telefone:"";}
+/* pendências: faltou recente e não tem contato após a falta mais recente */
+function ligPendencias(){
+  return ligFaltasRecentes().filter(f=>{
+    const c=ligContatoDe(f.colaborador);
+    if(!c)return true;
+    const dc=c.data_contato||String(c.criado_em).slice(0,10);
+    return dc<f.ultima; // último contato é anterior à última falta → pendente
+  });
+}
+function ligRender(){
+  const el=document.getElementById("lig-content");if(!el)return;
+  const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const noMes=d=>{if(!d)return false;return new Date(String(d).slice(0,10)+"T12:00:00")>=mIni;};
+  const contatosMes=LIG_C.filter(c=>noMes(c.data_contato||c.criado_em));
+  const pend=ligPendencias();
+  const recentes=ligFaltasRecentes();
+  const coberto=recentes.length?Math.round((recentes.length-pend.length)/recentes.length*100):100;
+  const porSup={};contatosMes.forEach(c=>{const s=(c.supervisor||"—");porSup[s]=(porSup[s]||0)+1;});
+  const rankSup=Object.entries(porSup).sort((a,b)=>b[1]-a[1]);
+  const porMot={};contatosMes.forEach(c=>{const mo=c.motivo||"Não informado";porMot[mo]=(porMot[mo]||0)+1;});
+  const rankMot=Object.entries(porMot).sort((a,b)=>b[1]-a[1]);
+  const kpi=(ic,lbl,v,sub,cor)=>`<div class="cvk" style="border-top:3px solid ${cor}"><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:4px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${v}</div><div style="font-size:.62rem;color:#94a3b8">${sub}</div></div>`;
+  let h='';
+  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:12px">`;
+  h+=kpi("📞","Contatos no mês",contatosMes.length,"tratativas registradas","#2e8fef");
+  h+=kpi("⏳","Pendentes de contato",pend.length,pend.length?"faltaram e não falaram":"tudo em dia",pend.length?"#dc2626":"#16a34a");
+  h+=kpi("🎯","Cobertura de contato",coberto+"%",`${recentes.length-pend.length} de ${recentes.length} faltas recentes`,coberto>=70?"#16a34a":coberto>=40?"#f97316":"#dc2626");
+  h+=kpi("🏷️","Motivo mais comum",rankMot[0]?rankMot[0][0]:"—",rankMot[0]?rankMot[0][1]+" ocorrência(s)":"sem dados","#7c3aed");
+  h+=`</div>`;
+  /* pendências do dia */
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px;margin-bottom:12px">
+    <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">⏳ Pendências de Contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">faltou nos últimos ${LIG_JANELA} dias e ainda não foi contatado</span></div>
+    ${pend.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px">${pend.map(f=>`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 11px;cursor:pointer" onclick='ligForm(null,${JSON.stringify(f).replace(/'/g,"&#39;")})'>
+      <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}</div>
+      <div style="font-size:.58rem;color:#b91c1c;margin:2px 0 6px">🏢 ${_esc(f.posto||"—")} · 🧭 ${_esc(f.supervisor||"—")}</div>
+      <div style="font-size:.58rem;color:#7f1d1d">Faltou: ${f.datas.map(d=>rhFmt(d)).join(", ")}</div>
+      <div style="margin-top:6px;font-size:.6rem;font-weight:800;color:#dc2626">📞 Registrar contato →</div>
+    </div>`).join("")}</div>`:'<div style="color:#16a34a;font-weight:700;font-size:.76rem;margin-top:6px">✅ Nenhuma pendência — todos os que faltaram já foram contatados!</div>'}
+  </div>`;
+  /* toolbar */
+  const sups=[...new Set(LIG_C.map(c=>c.supervisor).filter(Boolean))].sort();
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+    <button class="rh-btn" onclick="ligForm()">➕ Registrar Contato</button>
+    <input class="rhf-i" placeholder="🔎 Buscar colaborador…" style="flex:1;min-width:180px" value="${_esc(LIG_BUSCA)}" oninput="LIG_BUSCA=this.value;ligRenderHist()">
+    <select class="rhf-i" style="width:160px" onchange="LIG_FSUP=this.value;ligRenderHist()"><option value="">Supervisor: todos</option>${sups.map(s=>`<option ${LIG_FSUP===s?"selected":""}>${_esc(s)}</option>`).join("")}</select>
+  </div>`;
+  /* painel por supervisor + motivos */
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px"><div style="font-size:.74rem;font-weight:800;color:#0d1f35;margin-bottom:8px">🧭 Contatos por Supervisor (mês)</div>${rankSup.length?_cdBarRows(rankSup.slice(0,8),()=>"#2e8fef"):'<div style="color:#94a3b8;font-size:.7rem">Sem contatos no mês.</div>'}</div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px"><div style="font-size:.74rem;font-weight:800;color:#0d1f35;margin-bottom:8px">🏷️ Motivos das Faltas (mês)</div>${rankMot.length?_cdBarRows(rankMot.slice(0,8),()=>"#7c3aed"):'<div style="color:#94a3b8;font-size:.7rem">Sem dados.</div>'}</div>
+  </div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;overflow:hidden"><div style="padding:12px 16px;font-size:.8rem;font-weight:800;color:#0d1f35;border-bottom:1px solid #e5e9f0">🕐 Histórico de Contatos</div><div id="lig-hist"></div></div>`;
+  el.innerHTML=h;
+  ligRenderHist();
+}
+function ligRenderHist(){
+  const el=document.getElementById("lig-hist");if(!el)return;
+  let rows=LIG_C.slice();
+  if(LIG_FSUP)rows=rows.filter(c=>c.supervisor===LIG_FSUP);
+  const b=LIG_BUSCA.toLowerCase();
+  if(b)rows=rows.filter(c=>[c.colaborador,c.posto,c.motivo,c.justificativa].join(" ").toLowerCase().indexOf(b)>=0);
+  if(!rows.length){el.innerHTML='<div style="padding:24px;text-align:center;color:#94a3b8;font-size:.76rem">Nenhum contato registrado ainda.</div>';return;}
+  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.72rem;min-width:720px"><thead><tr style="background:#f8fafc">${["Data","Colaborador","Posto","Motivo","Justificativa","Acordo","Canal","Resp.",""].map(c=>`<th style="padding:8px 10px;text-align:left;color:#64748b;font-size:.6rem;text-transform:uppercase;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`).join("")}</tr></thead><tbody>
+  ${rows.slice(0,200).map(c=>`<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="ligForm(${c.id})">
+    <td style="padding:7px 10px;white-space:nowrap">${rhFmt(c.data_contato||String(c.criado_em).slice(0,10))}</td>
+    <td style="padding:7px 10px;font-weight:700;color:#0d1f35">${_esc(c.colaborador)}</td>
+    <td style="padding:7px 10px">${_esc(c.posto||"—")}</td>
+    <td style="padding:7px 10px">${c.motivo?`<span class="rh-badge" style="background:#ede9fe;color:#6b21a8">${_esc(c.motivo)}</span>`:"—"}</td>
+    <td style="padding:7px 10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_esc(c.justificativa||"")}">${_esc(c.justificativa||"—")}</td>
+    <td style="padding:7px 10px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_esc(c.acordo||"")}">${_esc(c.acordo||"—")}</td>
+    <td style="padding:7px 10px">${c.canal==="PESSOAL"?"🤝 Pessoal":"📞 Ligação"}</td>
+    <td style="padding:7px 10px;font-size:.64rem">${_esc((c.criado_por||"—").split(" ")[0])}</td>
+    <td style="padding:7px 10px" onclick="event.stopPropagation()"><span class="rh-act" onclick="ligExcluir(${c.id})" title="Excluir">🗑️</span></td>
+  </tr>`).join("")}</tbody></table></div>`;
+}
+function ligMotivoSugerido(txt){
+  const t=(txt||"").toLowerCase();
+  if(/atestad|m[eé]dic|doen|sa[uú]de|consulta|exame|dor|hospital|gripe|covid/.test(t))return"Saúde";
+  if(/filh|fam[ií]li|m[ãa]e|pai|esposa|marido|falecim|[óo]bito|luto|crian/.test(t))return"Familiar";
+  if(/[oô]nibus|transporte|carro|moto|condu[çc][aã]o|greve|passagem/.test(t))return"Transporte";
+  if(/dinheiro|salári|pagament|adiant|financ/.test(t))return"Financeiro";
+  if(/dormiu|esqueceu|n[ãa]o quis|desin|sem justif|abandono/.test(t))return"Conduta";
+  if(/pessoal|resolver|problema/.test(t))return"Pessoal";
+  return"";
+}
+function ligForm(id,pre){
+  const c=id?LIG_C.find(x=>x.id===id):null;
+  const p=pre||{};
+  const recentes=ligFaltasRecentes();
+  const nomes=[...new Set(recentes.map(r=>r.colaborador))];
+  const nome=c?c.colaborador:(p.colaborador||"");
+  const ov=document.createElement("div");ov.id="lig-modal";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px";
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  ov.innerHTML=`<div style="background:#fff;border-radius:18px;max-width:640px;width:100%;max-height:92vh;overflow:auto">
+    <div style="position:sticky;top:0;background:linear-gradient(135deg,#0d1f35,#2e8fef);color:#fff;padding:15px 22px;border-radius:18px 18px 0 0;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:.6rem;color:#9ec5f5;font-weight:800">TRATATIVA DE FALTA</div><div style="font-size:1.02rem;font-weight:900">${c?"✏️ Editar contato":"📞 Registrar contato"}</div></div>
+      <span class="rh-act" style="background:rgba(255,255,255,.15);border-radius:8px;padding:6px 10px" onclick="document.getElementById('lig-modal').remove()">✖</span>
+    </div>
+    <div style="padding:16px 22px">
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="rhf-l">Colaborador *</label><input class="rhf-i" id="lf-nome" list="lf-nomes" value="${_esc(nome)}" placeholder="Nome (autocompleta de quem faltou)" oninput="ligAutofill()"><datalist id="lf-nomes">${nomes.map(n=>`<option value="${_esc(n)}">`).join("")}</datalist></div>
+        <div><label class="rhf-l">Telefone</label><input class="rhf-i" id="lf-tel" value="${_esc(c?c.telefone:ligTelefoneDe(nome))}" placeholder="(19) …"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="rhf-l">Posto</label><input class="rhf-i" id="lf-posto" value="${_esc(c?c.posto:(p.posto||""))}"></div>
+        <div><label class="rhf-l">Supervisor</label><input class="rhf-i" id="lf-sup" value="${_esc(c?c.supervisor:(p.supervisor||""))}"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="rhf-l">Data do contato</label><input class="rhf-i" id="lf-data" type="date" value="${c&&c.data_contato?String(c.data_contato).slice(0,10):ymd(new Date())}"></div>
+        <div><label class="rhf-l">Data da falta</label><input class="rhf-i" id="lf-dtfalta" type="date" value="${c&&c.data_falta?String(c.data_falta).slice(0,10):(p.ultima||"")}"></div>
+        <div><label class="rhf-l">Canal</label><select class="rhf-i" id="lf-canal"><option value="LIGAÇÃO" ${c&&c.canal==="LIGAÇÃO"?"selected":""}>📞 Ligação</option><option value="PESSOAL" ${c&&c.canal==="PESSOAL"?"selected":""}>🤝 Pessoal</option></select></div>
+      </div>
+      <div style="margin-bottom:10px"><label class="rhf-l">Justificativa do colaborador</label><textarea class="rhf-i" id="lf-just" rows="2" oninput="ligSugereMotivo()" placeholder="O que ele alegou…">${_esc(c?c.justificativa:"")}</textarea></div>
+      <div style="margin-bottom:10px"><label class="rhf-l">Motivo</label><div id="lf-motivos" style="display:flex;flex-wrap:wrap;gap:6px">${LIG_MOTIVOS.map(mo=>{const on=c&&c.motivo===mo[0];return `<button type="button" data-mot="${mo[0]}" onclick="ligPickMotivo(this)" class="lf-chip" style="border:1px solid ${on?"#7c3aed":"#e2e8f0"};background:${on?"#ede9fe":"#f8fafc"};color:${on?"#6b21a8":"#475569"};border-radius:10px;padding:5px 11px;font-size:.68rem;font-weight:700;cursor:pointer">${mo[1]} ${mo[0]}</button>`;}).join("")}</div></div>
+      <div style="margin-bottom:10px"><label class="rhf-l">Acordo firmado</label><input class="rhf-i" id="lf-acordo" value="${_esc(c?c.acordo:"")}" placeholder="Ex: trará atestado segunda às 8h"></div>
+      <div style="margin-bottom:14px"><label class="rhf-l">Impressão do supervisor</label><input class="rhf-i" id="lf-impr" value="${_esc(c?c.impressao:"")}" placeholder="Comportamento / veracidade do relato"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="rh-btn" style="background:#64748b" onclick="document.getElementById('lig-modal').remove()">Cancelar</button>
+        <button class="rh-btn" onclick="ligSalvar(${c?c.id:"null"})">💾 Salvar contato</button>
+      </div><div id="lf-msg" style="font-size:.7rem;font-weight:700;margin-top:6px;text-align:right"></div>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
+function ligAutofill(){
+  const nome=document.getElementById("lf-nome").value.trim();
+  const f=ligFaltasRecentes().find(x=>x.colaborador===nome);
+  if(f){document.getElementById("lf-posto").value=f.posto||"";document.getElementById("lf-sup").value=f.supervisor||"";if(!document.getElementById("lf-dtfalta").value)document.getElementById("lf-dtfalta").value=f.ultima||"";}
+  const tel=ligTelefoneDe(nome);if(tel&&!document.getElementById("lf-tel").value)document.getElementById("lf-tel").value=tel;
+}
+function ligSugereMotivo(){
+  const sug=ligMotivoSugerido(document.getElementById("lf-just").value);
+  if(!sug)return;
+  const jaTem=[...document.querySelectorAll("#lf-motivos .lf-chip")].some(b=>b.style.background==="rgb(237, 233, 254)");
+  if(!jaTem){const btn=[...document.querySelectorAll("#lf-motivos .lf-chip")].find(b=>b.dataset.mot===sug);if(btn)ligPickMotivo(btn);}
+}
+function ligPickMotivo(btn){
+  document.querySelectorAll("#lf-motivos .lf-chip").forEach(b=>{b.style.border="1px solid #e2e8f0";b.style.background="#f8fafc";b.style.color="#475569";});
+  btn.style.border="1px solid #7c3aed";btn.style.background="#ede9fe";btn.style.color="#6b21a8";
+  btn.dataset.sel="1";document.querySelectorAll("#lf-motivos .lf-chip").forEach(b=>{if(b!==btn)b.dataset.sel="";});
+}
+function ligSalvar(id){
+  const v=x=>{const e=document.getElementById(x);return e?e.value.trim():"";};
+  const nome=v("lf-nome");const msg=document.getElementById("lf-msg");
+  if(!nome){msg.style.color="#dc2626";msg.textContent="Informe o colaborador.";return;}
+  const motBtn=[...document.querySelectorAll("#lf-motivos .lf-chip")].find(b=>b.dataset.sel==="1"||b.style.background==="rgb(237, 233, 254)");
+  const body={colaborador:nome,telefone:v("lf-tel"),posto:v("lf-posto"),supervisor:v("lf-sup"),data_contato:v("lf-data")||null,data_falta:v("lf-dtfalta")||null,canal:v("lf-canal"),justificativa:v("lf-just"),motivo:motBtn?motBtn.dataset.mot:null,acordo:v("lf-acordo"),impressao:v("lf-impr"),criado_por:sessionStorage.getItem("userNome")||null};
+  if(id)body.id=id;
+  msg.style.color="#64748b";msg.textContent="Salvando…";
+  fetch("/api/ligacoes",{method:id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{if(!ok)throw new Error((j&&j.error)||"");document.getElementById("lig-modal").remove();ligLoad();})
+    .catch(()=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar.";});
+}
+function ligExcluir(id){
+  const c=LIG_C.find(x=>x.id===id);
+  if(!confirm("Excluir o contato de \""+(c?c.colaborador:id)+"\"?"))return;
+  fetch("/api/ligacoes?id="+id,{method:"DELETE"}).then(()=>ligLoad());
 }
 function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
