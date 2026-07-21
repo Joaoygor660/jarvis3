@@ -649,6 +649,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-cat-h" onclick="navCatToggle('gestao')"><span class="nav-cat-t">📊 Gestão</span><span class="nav-cat-ar">▾</span></div>
     <div class="nav-cat-b">
       <div class="ni" data-pg="painelacomp" onclick="navTo('painelacomp',this)"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
+      <div class="ni" data-pg="audqual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span><span class="nib nib-novo">NOVO</span></div>
     </div>
   </div>
   <div class="nav-cat" data-cat="rh">
@@ -1436,6 +1437,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="sec-hdr"><span class="sec-hdr-ic">🚀</span><div><div class="sec-hdr-t">Projetos — Evolução &amp; Inovação</div><div class="sec-hdr-sub">Da ideia à implantação: pipeline, kanban, checklist e insights do JARVIS</div></div></div>
     <div id="prj-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando projetos…</div></div>
   </div>
+  <div class="page" id="pg-audqual">
+    <div class="sec-hdr"><span class="sec-hdr-ic">✅</span><div><div class="sec-hdr-t">Auditoria de Qualidade</div><div class="sec-hdr-sub">Vistorias de postos: checklist tri-pilar, cobertura e conformidade</div></div></div>
+    <div id="aud-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando auditorias…</div></div>
+  </div>
   <style>
     @keyframes floatBlob{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
     @keyframes pulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -1855,7 +1860,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade"};
 
 /* ── Sidebar 2.0: accordion com estado salvo + busca de módulos ── */
 function navCatToggle(k){
@@ -1992,6 +1997,7 @@ function navTo(p,btn){
   else if(p==="config"){cfgLoad();}
   else if(p==="sede"){hqLoad();}
   else if(p==="prj"){prjLoad();}
+  else if(p==="audqual"){audLoad();}
   else{updVGCharts();}
   if(p!=="sede"&&typeof HQ_TIMER!=="undefined"&&HQ_TIMER){clearInterval(HQ_TIMER);HQ_TIMER=null;}
   if(typeof hqBeat==="function")hqBeat(); // presença: avisa em qual sala estou
@@ -6279,6 +6285,168 @@ function prjResumoIA(){
     .then(r=>r.json()).then(j=>{out.textContent=j.answer||j.error||"Sem resposta.";})
     .catch(()=>{out.textContent="Erro ao gerar análise.";})
     .finally(()=>{btn.disabled=false;btn.textContent="✨ Gerar análise";});
+}
+/* ═════════ AUDITORIA DE QUALIDADE — vistorias de postos ═════════
+   Checklist tri-pilar (Limpeza · Colaboradores · Cliente). Postos ativos
+   derivados da planilha diária (LOCAL/AREA). Cobertura = auditados ÷ ativos. */
+const AUD_PILARES=[["limpeza","🧹 Limpeza","#0d9488"],["colab","👥 Colaboradores","#7c3aed"],["cliente","🤝 Cliente","#f97316"]];
+let AUD_CAT={limpeza:[],colab:[],cliente:[]},AUD_A=[],AUD_BUSCA="",AUD_FST="TODOS",AUD_FSUP="",AUD_PER="mes";
+/* postos ativos: LOCAL distintos da planilha diária, com supervisor (AREA) e turno */
+function audPostosAtivos(){
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  const fontes=[].concat(D.ativos||[],D.presenca||[],D.faltas||[]);
+  const m={};
+  fontes.forEach(r=>{const loc=(r.LOCAL||"").trim();if(!loc)return;if(!m[loc])m[loc]={posto:loc,supervisor:(r.AREA||"").trim(),cliente:(r.CLIENTE||"").trim()};});
+  return Object.values(m).sort((a,b)=>a.posto.localeCompare(b.posto));
+}
+function audLoad(){
+  const el=document.getElementById("aud-content");
+  if(el&&!AUD_A.length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando auditorias…</div>';
+  Promise.all([
+    fetch("/api/auditoria?t=categorias").then(r=>r.json()).then(j=>{const c={limpeza:[],colab:[],cliente:[]};((j&&j.rows)||[]).forEach(x=>{(c[x.pilar]=c[x.pilar]||[]).push(x.item);});AUD_CAT=c;}),
+    fetch("/api/auditoria?t=auditorias").then(r=>r.json()).then(j=>{AUD_A=(j&&j.rows)||[];})
+  ]).then(audRender).catch(err=>{console.error("Erro auditoria:",err);if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.85rem">Erro ao carregar. Verifique a conexão.</div>';});
+}
+function audNC(a){try{const n=typeof a.nao_conformes==="string"?JSON.parse(a.nao_conformes):a.nao_conformes;return n&&typeof n==="object"?n:{limpeza:[],colab:[],cliente:[]};}catch(e){return{limpeza:[],colab:[],cliente:[]};}}
+function audObs(a){try{const o=typeof a.obs==="string"?JSON.parse(a.obs):a.obs;return o&&typeof o==="object"?o:{};}catch(e){return{};}}
+function audTotalNC(a){const n=audNC(a);return(n.limpeza||[]).length+(n.colab||[]).length+(n.cliente||[]).length;}
+function audUltima(posto){return AUD_A.filter(a=>a.posto===posto).sort((x,y)=>new Date(y.criado_em)-new Date(x.criado_em))[0];}
+function audRender(){
+  const el=document.getElementById("aud-content");if(!el)return;
+  const postos=audPostosAtivos();
+  const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const noPer=d=>{if(AUD_PER==="tudo")return true;if(!d)return false;return new Date(String(d).slice(0,10)+"T12:00:00")>=mIni;};
+  const audsPer=AUD_A.filter(a=>noPer(a.criado_em));
+  const postosAuditadosPer=new Set(audsPer.map(a=>a.posto));
+  const cobertura=postos.length?Math.round(postosAuditadosPer.size/postos.length*100):0;
+  /* conformidade: postos cuja última auditoria não tem pendências abertas */
+  let conf=0,pend=0;
+  postos.forEach(p=>{const u=audUltima(p.posto);if(!u)return;if(audTotalNC(u)===0||u.pendencias_resolvidas)conf++;else pend++;});
+  const semAud=postos.length-conf-pend;
+  const confPct=postos.length?Math.round(conf/postos.length*100):0;
+  const supervisores=[...new Set(postos.map(p=>p.supervisor).filter(Boolean))].sort();
+  const kpi=(ic,lbl,v,sub,cor,click)=>`<div class="cvk" style="border-top:3px solid ${cor}${click?";cursor:pointer":""}"${click?` onclick="${click}"`:""}><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:4px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${v}</div><div style="font-size:.62rem;color:#94a3b8">${sub}</div></div>`;
+  let h='';
+  /* KPIs */
+  h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:12px">`;
+  h+=kpi("📍","Postos Ativos",postos.length,"derivados da planilha","#2e8fef");
+  h+=kpi("📋","Cobertura de Auditoria",cobertura+"%",`${postosAuditadosPer.size} de ${postos.length} auditados`,cobertura>=70?"#16a34a":cobertura>=40?"#f97316":"#dc2626","audSetSt('AUDITADOS')");
+  h+=kpi("✅","Conformidade",confPct+"%",`${conf} conformes`,"#16a34a","audSetSt('CONFORME')");
+  h+=kpi("⚠️","Com Pendência",pend,pend?"exigem retorno":"tudo certo",pend?"#dc2626":"#16a34a","audSetSt('PENDENTE')");
+  h+=kpi("🕳️","Nunca Auditados",semAud,semAud?"prioridade de visita":"todos visitados",semAud?"#b45309":"#16a34a","audSetSt('SEM')");
+  h+=`</div>`;
+  /* insights JARVIS */
+  const semList=postos.filter(p=>!audUltima(p.posto));
+  const pendList=postos.filter(p=>{const u=audUltima(p.posto);return u&&audTotalNC(u)>0&&!u.pendencias_resolvidas;});
+  const porSup={};postos.forEach(p=>{if(!p.supervisor)return;porSup[p.supervisor]=porSup[p.supervisor]||{tot:0,aud:0};porSup[p.supervisor].tot++;if(postosAuditadosPer.has(p.posto))porSup[p.supervisor].aud++;});
+  const supPior=Object.entries(porSup).map(([s,d])=>({s,pct:d.tot?d.aud/d.tot:0,d})).sort((a,b)=>a.pct-b.pct)[0];
+  const ins=[];
+  ins.push(`📋 Cobertura do período: <b>${postosAuditadosPer.size}/${postos.length}</b> postos auditados (<b>${cobertura}%</b>).`);
+  if(semList.length)ins.push(`🕳️ <b>${semList.length} posto(s)</b> nunca auditados${AUD_PER==="mes"?" neste mês":""} — priorize: ${semList.slice(0,3).map(p=>_esc(p.posto)).join(", ")}.`);
+  if(pendList.length)ins.push(`⚠️ <b>${pendList.length} posto(s)</b> com pendência aberta na última vistoria.`);
+  if(supPior&&supPior.d.tot>=2)ins.push(`🧭 Supervisor com menor cobertura: <b>${_esc(supPior.s)}</b> (${supPior.d.aud}/${supPior.d.tot} postos auditados).`);
+  if(!AUD_A.length)ins.push("🚀 Registre a primeira vistoria para o JARVIS começar a medir cobertura e conformidade.");
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px;margin-bottom:12px"><div style="font-size:.78rem;font-weight:800;color:#0d1f35;margin-bottom:8px">🤖 JARVIS observa <span style="font-size:.58rem;color:#94a3b8;font-weight:700">cobertura e conformidade</span></div>
+    ${ins.map((t,i)=>`<div class="cv-ins" style="animation-delay:${i*50}ms;padding:8px 12px"><div style="font-size:.72rem;color:#334155;line-height:1.45">${t}</div></div>`).join("")}</div>`;
+  /* toolbar */
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+    <button class="rh-btn" onclick="audFicha()">➕ Nova Auditoria</button>
+    <input class="rhf-i" placeholder="🔎 Buscar posto…" style="flex:1;min-width:180px" value="${_esc(AUD_BUSCA)}" oninput="AUD_BUSCA=this.value;audRenderLista()">
+    <select class="rhf-i" style="width:150px" onchange="AUD_FSUP=this.value;audRender()"><option value="">Supervisor: todos</option>${supervisores.map(s=>`<option ${AUD_FSUP===s?"selected":""}>${_esc(s)}</option>`).join("")}</select>
+    <select class="rhf-i" style="width:130px" onchange="AUD_FST=this.value;audRenderLista()"><option value="TODOS">Status: todos</option><option value="CONFORME">Conforme</option><option value="PENDENTE">Com pendência</option><option value="SEM">Nunca auditado</option></select>
+    <div style="display:flex;gap:4px;background:#eef2f7;border-radius:12px;padding:3px">
+      ${[["mes","Este mês"],["tudo","Tudo"]].map(v=>`<button onclick="AUD_PER='${v[0]}';audRender()" style="border:none;border-radius:10px;padding:6px 12px;font-size:.68rem;font-weight:800;cursor:pointer;background:${AUD_PER===v[0]?"#0d1f35":"transparent"};color:${AUD_PER===v[0]?"#fff":"#475569"}">${v[1]}</button>`).join("")}
+    </div>
+  </div>`;
+  h+=`<div id="aud-lista"></div>`;
+  el.innerHTML=h;
+  audRenderLista();
+}
+function audSetSt(s){AUD_FST=s==="AUDITADOS"?"TODOS":s;audRenderLista();}
+function audRenderLista(){
+  const el=document.getElementById("aud-lista");if(!el)return;
+  let postos=audPostosAtivos();
+  if(AUD_FSUP)postos=postos.filter(p=>p.supervisor===AUD_FSUP);
+  const b=AUD_BUSCA.toLowerCase();
+  if(b)postos=postos.filter(p=>(p.posto+" "+p.supervisor+" "+p.cliente).toLowerCase().indexOf(b)>=0);
+  const statusDe=p=>{const u=audUltima(p.posto);if(!u)return"SEM";if(audTotalNC(u)>0&&!u.pendencias_resolvidas)return"PENDENTE";return"CONFORME";};
+  if(AUD_FST!=="TODOS")postos=postos.filter(p=>statusDe(p)===AUD_FST);
+  const cor={CONFORME:"#16a34a",PENDENTE:"#dc2626",SEM:"#94a3b8"},lbl={CONFORME:"✅ Conforme",PENDENTE:"⚠️ Pendente",SEM:"○ Nunca auditado"};
+  if(!postos.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhum posto encontrado.</div>';return;}
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:10px">${postos.map(p=>{
+    const st=statusDe(p),u=audUltima(p.posto),nc=u?audTotalNC(u):0;
+    return `<div class="prj-card" style="background:#fff;border:1px solid #e5e9f0;border-left:3px solid ${cor[st]};border-radius:12px;padding:11px 13px;cursor:pointer" onclick="audFicha(${u?u.id:"null"},'${_esc(p.posto).replace(/'/g,"\\'")}')">
+      <div style="font-size:.74rem;font-weight:800;color:#0d1f35;line-height:1.25">${_esc(p.posto)}</div>
+      <div style="font-size:.58rem;color:#94a3b8;margin:2px 0 7px">🧭 ${_esc(p.supervisor||"—")}${p.cliente?" · "+_esc(p.cliente):""}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="rh-badge" style="background:${cor[st]}18;color:${cor[st]}">${lbl[st]}</span>
+        <span style="font-size:.58rem;color:#94a3b8">${u?"últ.: "+rhFmt(String(u.data||u.criado_em).slice(0,10))+(nc?` · ${nc} NC`:""):"sem registro"}</span>
+      </div></div>`;}).join("")}</div>`;
+}
+/* ── ficha de auditoria (nova ou revisão) ── */
+let AUD_FORM={};
+function audFicha(id,postoNome){
+  const a=id?AUD_A.find(x=>x.id===id):null;
+  const postos=audPostosAtivos();
+  const nc=a?audNC(a):{limpeza:[],colab:[],cliente:[]};
+  const obs=a?audObs(a):{};
+  AUD_FORM={id:a?a.id:null,posto:a?a.posto:(postoNome||""),nc:{limpeza:[...(nc.limpeza||[])],colab:[...(nc.colab||[])],cliente:[...(nc.cliente||[])]}};
+  const ov=document.createElement("div");ov.id="aud-modal";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px";
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  const supDefault=(postos.find(p=>p.posto===AUD_FORM.posto)||{}).supervisor||"";
+  ov.innerHTML=`<div style="background:#fff;border-radius:18px;max-width:760px;width:100%;max-height:92vh;overflow:auto">
+    <div style="position:sticky;top:0;background:linear-gradient(135deg,#0d1f35,#0d9488);color:#fff;padding:15px 22px;border-radius:18px 18px 0 0;z-index:2;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:.6rem;color:#a7f3d0;font-weight:800">FICHA DE VISTORIA</div><div style="font-size:1.02rem;font-weight:900">${a?"✏️ Revisar auditoria":"➕ Nova auditoria"}</div></div>
+      <span class="rh-act" style="background:rgba(255,255,255,.15);border-radius:8px;padding:6px 10px" onclick="document.getElementById('aud-modal').remove()">✖</span>
+    </div>
+    <div style="padding:16px 22px">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:14px">
+        <div><label class="rhf-l">Posto *</label><input class="rhf-i" id="af-posto" list="af-postos" value="${_esc(AUD_FORM.posto)}" placeholder="Selecione ou digite"><datalist id="af-postos">${postos.map(p=>`<option value="${_esc(p.posto)}">`).join("")}</datalist></div>
+        <div><label class="rhf-l">Supervisor</label><input class="rhf-i" id="af-sup" value="${_esc(a?a.supervisor:supDefault)}"></div>
+        <div><label class="rhf-l">Data</label><input class="rhf-i" id="af-data" type="date" value="${a&&a.data?String(a.data).slice(0,10):ymd(new Date())}"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+        <div><label class="rhf-l">Cliente / síndico</label><input class="rhf-i" id="af-cliente" value="${_esc(a?a.cliente:(postos.find(p=>p.posto===AUD_FORM.posto)||{}).cliente||"")}"></div>
+        <div><label class="rhf-l">Início</label><input class="rhf-i" id="af-inicio" type="time" value="${a?a.inicio||"":""}"></div>
+        <div><label class="rhf-l">Fim</label><input class="rhf-i" id="af-fim" type="time" value="${a?a.fim||"":""}"></div>
+      </div>
+      <div id="af-pilares">${AUD_PILARES.map(pl=>{const items=AUD_CAT[pl[0]]||[];
+        return `<div style="margin-bottom:12px"><div style="font-size:.76rem;font-weight:800;color:${pl[2]};margin-bottom:6px">${pl[1]} <span style="font-size:.56rem;color:#94a3b8;font-weight:700">clique no item para marcar NÃO CONFORME</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${items.map(it=>{const on=AUD_FORM.nc[pl[0]].includes(it);return `<button type="button" onclick="audToggle('${pl[0]}',this)" data-item="${_esc(it)}" class="af-chip" style="border:1px solid ${on?"#dc2626":"#e2e8f0"};background:${on?"#fef2f2":"#f8fafc"};color:${on?"#dc2626":"#475569"};border-radius:10px;padding:5px 10px;font-size:.66rem;font-weight:700;cursor:pointer">${on?"⚠️":"✓"} ${_esc(it)}</button>`;}).join("")||'<span style="font-size:.62rem;color:#cbd5e1">Sem itens neste pilar.</span>'}</div>
+        <input class="rhf-i" id="af-obs-${pl[0]}" placeholder="Observações de ${pl[1].replace(/^[^ ]+ /,"").toLowerCase()}…" style="margin-top:6px;font-size:.72rem" value="${_esc(obs[pl[0]]||"")}"></div>`;}).join("")}</div>
+      <div style="margin-bottom:14px"><label class="rhf-l">Observações gerais</label><textarea class="rhf-i" id="af-obs-gerais" rows="2">${_esc(obs.gerais||"")}</textarea></div>
+      ${a?`<label style="display:flex;align-items:center;gap:8px;font-size:.72rem;color:#334155;margin-bottom:12px;cursor:pointer"><input type="checkbox" id="af-resolv" ${a.pendencias_resolvidas?"checked":""}> Pendências desta vistoria já foram resolvidas</label>`:""}
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="rh-btn" style="background:#64748b" onclick="document.getElementById('aud-modal').remove()">Cancelar</button>
+        <button class="rh-btn" onclick="audSalvar()">💾 Salvar vistoria</button>
+      </div><div id="af-msg" style="font-size:.7rem;font-weight:700;margin-top:6px;text-align:right"></div>
+    </div></div>`;
+  document.body.appendChild(ov);
+}
+function audToggle(pilar,btn){
+  const item=btn.dataset.item;const arr=AUD_FORM.nc[pilar];
+  const i=arr.indexOf(item);
+  if(i>=0){arr.splice(i,1);btn.style.border="1px solid #e2e8f0";btn.style.background="#f8fafc";btn.style.color="#475569";btn.textContent="✓ "+item;}
+  else{arr.push(item);btn.style.border="1px solid #dc2626";btn.style.background="#fef2f2";btn.style.color="#dc2626";btn.textContent="⚠️ "+item;}
+}
+function audSalvar(){
+  const v=x=>{const e=document.getElementById(x);return e?e.value.trim():"";};
+  const posto=v("af-posto");const msg=document.getElementById("af-msg");
+  if(!posto){msg.style.color="#dc2626";msg.textContent="Informe o posto.";return;}
+  const body={
+    posto:posto,supervisor:v("af-sup"),cliente:v("af-cliente"),data:v("af-data")||null,inicio:v("af-inicio"),fim:v("af-fim"),
+    nao_conformes:AUD_FORM.nc,
+    obs:{limpeza:v("af-obs-limpeza"),colab:v("af-obs-colab"),cliente:v("af-obs-cliente"),gerais:v("af-obs-gerais")},
+    criado_por:sessionStorage.getItem("userNome")||null
+  };
+  const resolvEl=document.getElementById("af-resolv");if(resolvEl)body.pendencias_resolvidas=resolvEl.checked;
+  if(AUD_FORM.id)body.id=AUD_FORM.id;
+  msg.style.color="#64748b";msg.textContent="Salvando…";
+  fetch("/api/auditoria?t=auditorias",{method:AUD_FORM.id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json().then(j=>({ok:r.ok,j})))
+    .then(({ok,j})=>{if(!ok)throw new Error((j&&j.error)||"");document.getElementById("aud-modal").remove();audLoad();})
+    .catch(()=>{msg.style.color="#dc2626";msg.textContent="Erro ao salvar.";});
 }
 function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
