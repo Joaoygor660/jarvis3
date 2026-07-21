@@ -6490,6 +6490,32 @@ function ligPendencias(){
     return dc<f.ultima; // último contato é anterior à última falta → pendente
   });
 }
+/* WhatsApp do SAC: abre a conversa com a colaboradora já com a mensagem.
+   Envia pelo número que estiver logado no WhatsApp Web/desktop (o SAC). */
+const LIG_SAC_META=30; // dias-alvo de estabilidade pós-contato
+function ligSacMsg(nome){const p=(nome||"").split(" ")[0];return `Olá${p?", "+p:""}! 👋 Aqui é o SAC do Grupo ServCamp. Registramos a sua ausência no trabalho e gostaríamos de entender o que aconteceu. Podemos entrar em contato com você para conversar sobre o motivo da falta? Se preferir, pode nos justificar por aqui mesmo pelo WhatsApp. Contamos com você! 🙏`;}
+function ligWhats(nome,tel){
+  let num=String(tel||"").replace(/\D/g,"");
+  if(!num){alert("Informe o telefone da colaboradora para enviar o WhatsApp do SAC.");return;}
+  if(!num.startsWith("55"))num="55"+num;
+  window.open("https://wa.me/"+num+"?text="+encodeURIComponent(ligSacMsg(nome)),"_blank");
+}
+/* acompanhamento pós-contato: a partir da data do contato, mede se a
+   colaboradora seguiu firme. Faltou de novo depois do contato → quebra. */
+function ligAcompanhamento(){
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  const faltas=D.faltas||[];const hoje=new Date();
+  const ultimo={};
+  LIG_C.forEach(c=>{const d=c.data_contato||String(c.criado_em).slice(0,10);if(!ultimo[c.colaborador]||d>(ultimo[c.colaborador].data_contato||String(ultimo[c.colaborador].criado_em).slice(0,10)))ultimo[c.colaborador]=c;});
+  return Object.values(ultimo).map(c=>{
+    const dcStr=String(c.data_contato||String(c.criado_em).slice(0,10)).slice(0,10);
+    const dc=new Date(dcStr+"T12:00:00");
+    const depois=faltas.filter(f=>(f.NOME||"").trim()===c.colaborador&&f.DATA&&new Date(String(f.DATA).slice(0,10)+"T12:00:00")>dc).map(f=>String(f.DATA).slice(0,10)).sort();
+    const dias=Math.max(0,Math.floor((hoje-dc)/86400000));
+    if(depois.length){const q=depois[0];const firme=Math.max(0,Math.floor((new Date(q+"T12:00:00")-dc)/86400000));return{colaborador:c.colaborador,posto:c.posto,supervisor:c.supervisor,telefone:c.telefone,contato:dcStr,dias,quebrou:true,dataQuebra:q,diasFirme:firme};}
+    return{colaborador:c.colaborador,posto:c.posto,supervisor:c.supervisor,telefone:c.telefone,contato:dcStr,dias,quebrou:false};
+  }).sort((a,b)=>(a.quebrou-b.quebrou)||(b.dias-a.dias));
+}
 function ligRender(){
   const el=document.getElementById("lig-content");if(!el)return;
   const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
@@ -6517,9 +6543,37 @@ function ligRender(){
       <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}</div>
       <div style="font-size:.58rem;color:#b91c1c;margin:2px 0 6px">🏢 ${_esc(f.posto||"—")} · 🧭 ${_esc(f.supervisor||"—")}</div>
       <div style="font-size:.58rem;color:#7f1d1d">Faltou: ${f.datas.map(d=>rhFmt(d)).join(", ")}</div>
-      <div style="margin-top:6px;font-size:.6rem;font-weight:800;color:#dc2626">📞 Registrar contato →</div>
+      <div style="display:flex;gap:6px;margin-top:7px;align-items:center">
+        <span style="font-size:.6rem;font-weight:800;color:#dc2626">📞 Registrar →</span>
+        <button onclick="event.stopPropagation();ligWhats('${_esc(f.colaborador).replace(/'/g,"\\'")}','${_esc(ligTelefoneDe(f.colaborador))}')" style="border:none;background:#25d366;color:#fff;border-radius:8px;padding:3px 9px;font-size:.58rem;font-weight:800;cursor:pointer">📱 WhatsApp SAC</button>
+      </div>
     </div>`).join("")}</div>`:'<div style="color:#16a34a;font-weight:700;font-size:.76rem;margin-top:6px">✅ Nenhuma pendência — todos os que faltaram já foram contatados!</div>'}
   </div>`;
+  /* acompanhamento pós-contato — barra de estabilidade a partir do contato */
+  const acomp=ligAcompanhamento();
+  if(acomp.length){
+    h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px;margin-bottom:12px">
+      <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">📈 Acompanhamento pós-contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">a barra cresce a cada dia firme depois do contato · quebra se faltar de novo</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:9px;margin-top:8px">${acomp.map(a=>{
+        if(a.quebrou){
+          return `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:11px;padding:10px 12px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(a.colaborador)}</span><span style="font-size:.6rem;font-weight:800;color:#dc2626">💔 Quebrou</span></div>
+            <div style="font-size:.56rem;color:#b91c1c;margin:2px 0 6px">🧭 ${_esc(a.supervisor||"—")} · contato ${rhFmt(a.contato)}</div>
+            <div style="background:#fee2e2;border-radius:6px;height:9px;overflow:hidden"><div style="width:100%;height:9px;background:repeating-linear-gradient(45deg,#f87171,#f87171 5px,#fca5a5 5px,#fca5a5 10px)"></div></div>
+            <div style="font-size:.58rem;color:#7f1d1d;margin-top:5px">Aguentou <b>${a.diasFirme} dia(s)</b> e faltou de novo em <b>${rhFmt(a.dataQuebra)}</b> — reforçar tratativa.</div>
+          </div>`;
+        }
+        const pct=Math.min(100,Math.round(a.dias/LIG_SAC_META*100));
+        const cor=a.dias>=LIG_SAC_META?"#16a34a":a.dias>=7?"#22c55e":"#84cc16";
+        return `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:11px;padding:10px 12px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.72rem;font-weight:800;color:#166534">${_esc(a.colaborador)}</span><span style="font-size:.6rem;font-weight:800;color:#16a34a">${a.dias>=LIG_SAC_META?"🏆 Firme":"💪 Firme"}</span></div>
+          <div style="font-size:.56rem;color:#15803d;margin:2px 0 6px">🧭 ${_esc(a.supervisor||"—")} · contato ${rhFmt(a.contato)}</div>
+          <div style="background:#dcfce7;border-radius:6px;height:9px;overflow:hidden"><div style="width:${Math.max(4,pct)}%;height:9px;border-radius:6px;background:${cor};transition:width .6s"></div></div>
+          <div style="font-size:.58rem;color:#15803d;margin-top:5px"><b>${a.dias}</b> dia(s) sem faltar desde o contato ${a.dias>=LIG_SAC_META?"— feedback consolidado! 🎉":`(meta ${LIG_SAC_META}d)`}</div>
+        </div>`;
+      }).join("")}</div>
+    </div>`;
+  }
   /* toolbar */
   const sups=[...new Set(LIG_C.map(c=>c.supervisor).filter(Boolean))].sort();
   h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
@@ -6583,8 +6637,9 @@ function ligForm(id,pre){
     <div style="padding:16px 22px">
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">
         <div><label class="rhf-l">Colaborador *</label><input class="rhf-i" id="lf-nome" list="lf-nomes" value="${_esc(nome)}" placeholder="Nome (autocompleta de quem faltou)" oninput="ligAutofill()"><datalist id="lf-nomes">${nomes.map(n=>`<option value="${_esc(n)}">`).join("")}</datalist></div>
-        <div><label class="rhf-l">Telefone</label><input class="rhf-i" id="lf-tel" value="${_esc(c?c.telefone:ligTelefoneDe(nome))}" placeholder="(19) …"></div>
+        <div><label class="rhf-l">Telefone</label><div style="display:flex;gap:6px"><input class="rhf-i" id="lf-tel" value="${_esc(c?c.telefone:ligTelefoneDe(nome))}" placeholder="(19) …" style="flex:1"><button type="button" title="Enviar WhatsApp do SAC (não consegui contato)" onclick="ligWhats(document.getElementById('lf-nome').value,document.getElementById('lf-tel').value)" style="border:none;background:#25d366;color:#fff;border-radius:9px;padding:0 12px;font-size:1rem;cursor:pointer">📱</button></div></div>
       </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:7px 11px;margin-bottom:10px;font-size:.62rem;color:#15803d">💡 Não conseguiu falar por ligação? Toque em <b>📱</b> para enviar, pelo <b>WhatsApp do SAC</b>, uma mensagem perguntando o motivo da falta (ou se ela prefere justificar por ali mesmo).</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div><label class="rhf-l">Posto</label><input class="rhf-i" id="lf-posto" value="${_esc(c?c.posto:(p.posto||""))}"></div>
         <div><label class="rhf-l">Supervisor</label><input class="rhf-i" id="lf-sup" value="${_esc(c?c.supervisor:(p.supervisor||""))}"></div>
