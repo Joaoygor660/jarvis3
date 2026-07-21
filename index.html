@@ -1331,6 +1331,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔄 Reservas — Aproveitamento</div><div id="rd-c-reservas" style="font-size:.76rem;color:#334155">—</div></div>
         <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🎓 Treinamentos</div><div id="rd-c-treino" style="font-size:.76rem;color:#334155">—</div></div>
       </div>
+      <div id="rd-mapa"></div>
 
       <div style="margin:26px 0 12px;padding-top:18px;border-top:2px solid #e5e9f0;display:flex;align-items:center;gap:10px">
         <span style="font-size:.98rem;font-weight:900;color:#0d1f35">📊 Análise de Vagas — Histórico Completo</span>
@@ -4417,6 +4418,144 @@ function _rdTop(rows,field,filter){
   const m={};rows.forEach(x=>{if(filter&&!filter(x))return;const v=x[field];if(v)m[v]=(m[v]||0)+1;});
   return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6);
 }
+/* ═════════ MAPA DE CALOR — Origem dos Candidatos (Campinas) ═════════
+   Cartograma esquemático: bairros posicionados por região real da cidade,
+   pintados por intensidade de entrevistas. Fase 2 do mapa de calor. */
+const RH_REGIOES=[
+  {r:"NOROESTE",x:24,y:40,w:250,h:150},
+  {r:"NORTE",x:290,y:28,w:360,h:150},
+  {r:"LESTE",x:686,y:60,w:290,h:250},
+  {r:"OESTE",x:24,y:210,w:250,h:185},
+  {r:"CENTRO",x:290,y:196,w:360,h:200},
+  {r:"SUDOESTE",x:24,y:415,w:350,h:200},
+  {r:"SUL",x:396,y:415,w:330,h:200}
+];
+const RH_BMAP=[
+  ["Nova Aparecida","NOROESTE",78,86],["Amarais","NOROESTE",192,86],["Jardim Florestal","NOROESTE",78,146],["Jardim Rossin","NOROESTE",192,146],
+  ["Barão Geraldo","NORTE",372,74],["Jardim Santa Genebra","NORTE",506,78],["Jardim Eulina","NORTE",624,84],["Taquaral","NORTE",454,142],
+  ["Jardim Conceição","LESTE",762,116],["Sousas","LESTE",862,150],["Joaquim Egídio","LESTE",862,214],["Nova Campinas","LESTE",748,206],["Cambuí","LESTE",748,272],
+  ["Jardim Proença","OESTE",78,252],["Jardim Nova Europa","OESTE",196,252],["Vila Marieta","OESTE",78,332],["Jardim Garcia","OESTE",196,332],
+  ["Botafogo","CENTRO",396,232],["Bonfim","CENTRO",556,232],["Centro","CENTRO",478,286],["Swift","CENTRO",614,290],["Guanabara","CENTRO",396,338],["Ponte Preta","CENTRO",480,352],["Vila Industrial","CENTRO",558,338],
+  ["Campo Grande","SUDOESTE",108,464],["Ouro Verde","SUDOESTE",240,464],["Jardim Florence","SUDOESTE",332,494],["Satélite Íris","SUDOESTE",108,522],["San Martin","SUDOESTE",240,522],["DIC I","SUDOESTE",108,578],["DIC IV","SUDOESTE",240,578],["Jardim Bassoli","SUDOESTE",332,560],
+  ["Jardim Aurélia","SUL",470,464],["Jardim do Lago","SUL",606,464],["Parque Itália","SUL",470,534],["Jardim Miriam","SUL",606,534],["Vila Formosa","SUL",540,588]
+];
+function _slug(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");}
+const RH_BSLUG={};RH_BMAP.forEach(b=>{RH_BSLUG[_slug(b[0])]=b[0];});
+/* dados de DEMONSTRAÇÃO (usados enquanto não há volume real; peso realista p/ facilities) */
+const RH_MAPA_DEMO=(function(){
+  const pesos={"Campo Grande":182,"Ouro Verde":151,"Satélite Íris":118,"DIC I":96,"San Martin":88,"DIC IV":81,"Jardim Bassoli":74,"Jardim Florence":69,"Centro":124,"Vila Industrial":63,"Ponte Preta":58,"Nova Aparecida":77,"Amarais":52,"Jardim Rossin":44,"Jardim Aurélia":61,"Parque Itália":57,"Jardim do Lago":49,"Jardim Miriam":42,"Vila Formosa":38,"Jardim Eulina":47,"Taquaral":33,"Barão Geraldo":28,"Jardim Santa Genebra":24,"Cambuí":19,"Sousas":14,"Nova Campinas":17,"Jardim Proença":31,"Jardim Nova Europa":27,"Vila Marieta":22,"Jardim Garcia":25,"Botafogo":18,"Bonfim":16,"Guanabara":21,"Swift":15,"Jardim Conceição":12,"Joaquim Egídio":8,"Jardim Florestal":29};
+  const m={};Object.keys(pesos).forEach(n=>{const e=pesos[n];const contr=Math.round(e*(0.18+((n.charCodeAt(0)%7)/100)));const des=Math.round(e*(0.08+((n.charCodeAt(1)%6)/100)));m[n]={ent:e,cont:contr,des:des};});
+  return m;
+})();
+let RH_MAPA_AGG={},RH_MAPA_DEMO_ON=false,RH_MAPA_SEL=null;
+function rhHeatCor(v,mx){if(!v)return"#eef2f7";const r=v/(mx||1);return r>0.75?"#ef4444":r>0.5?"#fb923c":r>0.25?"#facc15":"#4ade80";}
+function rhMapaAgrega(entrev){
+  const agg={};RH_BMAP.forEach(b=>{agg[b[0]]={ent:0,cont:0,des:0,r:b[1]};});
+  let usados=0;
+  (entrev||[]).forEach(x=>{
+    const nome=RH_BSLUG[_slug(x.bairro)];if(!nome)return;
+    usados++;agg[nome].ent++;
+    if(x.situacao==="CONTRATADO")agg[nome].cont++;
+    if(["DESISTIU","NÃO COMPARECEU","RECUSOU A VAGA"].includes(x.situacao))agg[nome].des++;
+  });
+  RH_MAPA_DEMO_ON=usados<8;
+  if(RH_MAPA_DEMO_ON){RH_BMAP.forEach(b=>{const d=RH_MAPA_DEMO[b[0]];if(d)agg[b[0]]={ent:d.ent,cont:d.cont,des:d.des,r:b[1]};});}
+  return agg;
+}
+function rhMapaCalor(entrev){
+  const agg=rhMapaAgrega(entrev);RH_MAPA_AGG=agg;
+  const arr=RH_BMAP.map(b=>({n:b[0],r:b[1],x:b[2],y:b[3],...agg[b[0]]}));
+  const mx=Math.max(1,...arr.map(a=>a.ent));
+  const totEnt=arr.reduce((s,a)=>s+a.ent,0),totCont=arr.reduce((s,a)=>s+a.cont,0),totDes=arr.reduce((s,a)=>s+a.des,0);
+  const rank=arr.filter(a=>a.ent>0).sort((a,b)=>b.ent-a.ent);
+  const lider=rank[0]||{n:"—",ent:0};
+  const melhorContr=arr.filter(a=>a.ent>=3).map(a=>({...a,tx:a.cont/a.ent})).sort((a,b)=>b.tx-a.tx)[0];
+  const maiorDes=arr.filter(a=>a.ent>=3).map(a=>({...a,td:a.des/a.ent})).sort((a,b)=>b.td-a.td)[0];
+  const conv=totEnt?Math.round(totCont/totEnt*100):0;
+  const porReg={};arr.forEach(a=>{porReg[a.r]=(porReg[a.r]||0)+a.ent;});
+  const regTop=Object.entries(porReg).sort((a,b)=>b[1]-a[1]);
+  /* KPIs */
+  const kc=(ic,lbl,v,sub,cor)=>`<div class="cvk" style="border-top:3px solid ${cor}"><div style="font-size:1rem">${ic}</div><div class="cvk-lb" style="margin-top:3px">${lbl}</div><div class="cvk-v" style="font-size:1.25rem">${v}</div><div style="font-size:.6rem;color:#94a3b8">${sub}</div></div>`;
+  let h=`<div style="margin-top:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <div style="font-size:.92rem;font-weight:900;color:#0d1f35">🗺️ Mapa de Calor — Origem dos Candidatos</div>
+      ${RH_MAPA_DEMO_ON?'<span style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;font-size:.56rem;font-weight:900;letter-spacing:.6px;padding:4px 12px;border-radius:12px">🎬 DADOS DE DEMONSTRAÇÃO</span>':'<span style="background:#ecfdf5;color:#16a34a;font-size:.58rem;font-weight:800;padding:4px 12px;border-radius:12px">● dados reais das entrevistas</span>'}
+    </div>`;
+  if(RH_MAPA_DEMO_ON)h+=`<div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:.66rem;color:#6b21a8">Números ilustrativos até as entrevistas reais acumularem bairro. Assim que a equipe preencher o campo <b>Bairro</b> nas entrevistas, o mapa troca sozinho para os dados verdadeiros.</div>`;
+  h+=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-bottom:12px">
+    ${kc("🗣️","Entrevistas",totEnt,"no período","#2e8fef")}
+    ${kc("✅","Contratados",totCont,conv+"% de conversão","#16a34a")}
+    ${kc("🚪","Desistências",totDes,totEnt?Math.round(totDes/totEnt*100)+"% do total":"—","#dc2626")}
+    ${kc("📍","Bairro líder",lider.n,lider.ent+" entrevistas","#7c3aed")}
+    ${kc("🏆","Maior contratação",melhorContr?melhorContr.n:"—",melhorContr?Math.round(melhorContr.tx*100)+"% contratados":"—","#0d9488")}
+    ${kc("⚠️","Maior desistência",maiorDes?maiorDes.n:"—",maiorDes?Math.round(maiorDes.td*100)+"% desistiram":"—","#f97316")}
+  </div>`;
+  /* mapa + ranking */
+  h+=`<div style="display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:12px">
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:12px">
+      <svg viewBox="0 0 1000 640" style="width:100%;display:block">
+        ${RH_REGIOES.map(z=>`<rect x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/><text x="${z.x+10}" y="${z.y+16}" font-size="10" font-weight="800" fill="#cbd5e1" style="letter-spacing:1px">${z.r}</text>`).join("")}
+        ${arr.map(a=>{const cor=rhHeatCor(a.ent,mx);const sl=_slug(a.n);const w=Math.max(70,a.n.length*6.4+16);
+          return `<g class="rhtile" id="rhtile-${sl}" style="cursor:pointer" onmouseover="rhMapaInfo('${sl}')" onclick="rhMapaFoco('${sl}')">
+            <rect x="${a.x-w/2}" y="${a.y-15}" width="${w}" height="30" rx="8" fill="${cor}" stroke="#fff" stroke-width="1.5"/>
+            <text x="${a.x}" y="${a.y-2}" text-anchor="middle" font-size="9" font-weight="800" fill="#1e293b">${a.n}</text>
+            <text x="${a.x}" y="${a.y+9}" text-anchor="middle" font-size="8" font-weight="700" fill="#334155">${a.ent}</text>
+          </g>`;}).join("")}
+      </svg>
+      <div style="display:flex;gap:14px;align-items:center;justify-content:center;margin-top:6px;font-size:.6rem;color:#64748b">
+        <span>Intensidade:</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:3px;background:#4ade80;display:inline-block"></span>Poucas</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:3px;background:#facc15;display:inline-block"></span>Média</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:3px;background:#fb923c;display:inline-block"></span>Muitas</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:3px;background:#ef4444;display:inline-block"></span>Altíssima</span>
+      </div>
+    </div>
+    <div>
+      <div id="rhmapa-info" style="background:#0d1f35;border-radius:14px;padding:14px 16px;color:#fff;margin-bottom:10px;min-height:96px">
+        <div style="font-size:.66rem;color:#9ec5f5">Passe o mouse (ou clique) num bairro</div>
+        <div style="font-size:.72rem;color:#c7d6ec;margin-top:4px">para ver entrevistas, contratados, desistências e taxas daquela região.</div>
+      </div>
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:12px 14px">
+        <div style="font-size:.72rem;font-weight:800;color:#0d1f35;margin-bottom:8px">🏅 Ranking de Bairros</div>
+        <div style="max-height:250px;overflow-y:auto">${rank.slice(0,12).map((a,i)=>`<div onclick="rhMapaFoco('${_slug(a.n)}')" style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;cursor:pointer;font-size:.7rem" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">
+          <span style="font-weight:900;color:#94a3b8;width:16px">${["🥇","🥈","🥉"][i]||(i+1)}</span>
+          <span style="width:10px;height:10px;border-radius:3px;background:${rhHeatCor(a.ent,mx)};display:inline-block"></span>
+          <span style="flex:1;font-weight:700;color:#0d1f35">${a.n}</span>
+          <b style="color:#2e8fef">${a.ent}</b></div>`).join("")||'<div style="color:#94a3b8;font-size:.66rem">Sem dados ainda.</div>'}</div>
+      </div>
+    </div>
+  </div>`;
+  /* insights */
+  const ins=[];
+  if(lider.ent)ins.push(`📍 <b>${lider.n}</b> concentra <b>${Math.round(lider.ent/totEnt*100)}%</b> de todas as entrevistas.`);
+  if(regTop[0])ins.push(`🧭 As regiões <b>${regTop[0][0]}</b>${regTop[1]?" e <b>"+regTop[1][0]+"</b>":""} somam <b>${Math.round(((regTop[0][1]+(regTop[1]?regTop[1][1]:0))/totEnt)*100)}%</b> dos candidatos.`);
+  if(melhorContr)ins.push(`🏆 <b>${melhorContr.n}</b> tem a maior taxa de contratação: <b>${Math.round(melhorContr.tx*100)}%</b>.`);
+  if(maiorDes&&maiorDes.td>0.15)ins.push(`⚠️ <b>${maiorDes.n}</b> apresenta desistência elevada (<b>${Math.round(maiorDes.td*100)}%</b>) — vale investigar.`);
+  ins.push(`🎯 Concentre campanhas de recrutamento onde há volume + boa conversão (ex.: ${lider.n}).`);
+  h+=`<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);border-radius:14px;padding:14px 18px;color:#fff;margin-top:12px">
+    <div style="font-size:.76rem;font-weight:800;margin-bottom:8px">🤖 Inteligência Geográfica</div>
+    ${ins.map(t=>`<div style="font-size:.72rem;color:#e6eefc;line-height:1.5;margin-bottom:5px">${t}</div>`).join("")}
+  </div></div>`;
+  return h;
+}
+function rhMapaInfo(sl){
+  const nome=RH_BSLUG[sl];if(!nome)return;const a=RH_MAPA_AGG[nome];if(!a)return;
+  const box=document.getElementById("rhmapa-info");if(!box)return;
+  const tx=a.ent?Math.round(a.cont/a.ent*100):0,td=a.ent?Math.round(a.des/a.ent*100):0;
+  box.innerHTML=`<div style="font-size:.86rem;font-weight:900">📍 ${nome}</div><div style="font-size:.58rem;color:#9ec5f5;margin-bottom:8px">Região ${a.r}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.66rem">
+      <div>🗣️ Entrevistas: <b>${a.ent}</b></div><div>✅ Contratados: <b>${a.cont}</b></div>
+      <div>🚪 Desistências: <b>${a.des}</b></div><div>🎯 Conversão: <b style="color:${tx>=30?"#4ade80":"#fbbf24"}">${tx}%</b></div>
+      <div style="grid-column:1/-1">⚠️ Desistência: <b style="color:${td>20?"#f87171":"#c7d6ec"}">${td}%</b></div>
+    </div>`;
+}
+function rhMapaFoco(sl){
+  RH_MAPA_SEL=sl;
+  document.querySelectorAll(".rhtile rect").forEach(r=>{r.setAttribute("stroke","#fff");r.setAttribute("stroke-width","1.5");});
+  const g=document.getElementById("rhtile-"+sl);
+  if(g){const r=g.querySelector("rect");if(r){r.setAttribute("stroke","#0d1f35");r.setAttribute("stroke-width","3");}g.parentNode.appendChild(g);}
+  rhMapaInfo(sl);
+}
 function rhDashRender(){
   const mesAtual=ymd(new Date()).slice(0,7);
   const inPer=(d)=>RDASH_PER==="tudo"||String(d||"").slice(0,7)===mesAtual;
@@ -4468,6 +4607,9 @@ function rhDashRender(){
   const vids=trein.reduce((s,x)=>s+(parseInt(x.qtd_videos)||0),0),visitas=trein.filter(x=>x.tipo==="VISITA AO POSTO").length;
   document.getElementById("rd-c-treino").innerHTML=trein.length?`<div style="display:flex;gap:10px;text-align:center"><div onclick="rhDashDet('tre:videos')" style="flex:1;background:#eef2ff;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#4f46e5">${vids}</div><div style="font-size:.65rem;font-weight:700;color:#4f46e5">🎬 VÍDEOS</div></div><div onclick="rhDashDet('tre:visitas')" style="flex:1;background:#e0f2fe;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#0369a1">${visitas}</div><div style="font-size:.65rem;font-weight:700;color:#0369a1">📍 VISITAS</div></div><div onclick="rhDashDet('tre:pessoas')" style="flex:1;background:#dcfce7;border-radius:8px;padding:10px;cursor:pointer"><div style="font-size:1.3rem;font-weight:900;color:#15803d">${treinados}</div><div style="font-size:.65rem;font-weight:700;color:#15803d">👥 PESSOAS</div></div></div><div style="margin-top:10px;font-size:.72rem;color:#64748b">${trein.length} treinamentos registrados no período</div>`:'<span style="color:#94a3b8">Sem treinamentos no período.</span>';
 
+  // 🗺️ Mapa de Calor — Origem dos Candidatos
+  const mapaEl=document.getElementById("rd-mapa");
+  if(mapaEl)mapaEl.innerHTML=rhMapaCalor(entrev);
   rhDashVagas();
 }
 function _rvBars(el,arr,color,total){
