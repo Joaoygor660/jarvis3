@@ -1090,7 +1090,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px">
           <div><label class="rhf-l">Data de Abertura</label><input class="rhf-i" id="rhf-dtabertura" type="date"></div>
           <div><label class="rhf-l">Preenchida por</label><input class="rhf-i" id="rhf-preenchida" type="text" placeholder="Quem assumiu a vaga"></div>
-          <div><label class="rhf-l">Data Fechamento *</label><input class="rhf-i" id="rhf-dtfech" type="date" required></div>
+          <div><label class="rhf-l">Data Fechamento <span style="color:#94a3b8;font-weight:400">(ao preencher/cancelar)</span></label><input class="rhf-i" id="rhf-dtfech" type="date"></div>
           <div><label class="rhf-l">Aberta por (usuário)</label><input class="rhf-i" id="rhf-usuario" type="text" placeholder="Usuário que cadastrou"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
@@ -3634,14 +3634,10 @@ function rhSalvar(e){
     usuario_cadastro:document.getElementById("rhf-usuario").value.trim(),
     criado_por:sessionStorage.getItem("userNome")||null
   };
+  // Data de fechamento NÃO é obrigatória ao abrir a vaga. Só é preenchida
+  // automaticamente quando a vaga é marcada como Preenchida ou Cancelada.
   if((body.status==="PREENCHIDA"||body.status==="CANCELADA")&&!body.data_fechamento)body.data_fechamento=ymd(new Date());
   const msg=document.getElementById("rh-form-msg");
-  if(!body.data_fechamento){
-    msg.style.color="#dc2626";msg.textContent="⚠️ Data de fechamento é obrigatória para salvar a vaga.";
-    const dtf=document.getElementById("rhf-dtfech");
-    if(dtf){dtf.focus();dtf.style.borderColor="#dc2626";dtf.style.boxShadow="0 0 0 3px rgba(220,38,38,.12)";setTimeout(()=>{dtf.style.borderColor="";dtf.style.boxShadow="";},2500);}
-    return false;
-  }
   const btn=document.getElementById("rhBtnSalvar");
   btn.disabled=true;msg.style.color="#64748b";msg.textContent="Salvando…";
   const method=id?"PATCH":"POST";
