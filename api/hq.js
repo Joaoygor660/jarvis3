@@ -2,7 +2,10 @@
 // Mesmo padrão seguro do resto do JARVIS: o navegador fala com esta função,
 // e só ela fala com o Supabase (service role nunca chega ao front).
 
+const _auth = require("./_auth");
 module.exports = async function handler(req, res) {
+  const _ga = _auth.requireAuth(req);
+  if (!_ga.ok) return res.status(401).json({ error: "Não autenticado." });
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!SUPABASE_URL || !KEY) {

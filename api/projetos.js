@@ -30,7 +30,10 @@ const CFG = {
   }
 };
 
+const _auth = require("./_auth");
 module.exports = async function handler(req, res) {
+  const _ga = _auth.requireAuth(req);
+  if (!_ga.ok) return res.status(401).json({ error: "Não autenticado." });
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!SUPABASE_URL || !KEY) return res.status(500).json({ error: "Envs do Supabase não configuradas." });

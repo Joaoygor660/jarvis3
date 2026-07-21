@@ -1,4 +1,7 @@
+const _auth = require("./_auth");
 module.exports = async function handler(req, res) {
+  const _ga = _auth.requireAuth(req);
+  if (!_ga.ok) return res.status(401).json({ error: "Não autenticado." });
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Use POST" });
   }

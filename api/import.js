@@ -6,7 +6,10 @@
 // ao navegador). Não depende do pacote @supabase/supabase-js: fala direto
 // com a REST API (PostgREST) do Supabase via fetch nativo do Node.
 
+const _auth = require("./_auth");
 module.exports = async function handler(req, res) {
+  const _ga = _auth.requireAuth(req);
+  if (!_ga.ok) return res.status(401).json({ error: "Não autenticado." });
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Método não permitido. Use POST." });

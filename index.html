@@ -1573,6 +1573,25 @@ const USERS={
   "testejoao":{nome:"Teste João",cargo:"Usuário de Teste",senha:"servcamp2026",admin:false}
 };
 function _normUser(s){return(s||"").toUpperCase().trim().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Z0-9]/g,"").toLowerCase();}
+/* ── Autenticação das APIs: injeta o token (Bearer) em toda chamada a /api/*.
+   Um único ponto cobre TODOS os fetch existentes, sem editar cada um. ── */
+(function(){
+  const _orig=window.fetch.bind(window);
+  window.fetch=function(url,opt){
+    try{
+      if(typeof url==="string"&&url.indexOf("/api/")===0){
+        const tok=sessionStorage.getItem("authToken");
+        if(tok){
+          opt=opt||{};
+          const h=new Headers(opt.headers||{});
+          if(!h.has("Authorization"))h.set("Authorization","Bearer "+tok);
+          opt=Object.assign({},opt,{headers:h});
+        }
+      }
+    }catch(e){}
+    return _orig(url,opt);
+  };
+})();
 async function doLogin(e){
   e.preventDefault();
   const u=_normUser(document.getElementById("loginUser").value);
@@ -1603,6 +1622,12 @@ async function doLogin(e){
   sessionStorage.setItem("userCom",usr.com?"1":"0");
   sessionStorage.setItem("userComDash",usr.comDash?"1":"0");
   sessionStorage.setItem("userPrj",usr.prj?"1":"0");
+  // autenticação das APIs: pega um token assinado (só quem já tem senha própria).
+  // Sem token (senha padrão) ou AUTH_SECRET ausente = modo graça: nada bloqueia.
+  try{
+    const ar=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"authenticate",userKey:u,password:p})}).then(r=>r.json());
+    if(ar&&ar.token)sessionStorage.setItem("authToken",ar.token);else sessionStorage.removeItem("authToken");
+  }catch(e){}
   applyUserUI();
   // registra o último acesso (auditoria) — não bloqueia a entrada se falhar
   fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"login",userKey:u})}).catch(()=>{});
@@ -1638,6 +1663,8 @@ async function _savePassword(userKey){
   try{
     const r=await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userKey:userKey,newPassword:p1})});
     if(!r.ok){const d=await r.json().catch(()=>({}));errEl.textContent=d.error||"Erro ao salvar senha.";btn.disabled=false;btn.textContent="Salvar e Continuar";return;}
+    // quem acabou de definir a senha já sai autenticado (token no retorno)
+    try{const dd=await r.json();if(dd&&dd.token)sessionStorage.setItem("authToken",dd.token);}catch(e){}
     document.getElementById("pwChangeOverlay").remove();
     showWelcome();
   }catch(err){

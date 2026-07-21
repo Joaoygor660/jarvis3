@@ -4,7 +4,10 @@
 // usando a SERVICE_ROLE KEY do Supabase. O navegador chama este endpoint ao
 // abrir o dashboard, para carregar sempre os dados mais atuais.
 
+const _auth = require("./_auth");
 module.exports = async function handler(req, res) {
+  const _ga = _auth.requireAuth(req);
+  if (!_ga.ok) return res.status(401).json({ error: "Não autenticado." });
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ error: "Método não permitido. Use GET." });

@@ -1,6 +1,8 @@
 // api/users.js
-// Gerencia login e troca de senha obrigatória no primeiro acesso.
+// Gerencia login, autenticação por token e troca de senha obrigatória.
 // Usa a SERVICE_ROLE_KEY do Supabase no servidor — nunca exposta ao navegador.
+
+const _auth = require("./_auth");
 
 module.exports = async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -45,6 +47,24 @@ module.exports = async function handler(req, res) {
 
   if (req.method === "POST") {
     const body = req.body || {};
+    // Autenticação: confere a senha própria (custom_password) e devolve um token
+    // assinado. Usuários ainda na senha padrão (sem custom_password) não recebem
+    // token aqui — recebem ao definir a senha (fluxo de troca obrigatória).
+    if (body.action === "authenticate") {
+      const userKey = String(body.userKey || "");
+      const password = String(body.password || "");
+      if (!userKey || !password) return res.status(400).json({ error: "userKey e password são obrigatórios." });
+      let row = null;
+      try {
+        const g = await fetch(`${SUPABASE_URL}/rest/v1/app_users?user_key=eq.${encodeURIComponent(userKey)}&select=custom_password`, { headers });
+        if (g.ok) { const rr = await g.json(); row = rr[0] || null; }
+      } catch (e) {}
+      const ok = !!(row && row.custom_password && row.custom_password === password);
+      const secret = process.env.AUTH_SECRET;
+      if (ok && secret) return res.status(200).json({ ok: true, token: _auth.sign(userKey, secret, 12) });
+      // sem token: senha padrão ainda (ok:false) ou AUTH_SECRET não configurada (grace)
+      return res.status(200).json({ ok: false, token: null, grace: !secret });
+    }
     // Registro de último acesso (chamado logo após o login válido).
     if (body.action === "login") {
       const userKey = body.userKey;
@@ -82,7 +102,9 @@ module.exports = async function handler(req, res) {
       const errText = await resp.text();
       return res.status(resp.status).json({ error: "Erro ao salvar senha.", details: errText });
     }
-    return res.status(200).json({ ok: true });
+    // já devolve um token válido: quem acabou de definir a senha entra autenticado
+    const secret = process.env.AUTH_SECRET;
+    return res.status(200).json({ ok: true, token: secret ? _auth.sign(userKey, secret, 12) : null });
   }
 
   res.setHeader("Allow", "GET, POST");
