@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Email — JARVIS ServCamp</title>
+<style>
+  body{margin:0;padding:40px 20px;background:#f0f2f5;font-family:'Segoe UI',Arial,sans-serif}
+  .wrapper{max-width:600px;margin:0 auto}
+
+  /* instrução de uso */
+  .instrucao{
+    background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;
+    padding:12px 18px;margin-bottom:20px;font-size:13px;color:#7c5800;
+    line-height:1.5;
+  }
+  .instrucao strong{color:#d48806}
+
+  /* card email */
+  .card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10)}
+
+  /* header */
+  .header{
+    background:linear-gradient(135deg,#0a0a1a 0%,#1a1a3e 100%);
+    padding:36px 40px;text-align:center;
+  }
+  .header .empresa{font-size:11px;letter-spacing:5px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:8px}
+  .header .titulo{font-size:32px;font-weight:900;letter-spacing:3px;
+    background:linear-gradient(135deg,#f0a500,#ffd700);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin-bottom:6px;
+  }
+  .header .subtitulo{font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:1px}
+
+  /* corpo */
+  .body{padding:36px 40px}
+
+  .saudacao{font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:6px}
+  .saudacao span{color:#f0a500}
+  .intro{font-size:15px;color:#555;line-height:1.7;margin-bottom:28px}
+
+  /* blocos */
+  .bloco{border-radius:12px;padding:22px 24px;margin-bottom:18px}
+  .bloco-apres{background:#f8f9ff;border:1px solid #e0e4ff}
+  .bloco-acesso{background:#fffbf0;border:1px solid #ffe0a0}
+  .bloco-link{background:linear-gradient(135deg,#0a0a1a,#1a1a3e);border:none;text-align:center;padding:28px 24px}
+
+  .bloco-titulo{font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+  .bloco-apres .bloco-titulo{color:#5c6bc0}
+  .bloco-acesso .bloco-titulo{color:#f0a500}
+
+  .bloco-desc{font-size:14px;color:#666;line-height:1.6;margin-bottom:14px}
+
+  /* campo editável */
+  [contenteditable]{
+    display:inline-block;
+    border-bottom:2px dashed #f0a500;
+    min-width:120px;padding:2px 6px;
+    color:#1a1a2e;font-weight:700;font-size:15px;
+    outline:none;cursor:text;border-radius:2px;
+    transition:background .2s;
+  }
+  [contenteditable]:focus{background:#fff8e1}
+  [contenteditable]:hover{background:#fff8e1}
+
+  .campo-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .campo-label{font-size:13px;color:#888;min-width:80px}
+
+  /* botão dashboard */
+  .btn-dashboard{
+    display:inline-block;
+    background:linear-gradient(135deg,#f0a500,#ffd700);
+    color:#000;font-size:16px;font-weight:800;
+    padding:14px 40px;border-radius:50px;
+    text-decoration:none;letter-spacing:1px;
+    margin-top:8px;
+  }
+  .btn-dashboard:hover{opacity:.9}
+  .link-label{font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:12px}
+  .link-url{
+    font-size:13px;color:rgba(255,255,255,0.35);margin-top:12px;
+    word-break:break-all;
+  }
+  .link-url a{color:rgba(255,255,255,0.35)}
+
+  /* anexo */
+  .anexo-box{
+    display:flex;align-items:center;gap:14px;
+    background:#fff;border:1px solid #dde0ff;border-radius:8px;
+    padding:12px 16px;
+  }
+  .anexo-icone{font-size:28px}
+  .anexo-info .nome{font-size:14px;font-weight:700;color:#3949ab}
+  .anexo-info .desc{font-size:12px;color:#888;margin-top:2px}
+
+  /* footer */
+  .footer{text-align:center;padding:20px 40px 28px;font-size:11px;color:#aaa;letter-spacing:1px}
+  .footer strong{color:#f0a500}
+
+  /* botão copiar */
+  .btn-copiar{
+    display:block;width:100%;padding:12px;margin-bottom:16px;
+    background:#1a1a3e;color:#ffd700;font-size:13px;font-weight:700;
+    border:none;border-radius:8px;cursor:pointer;letter-spacing:1px;
+  }
+  .btn-copiar:hover{background:#0a0a2e}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- Instrução de uso -->
+  <div class="instrucao">
+    <strong>📌 Como usar:</strong> Clique nos campos sublinhados para editar (nome, usuário, senha e link). Depois copie o conteúdo do card e cole no corpo do seu e-mail. Lembre de anexar o arquivo <strong>apresentacao.html</strong>.
+  </div>
+
+  <!-- Card do email -->
+  <div class="card">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="empresa">Grupo ServCamp</div>
+      <div class="titulo">JARVIS</div>
+      <div class="subtitulo">Inteligência Operacional</div>
+    </div>
+
+    <!-- Corpo -->
+    <div class="body">
+
+      <div class="saudacao">Olá, <span contenteditable="true" title="Clique para editar o nome">Nome do Usuário</span>! 👋</div>
+
+      <p class="intro">
+        Estamos disponibilizando o acesso ao <strong>JARVIS</strong> — nosso painel de inteligência operacional desenvolvido para o Grupo ServCamp.<br><br>
+        O sistema centraliza em tempo real todas as informações da operação: funcionários ativos, faltas, coberturas, horas extras, postos e muito mais — tudo em um único lugar, com atualização em 1 clique. <strong>Menos tempo operacional. Mais inteligência estratégica.</strong>
+      </p>
+
+      <!-- Bloco apresentação -->
+      <div class="bloco bloco-apres">
+        <div class="bloco-titulo">📎 Apresentação do Sistema</div>
+        <div class="bloco-desc">Em anexo você encontra a apresentação completa do JARVIS. Abra o arquivo no seu navegador (Chrome ou Edge) para visualizar.</div>
+        <div class="anexo-box">
+          <div class="anexo-icone">🗂️</div>
+          <div class="anexo-info">
+            <div class="nome">apresentacao.html</div>
+            <div class="desc">Abra no navegador · Apresentação animada do sistema</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco acesso -->
+      <div class="bloco bloco-acesso">
+        <div class="bloco-titulo">🔐 Seus Dados de Acesso</div>
+        <div class="bloco-desc">Use as credenciais abaixo para entrar no sistema. No primeiro acesso, você será solicitado a criar uma senha pessoal.</div>
+
+        <div class="campo-row">
+          <span class="campo-label">Usuário:</span>
+          <span contenteditable="true" title="Clique para editar o usuário">usuario.aqui</span>
+        </div>
+        <div class="campo-row">
+          <span class="campo-label">Senha:</span>
+          <span contenteditable="true" title="Clique para editar a senha">servcamp2026</span>
+        </div>
+      </div>
+
+      <!-- Bloco link -->
+      <div class="bloco bloco-link">
+        <div class="link-label">Acesse o Dashboard</div>
+        <a class="btn-dashboard" contenteditable="false" id="btnLink" href="#">🚀 Acessar o JARVIS</a>
+        <div class="link-url">
+          Link: <span contenteditable="true" id="linkUrl" title="Clique para editar o link">https://seulink.vercel.app</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      Desenvolvido por <strong>Convert Vision</strong> · Automação Inteligente · 2026<br>
+      Em caso de dúvidas, entre em contato com o administrador do sistema.
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Atualiza o href do botão quando o link é editado
+  document.getElementById('linkUrl').addEventListener('input', function(){
+    document.getElementById('btnLink').href = this.textContent.trim();
+  });
+</script>
+
+</body>
+</html>

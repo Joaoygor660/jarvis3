@@ -1433,6 +1433,44 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="page" id="pg-sede">
     <div class="sec-hdr"><span class="sec-hdr-ic">🏢</span><div><div class="sec-hdr-t">Base Virtual — Grupo ServCamp</div><div class="sec-hdr-sub">Cada sala é um módulo do JARVIS: seu personagem anda até onde você está trabalhando</div></div></div>
     <div id="hq-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Abrindo a base…</div></div>
+    <style>
+    #chk-panel{position:fixed;top:60px;right:0;bottom:0;width:340px;max-width:88vw;background:#fff;border-left:1px solid #e5e9f0;box-shadow:-10px 0 30px rgba(13,31,53,.12);z-index:60;transform:translateX(102%);transition:transform .25s ease;overflow-y:auto;padding:14px 16px 30px}
+    #chk-panel.open{transform:translateX(0)}
+    #chk-toggle{position:fixed;right:18px;bottom:22px;z-index:59;width:52px;height:52px;border-radius:50%;border:none;background:#0d1f35;color:#fff;font-size:1.25rem;cursor:pointer;box-shadow:0 8px 20px rgba(13,31,53,.3)}
+    .chk-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .chk-tt{font-size:.92rem;font-weight:900;color:#0d1f35}
+    .chk-x{border:none;background:#f1f5f9;color:#475569;border-radius:8px;width:26px;height:26px;cursor:pointer;font-weight:800}
+    .chk-date{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;font-size:.68rem;font-weight:800;color:#475569}
+    .chk-date button{border:none;background:#f1f5f9;border-radius:7px;width:24px;height:24px;cursor:pointer;font-weight:900;color:#0d1f35}
+    .chk-date button:disabled{opacity:.35;cursor:default}
+    .chk-lockbar{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;border-radius:9px;padding:7px 10px;font-size:.64rem;font-weight:700;text-align:center;margin-bottom:10px}
+    .chk-tabs{display:flex;gap:6px;margin-bottom:10px}
+    .chk-tab{flex:1;border:none;border-radius:10px;padding:7px;font-size:.66rem;font-weight:800;cursor:pointer;background:#f1f5f9;color:#475569}
+    .chk-tab.on{background:#0d1f35;color:#fff}
+    .chk-toast{background:#0d1f35;color:#fff;border-radius:9px;padding:8px 11px;font-size:.66rem;font-weight:700;margin-bottom:10px}
+    .chk-prog{margin-bottom:12px}
+    .chk-prog-t{font-size:.66rem;font-weight:800;color:#64748b;margin-bottom:5px}
+    .chk-bar{height:8px;background:#eef2f7;border-radius:6px;overflow:hidden}
+    .chk-bar-f{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:6px;transition:width .3s}
+    .chk-item{display:flex;align-items:flex-start;gap:9px;padding:10px 11px;border:1px solid #e5e9f0;border-radius:11px;margin-bottom:7px;cursor:pointer;transition:border-color .15s,background .15s}
+    .chk-item:hover:not(.locked){border-color:#16a34a;background:#f0fdf4}
+    .chk-item .chk-ck{width:20px;height:20px;border-radius:6px;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;color:#16a34a;flex-shrink:0;background:#fff}
+    .chk-item.done{background:#f0fdf4;border-color:#bbf7d0}
+    .chk-item.done .chk-ck{background:#16a34a;color:#fff;border-color:#16a34a}
+    .chk-item.locked{opacity:.72;cursor:not-allowed;background:#f8fafc}
+    .chk-desc{font-size:.72rem;font-weight:700;color:#334155;line-height:1.35}
+    .chk-hint{display:block;font-size:.6rem;font-weight:700;color:#b45309;margin-top:3px}
+    .chk-gtt{font-size:.66rem;font-weight:900;color:#0d1f35;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 7px}
+    .chk-row{display:flex;align-items:center;justify-content:space-between;padding:7px 2px;border-bottom:1px solid #f1f5f9}
+    .chk-nm{font-size:.7rem;font-weight:700;color:#334155}
+    .chk-dots{display:flex;gap:3px}
+    .chk-dot{width:9px;height:9px;border-radius:50%;background:#e2e8f0}
+    .chk-dot.on{background:#22c55e}
+    .chk-count{margin-top:9px;background:#0d1f35;color:#fff;border-radius:9px;padding:8px 11px;font-size:.68rem;font-weight:800;text-align:center}
+    @media(max-width:900px){#chk-panel{top:56px;width:320px}}
+    </style>
+    <div id="chk-panel"></div>
+    <button id="chk-toggle" onclick="chkToggle()" title="Checklist diário" style="display:none">📝</button>
   </div>
   <div class="page" id="pg-prj">
     <div class="sec-hdr"><span class="sec-hdr-ic">🚀</span><div><div class="sec-hdr-t">Projetos — Evolução &amp; Inovação</div><div class="sec-hdr-sub">Da ideia à implantação: pipeline, kanban, checklist e insights do JARVIS</div></div></div>
@@ -1580,7 +1618,15 @@ const USERS={
   "fabianalassala":{nome:"Fabiana Lassala",cargo:"Financeiro",senha:"servcamp2026",admin:false},
   "raphaelvictor":{nome:"Raphael Victor",cargo:"Auxiliar ADM",senha:"servcamp2026",admin:false},
   "sandraalves":{nome:"Sandra Alves",cargo:"Responsável RH",senha:"servcamp2026",admin:false,rh:true},
-  "testejoao":{nome:"Teste João",cargo:"Usuário de Teste",senha:"servcamp2026",admin:false}
+  "testejoao":{nome:"Teste João",cargo:"Usuário de Teste",senha:"servcamp2026",admin:false},
+  "rafaelandrade":{nome:"Rafael Andrade",cargo:"Supervisor",senha:"servcamp2026",admin:false},
+  "adrianomacedo":{nome:"Adriano Macedo",cargo:"Supervisor",senha:"servcamp2026",admin:false},
+  "edneyferraz":{nome:"Edney Ferraz",cargo:"Supervisor",senha:"servcamp2026",admin:false},
+  "frankpimentel":{nome:"Frank Pimentel",cargo:"Supervisor",senha:"servcamp2026",admin:false},
+  "carlos":{nome:"Carlos",cargo:"Supervisor",senha:"servcamp2026",admin:false},
+  "jeankleber":{nome:"Jean Kleber",cargo:"Supervisor",senha:"servcamp2026",admin:false},
+  "paulosergio":{nome:"Paulo Sérgio",cargo:"Supervisor",senha:"servcamp2026",admin:false},
+  "ronaldocimadon":{nome:"Ronaldo Cimadon",cargo:"Supervisor",senha:"servcamp2026",admin:false}
 };
 function _normUser(s){return(s||"").toUpperCase().trim().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Z0-9]/g,"").toLowerCase();}
 /* ── Autenticação das APIs: injeta o token (Bearer) em toda chamada a /api/*.
@@ -2000,7 +2046,7 @@ function navTo(p,btn){
   else if(p==="compro"){comLoad();}
   else if(p==="comdash"){comDashLoad();}
   else if(p==="config"){cfgLoad();}
-  else if(p==="sede"){hqLoad();}
+  else if(p==="sede"){hqLoad();chkLoad();}
   else if(p==="prj"){prjLoad();}
   else if(p==="audqual"){audLoad();}
   else if(p==="ligacoes"){ligLoad();}
@@ -5474,6 +5520,126 @@ function hqFetch(){
   fetch("/api/hq?me="+encodeURIComponent(me)).then(r=>r.ok?r.json():null).then(j=>{
     if(j&&j.presenca){hqStep();HQ_STATE=j;hqSync(HQ_FIRST);HQ_FIRST=false;hqRenderChat();}
   }).catch(()=>{});
+}
+/* ===================================================================
+   CHECKLIST DIÁRIO (Base Virtual) — painel lateral por cargo.
+   Travas reais estão na API (api/checklist.js). Aqui é UX/espelho.
+   =================================================================== */
+var CHK={role:null,tarefas:[],diario:[],sup70:{completos:0,total:8,liberado:false},viewDate:null,tab:"minhas"};
+var CHK_TIMER=null;
+function chkNowBR(){var p={};new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hour12:false}).formatToParts(new Date()).forEach(function(x){p[x.type]=x.value;});return{date:p.year+"-"+p.month+"-"+p.day,hour:parseInt(p.hour,10)};}
+function chkRole(){
+  var u=sessionStorage.getItem("userKey")||"";var info=USERS[u]||{};var c=(info.cargo||"").toLowerCase();
+  if(/supervisor/.test(c))return"supervisor";
+  if(/coordena/.test(c))return"coordenacao";
+  if(/gerente/.test(c))return"gerente";
+  if(/diretor/.test(c))return"diretoria";
+  if(sessionStorage.getItem("userAdmin")==="1")return"diretoria";
+  return null;
+}
+function chkUsersByRole(role){
+  var out=[];for(var k in USERS){var c=(USERS[k].cargo||"").toLowerCase();
+    if(role==="supervisor"&&/supervisor/.test(c))out.push({key:k,nome:USERS[k].nome});
+    else if(role==="coordenacao"&&/coordena/.test(c))out.push({key:k,nome:USERS[k].nome});
+    else if(role==="gerente"&&/gerente/.test(c))out.push({key:k,nome:USERS[k].nome});
+    else if(role==="diretoria"&&/diretor/.test(c))out.push({key:k,nome:USERS[k].nome});
+  }return out;
+}
+function chkLoad(){
+  CHK.role=chkRole();
+  var tg=document.getElementById("chk-toggle");
+  if(!CHK.role){if(tg)tg.style.display="none";var pn=document.getElementById("chk-panel");if(pn)pn.classList.remove("open");return;}
+  if(tg)tg.style.display="";
+  if(!CHK.viewDate)CHK.viewDate=chkNowBR().date;
+  var pn=document.getElementById("chk-panel");
+  if(pn&&window.innerWidth>900&&!pn.dataset.userset)pn.classList.add("open");
+  chkFetch();
+  if(CHK_TIMER)clearInterval(CHK_TIMER);
+  CHK_TIMER=setInterval(function(){if(document.getElementById("pg-sede")&&document.getElementById("pg-sede").classList.contains("active"))chkFetch();},15000);
+}
+function chkToggle(){var pn=document.getElementById("chk-panel");if(!pn)return;pn.dataset.userset="1";pn.classList.toggle("open");}
+function chkFetch(){
+  var d=CHK.viewDate;
+  Promise.all([
+    CHK.tarefas.length?Promise.resolve({rows:CHK.tarefas}):fetch("/api/checklist?t=tarefas").then(function(r){return r.ok?r.json():{rows:[]};}),
+    fetch("/api/checklist?t=diario&data="+d).then(function(r){return r.ok?r.json():{rows:[]};}),
+    fetch("/api/checklist?t=sup70&data="+d).then(function(r){return r.ok?r.json():{completos:0,total:8,liberado:false};})
+  ]).then(function(res){
+    CHK.tarefas=res[0].rows||[];CHK.diario=res[1].rows||[];
+    CHK.sup70={completos:res[2].completos||0,total:res[2].total||8,liberado:!!res[2].liberado};
+    chkRender();
+  }).catch(function(e){console.error("checklist:",e);});
+}
+function chkDone(usuario,tarefaId){for(var i=0;i<CHK.diario.length;i++){var r=CHK.diario[i];if(r.usuario===usuario&&r.tarefa_id===tarefaId)return!!r.concluido;}return false;}
+function chkMarcar(tarefaId,concluido){
+  var me=sessionStorage.getItem("userKey")||"";
+  var br=chkNowBR();
+  if(CHK.viewDate!==br.date){chkMsg("Dias anteriores são somente leitura.");return;}
+  if(br.hour<11){chkMsg("O checklist só pode ser marcado a partir das 11:00.");return;}
+  fetch("/api/checklist",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({usuario:me,tarefa_id:tarefaId,concluido:concluido})})
+   .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+   .then(function(o){if(!o.ok){chkMsg(o.j&&o.j.error||"Não foi possível marcar.");}chkFetch();})
+   .catch(function(){chkMsg("Falha de conexão.");});
+}
+function chkMsg(t){if(typeof hqToast==="function"){hqToast(t);}else{var e=document.getElementById("chk-msg");if(e){e.textContent=t;e.style.display="block";setTimeout(function(){e.style.display="none";},4000);}}}
+function chkDateShift(n){var d=new Date(CHK.viewDate+"T12:00:00");d.setDate(d.getDate()+n);var t=chkNowBR().date;var nd=d.toISOString().slice(0,10);if(nd>t)return;CHK.viewDate=nd;chkFetch();}
+function chkRender(){
+  var pn=document.getElementById("chk-panel");if(!pn)return;
+  var br=chkNowBR();var hoje=CHK.viewDate===br.date;
+  var podeEditar=hoje&&br.hour>=11;
+  var temEquipe=CHK.role==="coordenacao"||CHK.role==="gerente"||CHK.role==="diretoria";
+  var meCargo=CHK.role;var me=sessionStorage.getItem("userKey")||"";
+  var minhas=CHK.tarefas.filter(function(t){return t.cargo===meCargo;}).sort(function(a,b){return a.ordem-b.ordem;});
+  var feitas=minhas.filter(function(t){return chkDone(me,t.id);}).length;
+  var pct=minhas.length?Math.round(feitas/minhas.length*100):0;
+  var h='<div class="chk-hd"><div class="chk-tt">📝 Checklist Diário</div><button class="chk-x" onclick="chkToggle()">✕</button></div>';
+  // navegação de data
+  var dLabel=hoje?"Hoje":CHK.viewDate.split("-").reverse().join("/");
+  h+='<div class="chk-date"><button onclick="chkDateShift(-1)">‹</button><span>'+dLabel+(hoje?"":" · somente leitura")+'</span><button onclick="chkDateShift(1)" '+(hoje?"disabled":"")+'>›</button></div>';
+  if(!podeEditar&&hoje)h+='<div class="chk-lockbar">🔒 Liberado a partir das 11:00 (Brasília)</div>';
+  // abas
+  h+='<div class="chk-tabs"><button class="chk-tab '+(CHK.tab==="minhas"?"on":"")+'" onclick="CHK.tab=\'minhas\';chkRender()">Minhas tarefas</button>';
+  if(temEquipe)h+='<button class="chk-tab '+(CHK.tab==="equipe"?"on":"")+'" onclick="CHK.tab=\'equipe\';chkRender()">Equipe</button>';
+  h+='</div><div id="chk-msg" class="chk-toast" style="display:none"></div>';
+  if(CHK.tab==="minhas"){
+    h+='<div class="chk-prog"><div class="chk-prog-t">'+feitas+'/'+minhas.length+' tarefas</div><div class="chk-bar"><div class="chk-bar-f" style="width:'+pct+'%"></div></div></div>';
+    minhas.forEach(function(t){
+      var done=chkDone(me,t.id);
+      var lockSup=t.especial==="sup70"&&!CHK.sup70.liberado&&!done;
+      var locked=!podeEditar||lockSup;
+      var cls="chk-item"+(done?" done":"")+(locked?" locked":"");
+      h+='<div class="'+cls+'" '+(locked?"":'onclick="chkMarcar(\''+t.id+'\','+(!done)+')"')+'>';
+      var sym=done?"✓":(locked?"🔒":"");
+      h+='<span class="chk-ck">'+sym+'</span><span class="chk-desc">'+chkEsc(t.descricao);
+      if(lockSup)h+='<span class="chk-hint">Aguardando supervisores ('+CHK.sup70.completos+'/'+CHK.sup70.total+' concluídos)</span>';
+      h+='</span></div>';
+    });
+  }else{
+    h+=chkEquipe();
+  }
+  pn.innerHTML=h;
+}
+function chkEsc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function chkGrupo(titulo,role){
+  var users=chkUsersByRole(role);
+  var tks=CHK.tarefas.filter(function(t){return t.cargo===role;}).sort(function(a,b){return a.ordem-b.ordem;});
+  var completos=0;
+  var h='<div class="chk-gtt">'+titulo+'</div>';
+  users.forEach(function(u){
+    var done=tks.filter(function(t){return chkDone(u.key,t.id);}).length;
+    if(tks.length&&done===tks.length)completos++;
+    var dots="";tks.forEach(function(t){dots+='<span class="chk-dot '+(chkDone(u.key,t.id)?"on":"")+'"></span>';});
+    h+='<div class="chk-row"><span class="chk-nm">'+chkEsc(u.nome)+'</span><span class="chk-dots">'+dots+'</span></div>';
+  });
+  if(role==="supervisor")h+='<div class="chk-count">'+completos+' de '+users.length+' supervisores concluídos</div>';
+  return h;
+}
+function chkEquipe(){
+  var h="";
+  if(CHK.role==="coordenacao"){h+=chkGrupo("Supervisores","supervisor");}
+  else if(CHK.role==="gerente"){h+=chkGrupo("Coordenação","coordenacao")+chkGrupo("Supervisores","supervisor");}
+  else if(CHK.role==="diretoria"){h+=chkGrupo("Gerência","gerente")+chkGrupo("Coordenação","coordenacao")+chkGrupo("Supervisores","supervisor");}
+  return h||'<div style="color:#94a3b8;font-size:.7rem;padding:10px">Sem equipe para exibir.</div>';
 }
 /* ── monta o cenário isométrico premium (uma vez) ── */
 function hqShell(){
