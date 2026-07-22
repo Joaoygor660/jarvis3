@@ -2060,6 +2060,9 @@ function refresh(){
   const s=ST.sd,e=ST.ed;
   if(s&&e)document.getElementById("pgSub").textContent=`Grupo ServCamp · ${s.toLocaleDateString("pt-BR")} – ${e.toLocaleDateString("pt-BR")}`;
   updVG();updOC();updSN();
+  // guias novas: reagem ao filtro principal (período, turno e área)
+  if(ST.pg==="audqual"){if(typeof audRender==="function")audRender();return;}
+  if(ST.pg==="ligacoes"){if(typeof ligRender==="function")ligRender();return;}
   if(ST.pg==="visao")updVGCharts();
   else{updSecCharts(ST.pg);rTbl(ST.pg);}
 }
@@ -6492,13 +6495,14 @@ function prjResumoIA(){
    Checklist tri-pilar (Limpeza · Colaboradores · Cliente). Postos ativos
    derivados da planilha diária (LOCAL/AREA). Cobertura = auditados ÷ ativos. */
 const AUD_PILARES=[["limpeza","🧹 Limpeza","#0d9488"],["colab","👥 Colaboradores","#7c3aed"],["cliente","🤝 Cliente","#f97316"]];
-let AUD_CAT={limpeza:[],colab:[],cliente:[]},AUD_A=[],AUD_BUSCA="",AUD_FST="TODOS",AUD_FSUP="",AUD_PER="mes";
+let AUD_CAT={limpeza:[],colab:[],cliente:[]},AUD_A=[],AUD_BUSCA="",AUD_FST="TODOS";
 /* postos ativos: LOCAL distintos da planilha diária, com supervisor (AREA) e turno */
 function audPostosAtivos(){
   // Cada "posto ativo" = um CLIENTE ativo. Mesma fonte e mesma chave (normTxt do
   // NOME) do KPI "Clientes Ativos" da Visão Geral, para os números baterem.
   const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
-  const clientes=D.clientes||[];
+  // Respeita o filtro global do sistema: TURNO e ÁREA (supervisor).
+  const clientes=(D.clientes||[]).filter(r=>(typeof mT==="function"?mT(r):true)&&(typeof mA==="function"?mA(r):true));
   const norm=(typeof normTxt==="function")?normTxt:(s=>String(s||"").toUpperCase().trim());
   const m={};
   clientes.forEach(r=>{
@@ -6523,8 +6527,9 @@ function audUltima(posto){return AUD_A.filter(a=>a.posto===posto).sort((x,y)=>ne
 function audRender(){
   const el=document.getElementById("aud-content");if(!el)return;
   const postos=audPostosAtivos();
-  const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
-  const noPer=d=>{if(AUD_PER==="tudo")return true;if(!d)return false;return new Date(String(d).slice(0,10)+"T12:00:00")>=mIni;};
+  // Período vem do filtro principal do sistema (ST.sd/ST.ed via inR).
+  const noPer=d=>{if(!d)return false;return(typeof inR==="function")?inR(String(d).slice(0,10)):true;};
+  const perTxt=(ST.sd||ST.ed)?" no período":"";
   const audsPer=AUD_A.filter(a=>noPer(a.criado_em));
   const postosAuditadosPer=new Set(audsPer.map(a=>a.posto));
   const cobertura=postos.length?Math.round(postosAuditadosPer.size/postos.length*100):0;
@@ -6533,7 +6538,6 @@ function audRender(){
   postos.forEach(p=>{const u=audUltima(p.posto);if(!u)return;if(audTotalNC(u)===0||u.pendencias_resolvidas)conf++;else pend++;});
   const semAud=postos.length-conf-pend;
   const confPct=postos.length?Math.round(conf/postos.length*100):0;
-  const supervisores=[...new Set(postos.map(p=>p.supervisor).filter(Boolean))].sort();
   const kpi=(ic,lbl,v,sub,cor,click)=>`<div class="cvk" style="border-top:3px solid ${cor}${click?";cursor:pointer":""}"${click?` onclick="${click}"`:""}><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:4px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${v}</div><div style="font-size:.62rem;color:#94a3b8">${sub}</div></div>`;
   let h='';
   /* KPIs */
@@ -6551,7 +6555,7 @@ function audRender(){
   const supPior=Object.entries(porSup).map(([s,d])=>({s,pct:d.tot?d.aud/d.tot:0,d})).sort((a,b)=>a.pct-b.pct)[0];
   const ins=[];
   ins.push(`📋 Cobertura do período: <b>${postosAuditadosPer.size}/${postos.length}</b> postos auditados (<b>${cobertura}%</b>).`);
-  if(semList.length)ins.push(`🕳️ <b>${semList.length} posto(s)</b> nunca auditados${AUD_PER==="mes"?" neste mês":""} — priorize: ${semList.slice(0,3).map(p=>_esc(p.posto)).join(", ")}.`);
+  if(semList.length)ins.push(`🕳️ <b>${semList.length} posto(s)</b> nunca auditados${perTxt} — priorize: ${semList.slice(0,3).map(p=>_esc(p.posto)).join(", ")}.`);
   if(pendList.length)ins.push(`⚠️ <b>${pendList.length} posto(s)</b> com pendência aberta na última vistoria.`);
   if(supPior&&supPior.d.tot>=2)ins.push(`🧭 Supervisor com menor cobertura: <b>${_esc(supPior.s)}</b> (${supPior.d.aud}/${supPior.d.tot} postos auditados).`);
   if(!AUD_A.length)ins.push("🚀 Registre a primeira vistoria para o JARVIS começar a medir cobertura e conformidade.");
@@ -6561,11 +6565,8 @@ function audRender(){
   h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
     <button class="rh-btn" onclick="audFicha()">➕ Nova Auditoria</button>
     <input class="rhf-i" placeholder="🔎 Buscar posto…" style="flex:1;min-width:180px" value="${_esc(AUD_BUSCA)}" oninput="AUD_BUSCA=this.value;audRenderLista()">
-    <select class="rhf-i" style="width:150px" onchange="AUD_FSUP=this.value;audRender()"><option value="">Supervisor: todos</option>${supervisores.map(s=>`<option ${AUD_FSUP===s?"selected":""}>${_esc(s)}</option>`).join("")}</select>
     <select class="rhf-i" style="width:130px" onchange="AUD_FST=this.value;audRenderLista()"><option value="TODOS">Status: todos</option><option value="CONFORME">Conforme</option><option value="PENDENTE">Com pendência</option><option value="SEM">Nunca auditado</option></select>
-    <div style="display:flex;gap:4px;background:#eef2f7;border-radius:12px;padding:3px">
-      ${[["mes","Este mês"],["tudo","Tudo"]].map(v=>`<button onclick="AUD_PER='${v[0]}';audRender()" style="border:none;border-radius:10px;padding:6px 12px;font-size:.68rem;font-weight:800;cursor:pointer;background:${AUD_PER===v[0]?"#0d1f35":"transparent"};color:${AUD_PER===v[0]?"#fff":"#475569"}">${v[1]}</button>`).join("")}
-    </div>
+    <span style="font-size:.6rem;color:#94a3b8;font-weight:700">🔗 Período, turno e área seguem o filtro do topo</span>
   </div>`;
   h+=`<div id="aud-lista"></div>`;
   el.innerHTML=h;
@@ -6574,8 +6575,7 @@ function audRender(){
 function audSetSt(s){AUD_FST=s==="AUDITADOS"?"TODOS":s;audRenderLista();}
 function audRenderLista(){
   const el=document.getElementById("aud-lista");if(!el)return;
-  let postos=audPostosAtivos();
-  if(AUD_FSUP)postos=postos.filter(p=>p.supervisor===AUD_FSUP);
+  let postos=audPostosAtivos(); // já filtrado por turno/área do sistema
   const b=AUD_BUSCA.toLowerCase();
   if(b)postos=postos.filter(p=>(p.posto+" "+p.supervisor+" "+p.cliente).toLowerCase().indexOf(b)>=0);
   const statusDe=p=>{const u=audUltima(p.posto);if(!u)return"SEM";if(audTotalNC(u)>0&&!u.pendencias_resolvidas)return"PENDENTE";return"CONFORME";};
@@ -6661,23 +6661,32 @@ function audSalvar(){
    Puxa as faltas da planilha diária, aponta quem faltou e ainda não foi
    contatado, e registra a tratativa. Fecha o ciclo antes da medida disciplinar. */
 const LIG_MOTIVOS=[["Saúde","🏥"],["Familiar","👨‍👩‍👧"],["Pessoal","🙍"],["Transporte","🚌"],["Conduta","⚠️"],["Financeiro","💰"],["Sem justificativa","❓"],["Outro","•"]];
-const LIG_JANELA=10; // dias para considerar falta "recente"
-let LIG_C=[],LIG_BUSCA="",LIG_FSUP="";
+let LIG_C=[],LIG_BUSCA="";
+/* rótulo do período ativo no filtro do sistema (usado nos títulos da guia) */
+function ligPeriodoTxt(){
+  if(!ST.sd&&!ST.ed)return"todo o histórico da planilha";
+  const f=d=>d?d.toLocaleDateString("pt-BR"):"—";
+  if(ST.sd&&ST.ed&&ST.sd.getTime()===ST.ed.getTime())return f(ST.sd);
+  return f(ST.sd)+" a "+f(ST.ed);
+}
 function ligLoad(){
   const el=document.getElementById("lig-content");
   if(el&&!LIG_C.length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando contatos…</div>';
   fetch("/api/ligacoes").then(r=>r.json()).then(j=>{LIG_C=(j&&j.rows)||[];ligRender();}).catch(err=>{console.error("Erro ligações:",err);if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.85rem">Erro ao carregar. Verifique a conexão.</div>';});
 }
-/* colaboradores que faltaram nos últimos LIG_JANELA dias (da planilha) */
+/* colaboradores que faltaram DENTRO do período selecionado no filtro do
+   sistema (além de turno e área) — nada de janela fixa própria. */
 function ligFaltasRecentes(){
   const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
-  const lim=new Date();lim.setDate(lim.getDate()-LIG_JANELA);
   const m={};
   (D.faltas||[]).forEach(f=>{
     const nome=(f.NOME||"").trim();if(!nome)return;
-    const dt=f.DATA?new Date(String(f.DATA).slice(0,10)+"T12:00:00"):null;if(!dt||dt<lim)return;
+    const dia=f.DATA?String(f.DATA).slice(0,10):"";if(!dia)return;
+    if(typeof inR==="function"&&!inR(dia))return;
+    if(typeof mT==="function"&&!mT(f))return;
+    if(typeof mA==="function"&&!mA(f))return;
     if(!m[nome])m[nome]={colaborador:nome,posto:(f.LOCAL||"").trim(),supervisor:(f.AREA||"").trim(),datas:[]};
-    m[nome].datas.push(String(f.DATA).slice(0,10));
+    m[nome].datas.push(dia);
   });
   Object.values(m).forEach(x=>{x.datas.sort();x.ultima=x.datas[x.datas.length-1];});
   return Object.values(m);
@@ -6721,9 +6730,12 @@ function ligAcompanhamento(){
 }
 function ligRender(){
   const el=document.getElementById("lig-content");if(!el)return;
-  const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
-  const noMes=d=>{if(!d)return false;return new Date(String(d).slice(0,10)+"T12:00:00")>=mIni;};
-  const contatosMes=LIG_C.filter(c=>noMes(c.data_contato||c.criado_em));
+  // Contatos do PERÍODO e da ÁREA selecionados no filtro do sistema.
+  const contatosMes=LIG_C.filter(c=>{
+    const d=String(c.data_contato||c.criado_em||"").slice(0,10);if(!d)return false;
+    if(typeof inR==="function"&&!inR(d))return false;
+    return!ST.area||(c.supervisor||"")===ST.area;
+  });
   const pend=ligPendencias();
   const recentes=ligFaltasRecentes();
   const coberto=recentes.length?Math.round((recentes.length-pend.length)/recentes.length*100):100;
@@ -6734,14 +6746,14 @@ function ligRender(){
   const kpi=(ic,lbl,v,sub,cor)=>`<div class="cvk" style="border-top:3px solid ${cor}"><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:4px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${v}</div><div style="font-size:.62rem;color:#94a3b8">${sub}</div></div>`;
   let h='';
   h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:12px">`;
-  h+=kpi("📞","Contatos no mês",contatosMes.length,"tratativas registradas","#2e8fef");
+  h+=kpi("📞","Contatos no período",contatosMes.length,"tratativas registradas","#2e8fef");
   h+=kpi("⏳","Pendentes de contato",pend.length,pend.length?"faltaram e não falaram":"tudo em dia",pend.length?"#dc2626":"#16a34a");
   h+=kpi("🎯","Cobertura de contato",coberto+"%",`${recentes.length-pend.length} de ${recentes.length} faltas recentes`,coberto>=70?"#16a34a":coberto>=40?"#f97316":"#dc2626");
   h+=kpi("🏷️","Motivo mais comum",rankMot[0]?rankMot[0][0]:"—",rankMot[0]?rankMot[0][1]+" ocorrência(s)":"sem dados","#7c3aed");
   h+=`</div>`;
   /* pendências do dia */
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px;margin-bottom:12px">
-    <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">⏳ Pendências de Contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">faltou nos últimos ${LIG_JANELA} dias e ainda não foi contatado</span></div>
+    <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">⏳ Pendências de Contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">faltou em ${_esc(ligPeriodoTxt())} e ainda não foi contatado</span></div>
     ${pend.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px">${pend.map(f=>`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 11px;cursor:pointer" onclick='ligForm(null,${JSON.stringify(f).replace(/'/g,"&#39;")})'>
       <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}</div>
       <div style="font-size:.58rem;color:#b91c1c;margin:2px 0 6px">🏢 ${_esc(f.posto||"—")} · 🧭 ${_esc(f.supervisor||"—")}</div>
@@ -6778,11 +6790,10 @@ function ligRender(){
     </div>`;
   }
   /* toolbar */
-  const sups=[...new Set(LIG_C.map(c=>c.supervisor).filter(Boolean))].sort();
   h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
     <button class="rh-btn" onclick="ligForm()">➕ Registrar Contato</button>
     <input class="rhf-i" placeholder="🔎 Buscar colaborador…" style="flex:1;min-width:180px" value="${_esc(LIG_BUSCA)}" oninput="LIG_BUSCA=this.value;ligRenderHist()">
-    <select class="rhf-i" style="width:160px" onchange="LIG_FSUP=this.value;ligRenderHist()"><option value="">Supervisor: todos</option>${sups.map(s=>`<option ${LIG_FSUP===s?"selected":""}>${_esc(s)}</option>`).join("")}</select>
+    <span style="font-size:.6rem;color:#94a3b8;font-weight:700">🔗 Período, turno e área seguem o filtro do topo</span>
   </div>`;
   /* painel por supervisor + motivos */
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
@@ -6795,8 +6806,10 @@ function ligRender(){
 }
 function ligRenderHist(){
   const el=document.getElementById("lig-hist");if(!el)return;
+  // Área e período vêm do filtro do sistema; a busca é o único filtro local.
   let rows=LIG_C.slice();
-  if(LIG_FSUP)rows=rows.filter(c=>c.supervisor===LIG_FSUP);
+  if(ST.area)rows=rows.filter(c=>(c.supervisor||"")===ST.area);
+  if(typeof inR==="function")rows=rows.filter(c=>inR(String(c.data_contato||c.criado_em||"").slice(0,10)));
   const b=LIG_BUSCA.toLowerCase();
   if(b)rows=rows.filter(c=>[c.colaborador,c.posto,c.motivo,c.justificativa].join(" ").toLowerCase().indexOf(b)>=0);
   if(!rows.length){el.innerHTML='<div style="padding:24px;text-align:center;color:#94a3b8;font-size:.76rem">Nenhum contato registrado ainda.</div>';return;}
