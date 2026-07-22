@@ -1295,10 +1295,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   </div>
   <div class="page" id="pg-rhdash">
     <div class="sec-hdr"><span class="sec-hdr-ic">📈</span><div><div class="sec-hdr-t">Painel RH — Diretoria</div><div class="sec-hdr-sub">Visão consolidada de recrutamento, turnover, reservas e treinamento — Grupo ServCamp</div></div></div>
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><div style="display:flex;gap:6px;background:#f1f5f9;padding:4px;border-radius:10px">
-      <button class="rd-per rd-per-on" id="rdp-mes" onclick="rhDashPer('mes')">Este mês</button>
-      <button class="rd-per" id="rdp-tudo" onclick="rhDashPer('tudo')">Tudo</button>
-    </div></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><span style="font-size:.6rem;color:#94a3b8;font-weight:700">🔗 Período e área seguem o filtro do topo</span></div>
     <div id="rdash-loading" style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando dados de RH…</div>
     <div id="rdash-body" style="display:none">
       <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
@@ -1878,6 +1875,38 @@ function mT(r){if(ST.turno==="TODOS")return true;return(r.TURNO||"DIURNO")===ST.
 function mA(r){if(!ST.area)return true;return(r.AREA||"")===ST.area;}
 function full(arr){return arr.filter(r=>inR(r.DATA)&&mT(r)&&mA(r));}
 
+/* ── Filtro global aplicado às guias que vêm do BANCO (RH, Comercial, painéis).
+   Elas não têm DATA/TURNO da planilha: cada uma tem sua própria data e algumas
+   têm "area" (supervisor). Turno não se aplica e é ignorado, não zerado.
+   Itens EM ABERTO continuam visíveis fora do período — vaga aberta há 2 meses
+   ainda está aberta hoje (opts.aberto). ── */
+function gArea(row){
+  if(!ST.area)return true;
+  const a=String(row&&row.area||"").trim().toUpperCase();
+  if(!a)return false;
+  return a===String(ST.area).trim().toUpperCase();
+}
+function gFil(arr,campoData,opts){
+  opts=opts||{};
+  const temPer=!!(ST.sd||ST.ed);
+  return(arr||[]).filter(x=>{
+    if(opts.area!==false&&!gArea(x))return false;
+    if(!temPer)return true;
+    if(opts.aberto&&opts.aberto(x))return true;
+    const d=x[campoData];
+    if(!d)return false;
+    return inR(String(d).slice(0,10));
+  });
+}
+/* vaga/proposta ainda em andamento = não encerrada */
+function gVagaAberta(v){return v.status!=="PREENCHIDA"&&v.status!=="CANCELADA";}
+function gPropAberta(p){return p.status!=="FECHADO"&&p.status!=="PERDIDO";}
+function comPF(){return gFil(COM_P,"criado_em",{area:false,aberto:gPropAberta});}
+function rhEntF(){return gFil(RH_ENT,"data_entrevista",{area:false});}
+function rhDesF(){return gFil(RH_DES,"data_desligamento",{});}
+function rhResF(){return gFil(RH_RES,"data_oportunidade",{});}
+function rhTreF(){return gFil(RH_TRE,"data_treinamento",{});}
+
 function filterAll(){
   const D=DASHBOARD_DATA;
   F={
@@ -2060,9 +2089,18 @@ function refresh(){
   const s=ST.sd,e=ST.ed;
   if(s&&e)document.getElementById("pgSub").textContent=`Grupo ServCamp · ${s.toLocaleDateString("pt-BR")} – ${e.toLocaleDateString("pt-BR")}`;
   updVG();updOC();updSN();
-  // guias novas: reagem ao filtro principal (período, turno e área)
-  if(ST.pg==="audqual"){if(typeof audRender==="function")audRender();return;}
-  if(ST.pg==="ligacoes"){if(typeof ligRender==="function")ligRender();return;}
+  // guias de banco (RH, Comercial, painéis e módulos novos) reagem ao filtro
+  const _rer={
+    audqual:()=>audRender(), ligacoes:()=>ligRender(),
+    rhvagas:()=>{rhRender();rhRenderTbl();},
+    rhentrev:()=>{rhEntRender();rhEntRenderTbl();},
+    rhdesl:()=>{rhDesRender();rhDesRenderTbl();},
+    rhres:()=>{rhResRender();rhResRenderTbl();},
+    rhtrein:()=>{rhTreRender();rhTreRenderTbl();},
+    rhdash:()=>{if(RDASH.loaded)rhDashRender();},
+    compro:()=>comRenderAll(), comdash:()=>comDashRender()
+  };
+  if(_rer[ST.pg]){try{_rer[ST.pg]();}catch(e){console.error("refiltrar "+ST.pg+":",e);}return;}
   if(ST.pg==="visao")updVGCharts();
   else{updSecCharts(ST.pg);rTbl(ST.pg);}
 }
@@ -3587,8 +3625,10 @@ function rhLoad(){
     if(tbl)tbl.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar vagas. Verifique a conexão.</div>';
   });
 }
+/* vagas sob o filtro global (abertas seguem visíveis fora do período) */
+function rhVagasF(){return gFil(RH_VAGAS,"data_abertura",{aberto:gVagaAberta});}
 function rhRender(){
-  const v=RH_VAGAS;
+  const v=rhVagasF();
   const abertasArr=v.filter(x=>x.status==="ABERTA");
   const abertas=abertasArr.length;
   const abCont=abertasArr.filter(x=>x.tipo_cliente!=="RESERVA").length;
@@ -3647,9 +3687,10 @@ let RH_TBL_STATUS="TODAS";
 function rhSetStatusFiltro(s){RH_TBL_STATUS=s;rhRenderTbl();}
 function rhRenderFiltros(){
   const box=document.getElementById("rh-tbl-filtros");if(!box)return;
-  const cont={};RH_VAGAS.forEach(x=>{const s=x.status||"—";cont[s]=(cont[s]||0)+1;});
+  const _vf=rhVagasF();
+  const cont={};_vf.forEach(x=>{const s=x.status||"—";cont[s]=(cont[s]||0)+1;});
   const ordem=["ABERTA","EM ENTREVISTA","EXAME","INTEGRAÇÃO","PREENCHIDA","CANCELADA"];
-  const chips=[["TODAS","Todas","#0d1f35",RH_VAGAS.length]];
+  const chips=[["TODAS","Todas","#0d1f35",_vf.length]];
   ordem.forEach(s=>{if(cont[s])chips.push([s,s,RH_ST_COLORS[s]||"#64748b",cont[s]]);});
   box.innerHTML=chips.map(([val,lbl,cor,n])=>{
     const on=RH_TBL_STATUS===val;
@@ -3660,11 +3701,12 @@ function rhRenderTbl(){
   const el=document.getElementById("rh-tbl");if(!el)return;
   rhRenderFiltros();
   const q=(document.getElementById("s-rhvagas")?.value||"").toUpperCase();
-  let rows=RH_VAGAS;
+  const _all=rhVagasF();
+  let rows=_all;
   if(RH_TBL_STATUS!=="TODAS")rows=rows.filter(x=>(x.status||"—")===RH_TBL_STATUS);
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   const cnt=document.getElementById("rh-tbl-cnt");
-  if(cnt)cnt.textContent=RH_VAGAS.length?`— ${rows.length} de ${RH_VAGAS.length}`:"";
+  if(cnt)cnt.textContent=_all.length?`— ${rows.length} de ${_all.length}`:"";
   if(!rows.length){
     const vazio=(!RH_VAGAS.length)?'Nenhuma vaga registrada ainda. Use o formulário acima para abrir a primeira. 🚀':'Nenhuma vaga encontrada com este filtro.';
     el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">'+vazio+'</div>';return;}
@@ -3807,7 +3849,7 @@ function rhEntLoad(){
   });
 }
 function rhEntRender(){
-  const v=RH_ENT;
+  const v=rhEntF();
   const proc=v.filter(x=>x.situacao==="EM PROCESSO");
   const contr=v.filter(x=>x.situacao==="CONTRATADO").length;
   const fin=v.filter(x=>x.situacao!=="EM PROCESSO").length;
@@ -3838,7 +3880,7 @@ function rhEntRender(){
 function rhEntRenderTbl(){
   const el=document.getElementById("re-tbl");if(!el)return;
   const q=(document.getElementById("s-rhentrev")?.value||"").toUpperCase();
-  let rows=RH_ENT;
+  let rows=rhEntF();
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma entrevista registrada ainda. Use o formulário acima para registrar a primeira. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
@@ -3996,7 +4038,7 @@ function rhDesAutoFill(){
   set("rdf-re",emp.RE);set("rdf-cargo",emp.CARGO);set("rdf-area",emp.AREA);set("rdf-posto",emp.LOCAL);
 }
 function rhDesRender(){
-  const v=RH_DES;
+  const v=rhDesF();
   const mesAtual=ymd(new Date()).slice(0,7);
   const noMes=v.filter(x=>String(x.data_desligamento||"").slice(0,7)===mesAtual);
   const pedidos=v.filter(x=>x.tipo==="PEDIDO DE DEMISSÃO").length;
@@ -4034,7 +4076,7 @@ function rhDesTempoCasa(x){
 function rhDesRenderTbl(){
   const el=document.getElementById("rd-tbl");if(!el)return;
   const q=(document.getElementById("s-rhdesl")?.value||"").toUpperCase();
-  let rows=RH_DES;
+  let rows=rhDesF();
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhum desligamento registrado ainda. Use o formulário acima para registrar o primeiro. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
@@ -4184,7 +4226,7 @@ function rhResAutoFill(){
   set("rrf-re",emp.RE);set("rrf-cargo",emp.CARGO);set("rrf-area",emp.AREA);
 }
 function rhResRender(){
-  const v=RH_RES;
+  const v=rhResF();
   const aceit=v.filter(x=>x.resultado==="ACEITOU").length;
   const recus=v.filter(x=>x.resultado==="RECUSOU").length;
   const efet=v.filter(x=>x.resultado==="EFETIVADO").length;
@@ -4210,7 +4252,7 @@ function rhResRender(){
 function rhResRenderTbl(){
   const el=document.getElementById("rr-tbl");if(!el)return;
   const q=(document.getElementById("s-rhres")?.value||"").toUpperCase();
-  let rows=RH_RES;
+  let rows=rhResF();
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhuma oportunidade registrada ainda. Use o formulário acima para registrar a primeira. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
@@ -4347,7 +4389,7 @@ function rhTreTipoChg(){
   if(tipo!=="VÍDEO")qtd.value="";
 }
 function rhTreRender(){
-  const v=RH_TRE;
+  const v=rhTreF();
   const mesAtual=ymd(new Date()).slice(0,7);
   const noMes=v.filter(x=>String(x.data_treinamento||"").slice(0,7)===mesAtual);
   const videos=v.reduce((s,x)=>s+(parseInt(x.qtd_videos)||0),0);
@@ -4373,7 +4415,7 @@ function rhTreRender(){
 function rhTreRenderTbl(){
   const el=document.getElementById("rt-tbl");if(!el)return;
   const q=(document.getElementById("s-rhtrein")?.value||"").toUpperCase();
-  let rows=RH_TRE;
+  let rows=rhTreF();
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   if(!rows.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhum treinamento registrado ainda. Use o formulário acima para registrar o primeiro. 🚀</div>';return;}
   let h='<table style="width:100%;border-collapse:collapse;font-size:.74rem"><thead><tr style="background:#f8fafc">';
@@ -4473,13 +4515,7 @@ function rhTreExcluir(id){
 /* ===== PAINEL RH — DIRETORIA (consolidado, somente leitura) ===== */
 let RDASH={vagas:[],entrev:[],desl:[],res:[],trein:[],loaded:false};
 let RDASH_CUR=null;
-let RDASH_PER="mes";
-function rhDashPer(p){
-  RDASH_PER=p;
-  document.getElementById("rdp-mes").classList.toggle("rd-per-on",p==="mes");
-  document.getElementById("rdp-tudo").classList.toggle("rd-per-on",p==="tudo");
-  if(RDASH.loaded)rhDashRender();
-}
+/* período e área do Painel RH vêm do filtro principal do sistema */
 function rhDashLoad(){
   if(RDASH.loaded){rhDashRender();return;}
   document.getElementById("rdash-loading").style.display="";
@@ -4641,13 +4677,13 @@ function rhMapaFoco(sl){
   rhMapaInfo(sl);
 }
 function rhDashRender(){
-  const mesAtual=ymd(new Date()).slice(0,7);
-  const inPer=(d)=>RDASH_PER==="tudo"||String(d||"").slice(0,7)===mesAtual;
-  const vagas=RDASH.vagas; // vagas em aberto independem do período
-  const entrev=RDASH.entrev.filter(x=>inPer(x.data_entrevista));
-  const desl=RDASH.desl.filter(x=>inPer(x.data_desligamento));
-  const res=RDASH.res.filter(x=>inPer(x.data_oportunidade));
-  const trein=RDASH.trein.filter(x=>inPer(x.data_treinamento));
+  // Filtro principal do sistema: período (ST.sd/ST.ed) + área. Vagas em aberto
+  // seguem visíveis fora do período — continuam abertas hoje.
+  const vagas=gFil(RDASH.vagas,"data_abertura",{aberto:gVagaAberta});
+  const entrev=gFil(RDASH.entrev,"data_entrevista",{area:false});
+  const desl=gFil(RDASH.desl,"data_desligamento",{});
+  const res=gFil(RDASH.res,"data_oportunidade",{});
+  const trein=gFil(RDASH.trein,"data_treinamento",{});
   const ativosN=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos)?new Set(DASHBOARD_DATA.ativos.map(r=>String(r.NOME||"").trim().toUpperCase())).size:0;
   // KPIs
   const vagasAbArr=vagas.filter(v=>v.status!=="PREENCHIDA"&&v.status!=="CANCELADA");
@@ -4667,7 +4703,7 @@ function rhDashRender(){
   document.getElementById("rd-k-contrs").innerHTML=desl.length?`saldo <b>${contr-desl.length>=0?"+":""}${contr-desl.length}</b> vs saídas`:"—";
   document.getElementById("rd-k-entr").textContent=entrev.length;
   const vagasDist=new Set(entrev.map(x=>x.vaga_numero).filter(Boolean)).size;
-  const perLbl=RDASH_PER==="tudo"?"total geral":"no mês (por data da entrevista)";
+  const perLbl=(ST.sd||ST.ed)?"no período (por data da entrevista)":"total geral";
   document.getElementById("rd-k-entrs").innerHTML=vagasDist?`para <b>${vagasDist}</b> vagas · <span style="opacity:.7">${perLbl}</span>`:`<span style="opacity:.7">${perLbl}</span>`;
   const fin=entrev.filter(x=>x.situacao!=="EM PROCESSO").length;
   document.getElementById("rd-k-taxa").textContent=fin?((contr/fin*100).toFixed(0)+"%"):"—";
@@ -4859,16 +4895,16 @@ function comRenderView(){
 }
 function comFiltrados(){
   const q=(document.getElementById("s-compro")?.value||"").toUpperCase();
-  let rows=COM_P;
+  let rows=comPF();
   if(COM_TBL_STATUS!=="TODAS")rows=rows.filter(x=>(x.status||"—")===COM_TBL_STATUS);
   if(q)rows=rows.filter(x=>JSON.stringify(x).toUpperCase().includes(q));
   return rows;
 }
 /* ── Modal de detalhe dos cards (clique para ver os dados) ── */
 function comDet(kind){
-  const P=COM_P||[];
+  const P=comPF();
   const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
-  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
+  const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
   const hd=["Cliente","Tipo","Contato","Cidade","Valor","Status","Envio","Parado","Chance","Resp."];
   const det=p=>[p.nome||"—",p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.contato||"—",p.cidade||"—",fmtBRL(p.valor),p.status||"—",p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—",comDiasParado(p)+"d",comChance(p)+"%",(p.responsavel||"—").split(" ")[0]];
   const soma=arr=>COM_VALORES?fmtBRL0(arr.reduce((s,p)=>s+(Number(p.valor)||0),0)):arr.length+" proposta(s)";
@@ -4939,9 +4975,9 @@ function comDet(kind){
 function comRenderCards(){
   const el=document.getElementById("cp-kpis");if(!el)return;
   const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1),mAntIni=new Date(hoje.getFullYear(),hoje.getMonth()-1,1),mAntFim=new Date(hoje.getFullYear(),hoje.getMonth(),0,23,59,59);
-  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
+  const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
   const noMesAnt=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mAntIni&&x<=mAntFim;};
-  const P=COM_P;
+  const P=comPF();
   const abertas=P.filter(p=>COM_ST_ATIVOS.includes(p.status));
   const negoc=P.filter(p=>["PROPOSTA","NEGOCIAÇÃO","CONTRATO"].includes(p.status));
   const negR=negoc.reduce((s,p)=>s+(Number(p.valor)||0),0);
@@ -6915,9 +6951,9 @@ function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
   const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
   const mAntIni=new Date(hoje.getFullYear(),hoje.getMonth()-1,1),mAntFim=new Date(hoje.getFullYear(),hoje.getMonth(),0,23,59,59);
-  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
+  const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
   const noMesAnt=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mAntIni&&x<=mAntFim;};
-  const P=COM_P;
+  const P=comPF();
   const envMes=P.filter(p=>noMes(p.data_envio_proposta)),envAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
   const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em)),fecAnt=P.filter(p=>p.status==="FECHADO"&&noMesAnt(p.fechado_em));
   const visMes=P.filter(p=>noMes(p.ultima_visita));
@@ -7148,7 +7184,7 @@ function comResumoIA(){
   const btn=document.getElementById("cd-ia-btn"),out=document.getElementById("cd-ia-out");
   btn.disabled=true;btn.textContent="🧠 Analisando…";out.textContent="";
   const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
-  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
+  const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
   const envMes=COM_P.filter(p=>noMes(p.data_envio_proposta));
   const resumoDados=COM_P.map(p=>`${p.nome} (${p.tipo_cliente}, ${p.cidade||"?"}): ${p.servico||"?"} | ${fmtBRL(p.valor)} | status ${p.status} | origem ${p.origem_lead||"?"} | enviada ${p.data_envio_proposta||"não"} | cadência etapa ${p.cadencia_etapa||0}/5${p.respondido_em?" | RESPONDEU":""}${p.motivo_perda?" | perda: "+p.motivo_perda:""}`).join("\n");
   const ctx=`MÓDULO COMERCIAL — ${hoje.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}\nPropostas enviadas no mês: ${envMes.length}\nTotal de propostas na base: ${COM_P.length}\n\nLISTA DE PROPOSTAS:\n${resumoDados}`;
