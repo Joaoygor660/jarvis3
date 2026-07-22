@@ -6495,10 +6495,17 @@ const AUD_PILARES=[["limpeza","🧹 Limpeza","#0d9488"],["colab","👥 Colaborad
 let AUD_CAT={limpeza:[],colab:[],cliente:[]},AUD_A=[],AUD_BUSCA="",AUD_FST="TODOS",AUD_FSUP="",AUD_PER="mes";
 /* postos ativos: LOCAL distintos da planilha diária, com supervisor (AREA) e turno */
 function audPostosAtivos(){
+  // Cada "posto ativo" = um CLIENTE ativo. Mesma fonte e mesma chave (normTxt do
+  // NOME) do KPI "Clientes Ativos" da Visão Geral, para os números baterem.
   const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
-  const fontes=[].concat(D.ativos||[],D.presenca||[],D.faltas||[]);
+  const clientes=D.clientes||[];
+  const norm=(typeof normTxt==="function")?normTxt:(s=>String(s||"").toUpperCase().trim());
   const m={};
-  fontes.forEach(r=>{const loc=(r.LOCAL||"").trim();if(!loc)return;if(!m[loc])m[loc]={posto:loc,supervisor:(r.AREA||"").trim(),cliente:(r.CLIENTE||"").trim()};});
+  clientes.forEach(r=>{
+    const nome=(r.NOME||"").trim();if(!nome)return;
+    const key=norm(nome);if(!key)return;
+    if(!m[key])m[key]={posto:nome,supervisor:(r.AREA||"").trim(),cliente:nome};
+  });
   return Object.values(m).sort((a,b)=>a.posto.localeCompare(b.posto));
 }
 function audLoad(){
