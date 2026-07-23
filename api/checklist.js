@@ -61,9 +61,15 @@ module.exports = async function handler(req, res) {
         const { completos, total } = await contaSupCompletos(data);
         return res.status(200).json({ ok: true, completos, total, liberado: completos / total >= 0.7 });
       }
-      // padrão: registros do dia (self + equipe)
-      const data = q.data || nowBR().date;
-      const r = await fetch(`${rest}/jv_checklist_diario?select=*&data=eq.${data}`, { headers });
+      // padrão: registros de um dia, ou de um intervalo (?de=&ate=) para o Modo TV
+      let filtro;
+      if (q.de || q.ate) {
+        const de = q.de || q.ate, ate = q.ate || q.de;
+        filtro = `data=gte.${de}&data=lte.${ate}`;
+      } else {
+        filtro = `data=eq.${q.data || nowBR().date}`;
+      }
+      const r = await fetch(`${rest}/jv_checklist_diario?select=*&${filtro}&limit=5000`, { headers });
       if (!r.ok) return res.status(r.status).json({ error: "Erro ao consultar registros." });
       return res.status(200).json({ ok: true, rows: await r.json() });
     }
