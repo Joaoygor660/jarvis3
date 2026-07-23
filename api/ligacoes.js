@@ -3,7 +3,7 @@
 
 const _auth = require("./_auth");
 
-const COLS = ["colaborador", "posto", "supervisor", "telefone", "data_contato", "data_falta", "justificativa", "motivo", "acordo", "canal", "impressao", "criado_por"];
+const COLS = ["colaborador", "posto", "supervisor", "telefone", "data_contato", "data_falta", "justificativa", "motivo", "acordo", "canal", "impressao", "criado_por", "duracao_min", "abono"];
 
 module.exports = async function handler(req, res) {
   const _ga = _auth.requireAuth(req);

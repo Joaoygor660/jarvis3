@@ -6705,11 +6705,37 @@ function ligFaltasRecentes(){
     if(typeof inR==="function"&&!inR(dia))return;
     if(typeof mT==="function"&&!mT(f))return;
     if(typeof mA==="function"&&!mA(f))return;
-    if(!m[nome])m[nome]={colaborador:nome,posto:(f.LOCAL||"").trim(),supervisor:(f.AREA||"").trim(),datas:[]};
+    if(!m[nome])m[nome]={colaborador:nome,posto:(f.LOCAL||"").trim(),supervisor:(f.AREA||"").trim(),datas:[],abonos:{}};
     m[nome].datas.push(dia);
+    m[nome].abonos[dia]=f.ABONO||"";
   });
-  Object.values(m).forEach(x=>{x.datas.sort();x.ultima=x.datas[x.datas.length-1];});
+  Object.values(m).forEach(x=>{x.datas.sort();x.ultima=x.datas[x.datas.length-1];x.abono=x.abonos[x.ultima]||"";});
   return Object.values(m);
+}
+/* ABONO da planilha: I=injustificada, A=abonada, J=justificada, L=licença */
+const LIG_ABONO={I:["Injustificada","#dc2626","#fef2f2","#fecaca"],A:["Abonada","#f97316","#fff7ed","#fed7aa"],
+  J:["Justificada","#16a34a","#f0fdf4","#bbf7d0"],L:["Licença","#0891b2","#ecfeff","#a5f3fc"]};
+function ligAbonoTag(cod){
+  const a=LIG_ABONO[String(cod||"").trim().toUpperCase()];
+  if(!a)return '<span style="font-size:.56rem;font-weight:800;color:#94a3b8">sem abono</span>';
+  return '<span style="font-size:.56rem;font-weight:800;color:'+a[1]+';background:'+a[2]+';border:1px solid '+a[3]+';border-radius:8px;padding:1px 7px">'+a[0]+'</span>';
+}
+/* abono registrado no contato, ou o da planilha na data da falta */
+function ligAbonoDe(c){
+  if(c&&c.abono)return c.abono;
+  if(!c||!c.colaborador)return "";
+  const f=ligFaltasRecentes().find(x=>x.colaborador===c.colaborador);
+  if(!f)return "";
+  return (c.data_falta&&f.abonos&&f.abonos[String(c.data_falta).slice(0,10)])||f.abono||"";
+}
+/* expande/recolhe o detalhe dentro do próprio card */
+function ligExpandir(id){
+  const el=document.getElementById(id);if(!el)return;
+  const d=el.querySelector(".lig-det"),m=el.querySelector(".lig-mais");
+  if(!d)return;
+  const abrir=d.style.display==="none";
+  d.style.display=abrir?"block":"none";
+  if(m)m.textContent=abrir?"▴ recolher":"▾ detalhes";
 }
 function ligContatoDe(nome){return LIG_C.filter(c=>c.colaborador===nome).sort((a,b)=>new Date(b.criado_em)-new Date(a.criado_em))[0];}
 function ligTelefoneDe(nome){const c=LIG_C.find(c=>c.colaborador===nome&&c.telefone);return c?c.telefone:"";}
@@ -6771,17 +6797,47 @@ function ligRender(){
   h+=kpi("🎯","Cobertura de contato",coberto+"%",`${recentes.length-pend.length} de ${recentes.length} faltas recentes`,coberto>=70?"#16a34a":coberto>=40?"#f97316":"#dc2626");
   h+=kpi("🏷️","Motivo mais comum",rankMot[0]?rankMot[0][0]:"—",rankMot[0]?rankMot[0][1]+" ocorrência(s)":"sem dados","#7c3aed");
   h+=`</div>`;
+  /* tempo de conversa + composição por tipo de falta */
+  const comDur=contatosMes.filter(c=>c.duracao_min!=null&&c.duracao_min>0);
+  const durMed=comDur.length?Math.round(comDur.reduce((t,c)=>t+c.duracao_min,0)/comDur.length):null;
+  const durTot=comDur.reduce((t,c)=>t+c.duracao_min,0);
+  const porAb={};contatosMes.forEach(c=>{const k=String(ligAbonoDe(c)||"").toUpperCase();if(!LIG_ABONO[k])return;porAb[k]=(porAb[k]||0)+1;});
+  const totAb=Object.values(porAb).reduce((t,n)=>t+n,0);
+  h+=`<div style="display:grid;grid-template-columns:1fr 2fr;gap:11px;margin-bottom:12px">
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px">
+      <div style="font-size:.7rem;font-weight:800;color:#0d1f35;margin-bottom:6px">⏱️ Tempo de conversa</div>
+      <div style="font-size:1.6rem;font-weight:900;color:#0d1f35">${durMed!=null?durMed+" min":"—"}</div>
+      <div style="font-size:.6rem;color:#94a3b8">média de ${comDur.length} ligação(ões) · ${durTot} min no total</div>
+      ${comDur.length<contatosMes.length?`<div style="font-size:.56rem;color:#b45309;margin-top:5px">${contatosMes.length-comDur.length} contato(s) sem duração informada</div>`:""}
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px">
+      <div style="font-size:.7rem;font-weight:800;color:#0d1f35;margin-bottom:8px">🏷️ Tipo das faltas tratadas</div>
+      ${totAb?Object.keys(LIG_ABONO).filter(k=>porAb[k]).map(k=>{const a=LIG_ABONO[k],n=porAb[k],pc=Math.round(n/totAb*100);
+        return `<div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+          <span style="width:88px;font-size:.62rem;font-weight:800;color:${a[1]}">${a[0]}</span>
+          <div style="flex:1;background:#f1f5f9;border-radius:6px;height:13px;overflow:hidden"><div style="width:${pc}%;height:13px;background:${a[1]}"></div></div>
+          <span style="width:56px;text-align:right;font-size:.62rem;font-weight:800;color:#334155">${n} · ${pc}%</span></div>`;}).join("")
+        :'<div style="font-size:.64rem;color:#94a3b8">Nenhum contato com tipo de falta identificado ainda.</div>'}
+    </div>
+  </div>`;
   /* pendências do dia */
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px;margin-bottom:12px">
     <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">⏳ Pendências de Contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">faltou em ${_esc(ligPeriodoTxt())} e ainda não foi contatado</span></div>
-    ${pend.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px">${pend.map(f=>`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 11px;cursor:pointer" onclick='ligForm(null,${JSON.stringify(f).replace(/'/g,"&#39;")})'>
-      <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}</div>
+    ${pend.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px">${pend.map((f,ix)=>`<div id="ligp-${ix}" style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 11px;cursor:pointer" onclick="ligExpandir('ligp-${ix}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+        <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}</div>${ligAbonoTag(f.abono)}
+      </div>
       <div style="font-size:.58rem;color:#b91c1c;margin:2px 0 6px">🏢 ${_esc(f.posto||"—")} · 🧭 ${_esc(f.supervisor||"—")}</div>
       <div style="font-size:.58rem;color:#7f1d1d">Faltou: ${f.datas.map(d=>rhFmt(d)).join(", ")}</div>
       <div style="display:flex;gap:6px;margin-top:7px;align-items:center">
-        <span style="font-size:.6rem;font-weight:800;color:#dc2626">📞 Registrar →</span>
+        <button onclick="event.stopPropagation();ligForm(null,${JSON.stringify(f).replace(/'/g,"&#39;")})" style="border:none;background:#dc2626;color:#fff;border-radius:8px;padding:3px 9px;font-size:.58rem;font-weight:800;cursor:pointer">📞 Registrar contato</button>
         <button onclick="event.stopPropagation();ligWhats('${_esc(f.colaborador).replace(/'/g,"\\'")}','${_esc(ligTelefoneDe(f.colaborador))}')" style="border:none;background:#25d366;color:#fff;border-radius:8px;padding:3px 9px;font-size:.58rem;font-weight:800;cursor:pointer">📱 WhatsApp SAC</button>
       </div>
+      <div class="lig-det" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #fca5a5;font-size:.58rem;color:#7f1d1d;line-height:1.65">
+        <b>${f.datas.length}</b> falta(s) no período &middot; último contato: <b>${(function(){const c=ligContatoDe(f.colaborador);return c?rhFmt(c.data_contato||String(c.criado_em).slice(0,10)):"nunca";})()}</b><br>
+        Telefone: <b>${_esc(ligTelefoneDe(f.colaborador)||"não cadastrado")}</b>
+      </div>
+      <div class="lig-mais" style="font-size:.55rem;font-weight:800;color:#dc2626;margin-top:6px">▾ detalhes</div>
     </div>`).join("")}</div>`:'<div style="color:#16a34a;font-weight:700;font-size:.76rem;margin-top:6px">✅ Nenhuma pendência — todos os que faltaram já foram contatados!</div>'}
   </div>`;
   /* acompanhamento pós-contato — barra de estabilidade a partir do contato */
@@ -6833,11 +6889,13 @@ function ligRenderHist(){
   const b=LIG_BUSCA.toLowerCase();
   if(b)rows=rows.filter(c=>[c.colaborador,c.posto,c.motivo,c.justificativa].join(" ").toLowerCase().indexOf(b)>=0);
   if(!rows.length){el.innerHTML='<div style="padding:24px;text-align:center;color:#94a3b8;font-size:.76rem">Nenhum contato registrado ainda.</div>';return;}
-  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.72rem;min-width:720px"><thead><tr style="background:#f8fafc">${["Data","Colaborador","Posto","Motivo","Justificativa","Acordo","Canal","Resp.",""].map(c=>`<th style="padding:8px 10px;text-align:left;color:#64748b;font-size:.6rem;text-transform:uppercase;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`).join("")}</tr></thead><tbody>
+  el.innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.72rem;min-width:720px"><thead><tr style="background:#f8fafc">${["Data","Colaborador","Posto","Tipo","Dur.","Motivo","Justificativa","Acordo","Canal","Resp.",""].map(c=>`<th style="padding:8px 10px;text-align:left;color:#64748b;font-size:.6rem;text-transform:uppercase;border-bottom:1px solid #e5e9f0;white-space:nowrap">${c}</th>`).join("")}</tr></thead><tbody>
   ${rows.slice(0,200).map(c=>`<tr style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="ligForm(${c.id})">
     <td style="padding:7px 10px;white-space:nowrap">${rhFmt(c.data_contato||String(c.criado_em).slice(0,10))}</td>
     <td style="padding:7px 10px;font-weight:700;color:#0d1f35">${_esc(c.colaborador)}</td>
     <td style="padding:7px 10px">${_esc(c.posto||"—")}</td>
+    <td style="padding:7px 10px">${ligAbonoTag(ligAbonoDe(c))}</td>
+    <td style="padding:7px 10px;white-space:nowrap">${c.duracao_min!=null?c.duracao_min+" min":"—"}</td>
     <td style="padding:7px 10px">${c.motivo?`<span class="rh-badge" style="background:#ede9fe;color:#6b21a8">${_esc(c.motivo)}</span>`:"—"}</td>
     <td style="padding:7px 10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_esc(c.justificativa||"")}">${_esc(c.justificativa||"—")}</td>
     <td style="padding:7px 10px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_esc(c.acordo||"")}">${_esc(c.acordo||"—")}</td>
@@ -6880,9 +6938,11 @@ function ligForm(id,pre){
         <div><label class="rhf-l">Posto</label><input class="rhf-i" id="lf-posto" value="${_esc(c?c.posto:(p.posto||""))}"></div>
         <div><label class="rhf-l">Supervisor</label><input class="rhf-i" id="lf-sup" value="${_esc(c?c.supervisor:(p.supervisor||""))}"></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:10px">
         <div><label class="rhf-l">Data do contato</label><input class="rhf-i" id="lf-data" type="date" value="${c&&c.data_contato?String(c.data_contato).slice(0,10):ymd(new Date())}"></div>
         <div><label class="rhf-l">Data da falta</label><input class="rhf-i" id="lf-dtfalta" type="date" value="${c&&c.data_falta?String(c.data_falta).slice(0,10):(p.ultima||"")}"></div>
+        <div><label class="rhf-l">Tipo da falta</label><select class="rhf-i" id="lf-abono">${["","I","A","J","L"].map(k=>{const lbl=k?LIG_ABONO[k][0]:"— da planilha —";const on=(c?ligAbonoDe(c):(p.abono||""))===k;return `<option value="${k}" ${on?"selected":""}>${lbl}</option>`;}).join("")}</select></div>
+        <div><label class="rhf-l">Duração (min)</label><input class="rhf-i" id="lf-dur" type="number" min="0" max="240" value="${c&&c.duracao_min!=null?c.duracao_min:""}" placeholder="Ex: 7"></div>
         <div><label class="rhf-l">Canal</label><select class="rhf-i" id="lf-canal"><option value="LIGAÇÃO" ${c&&c.canal==="LIGAÇÃO"?"selected":""}>📞 Ligação</option><option value="PESSOAL" ${c&&c.canal==="PESSOAL"?"selected":""}>🤝 Pessoal</option></select></div>
       </div>
       <div style="margin-bottom:10px"><label class="rhf-l">Justificativa do colaborador</label><textarea class="rhf-i" id="lf-just" rows="2" oninput="ligSugereMotivo()" placeholder="O que ele alegou…">${_esc(c?c.justificativa:"")}</textarea></div>
@@ -6918,7 +6978,8 @@ function ligSalvar(id){
   const nome=v("lf-nome");const msg=document.getElementById("lf-msg");
   if(!nome){msg.style.color="#dc2626";msg.textContent="Informe o colaborador.";return;}
   const motBtn=[...document.querySelectorAll("#lf-motivos .lf-chip")].find(b=>b.dataset.sel==="1"||b.style.background==="rgb(237, 233, 254)");
-  const body={colaborador:nome,telefone:v("lf-tel"),posto:v("lf-posto"),supervisor:v("lf-sup"),data_contato:v("lf-data")||null,data_falta:v("lf-dtfalta")||null,canal:v("lf-canal"),justificativa:v("lf-just"),motivo:motBtn?motBtn.dataset.mot:null,acordo:v("lf-acordo"),impressao:v("lf-impr"),criado_por:sessionStorage.getItem("userNome")||null};
+  const body={colaborador:nome,telefone:v("lf-tel"),posto:v("lf-posto"),supervisor:v("lf-sup"),data_contato:v("lf-data")||null,data_falta:v("lf-dtfalta")||null,canal:v("lf-canal"),justificativa:v("lf-just"),motivo:motBtn?motBtn.dataset.mot:null,acordo:v("lf-acordo"),impressao:v("lf-impr"),criado_por:sessionStorage.getItem("userNome")||null,
+    abono:v("lf-abono")||null,duracao_min:v("lf-dur")?parseInt(v("lf-dur"),10):null};
   if(id)body.id=id;
   msg.style.color="#64748b";msg.textContent="Salvando…";
   fetch("/api/ligacoes",{method:id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
