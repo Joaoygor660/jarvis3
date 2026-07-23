@@ -6890,7 +6890,7 @@ function audSalvar(){
    Puxa as faltas da planilha diária, aponta quem faltou e ainda não foi
    contatado, e registra a tratativa. Fecha o ciclo antes da medida disciplinar. */
 const LIG_MOTIVOS=[["Saúde","🏥"],["Familiar","👨‍👩‍👧"],["Pessoal","🙍"],["Transporte","🚌"],["Conduta","⚠️"],["Financeiro","💰"],["Sem justificativa","❓"],["Outro","•"]];
-let LIG_C=[],LIG_BUSCA="";
+let LIG_C=[],LIG_BUSCA="",LIG_ABANDONO_N=0;
 /* rótulo do período ativo no filtro do sistema (usado nos títulos da guia) */
 function ligPeriodoTxt(){
   if(!ST.sd&&!ST.ed)return"todo o histórico da planilha";
@@ -6908,10 +6908,13 @@ function ligLoad(){
 function ligFaltasRecentes(){
   const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
   const m={};
+  LIG_ABANDONO_N=0;
   (D.faltas||[]).forEach(f=>{
     const nome=(f.NOME||"").trim();if(!nome)return;
     const dia=f.DATA?String(f.DATA).slice(0,10):"";if(!dia)return;
     if(typeof inR==="function"&&!inR(dia))return;
+    // quem abandonou o posto não entra na fila de ligação (mesma regra do filterAll)
+    if(String(f.LOCAL||"").toUpperCase().indexOf("ABANDONO")>=0){LIG_ABANDONO_N++;return;}
     if(typeof mT==="function"&&!mT(f))return;
     if(typeof mA==="function"&&!mA(f))return;
     if(!m[nome])m[nome]={colaborador:nome,posto:(f.LOCAL||"").trim(),supervisor:(f.AREA||"").trim(),datas:[],abonos:{}};
@@ -7031,7 +7034,7 @@ function ligRender(){
   </div>`;
   /* pendências do dia */
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px;margin-bottom:12px">
-    <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">⏳ Pendências de Contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">faltou em ${_esc(ligPeriodoTxt())} e ainda não foi contatado</span></div>
+    <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">⏳ Pendências de Contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">faltou em ${_esc(ligPeriodoTxt())} e ainda não foi contatado${LIG_ABANDONO_N?` · <b style="color:#b45309">${LIG_ABANDONO_N} em abandono ocultado(s)</b>`:""}</span></div>
     ${pend.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px">${pend.map((f,ix)=>`<div id="ligp-${ix}" style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 11px;cursor:pointer" onclick="ligExpandir('ligp-${ix}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
         <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}</div>${ligAbonoTag(f.abono)}
