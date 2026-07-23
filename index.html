@@ -5536,13 +5536,7 @@ function comTimeline(id){
 function comDashLoad(){
   const el=document.getElementById("cd-content");
   if(el&&!COM_P.length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando painel comercial…</div>';
-  // os Alertas Estratégicos cruzam RH: carrega esses dados junto, sem travar o painel
-  const rh=RDASH.loaded?Promise.resolve():(function(){
-    const get=t=>fetch("/api/rh?t="+t).then(r=>r.json()).then(j=>(j&&j.rows)||[]).catch(()=>[]);
-    return Promise.all([get("vagas"),get("entrevistas"),get("desligamentos"),get("reservas"),get("treinamentos")])
-      .then(a=>{RDASH={vagas:a[0],entrev:a[1],desl:a[2],res:a[3],trein:a[4],loaded:true};}).catch(()=>{});
-  })();
-  Promise.all([comFetchAll(),rh]).then(comDashRender).catch(()=>{if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.85rem">Erro ao carregar.</div>';});
+  comFetchAll().then(comDashRender).catch(()=>{if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.85rem">Erro ao carregar.</div>';});
 }
 function _cdBarRows(pairs,corFn){
   if(!pairs.length)return'<div style="color:#94a3b8">Sem dados ainda.</div>';
@@ -7204,59 +7198,6 @@ function ligExcluir(id){
   if(!confirm("Excluir o contato de \""+(c?c.colaborador:id)+"\"?"))return;
   fetch("/api/ligacoes?id="+id,{method:"DELETE"}).then(()=>ligLoad());
 }
-/* ═════════ ALERTAS ESTRATÉGICOS — Diretoria ═════════
-   Cruza operação (planilha), RH (banco) e comercial. O diretor não procura o
-   problema: ele aparece. Só entra alerta com evidência real; nada de texto
-   genérico quando não há dado. */
-function comAlertasEstrategicos(){
-  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
-  const hoje=new Date(),dias=d=>(hoje-new Date(String(d).slice(0,10)+"T12:00:00"))/86400000;
-  const A=[];
-  /* 1) déficit de pessoal por área — postos descobertos na planilha */
-  const desc={};
-  (D.justif||[]).forEach(r=>{if(typeof inR==="function"&&!inR(r.DATA))return;const a=(r.AREA||"").trim();if(a)desc[a]=(desc[a]||0)+1;});
-  const piorDesc=Object.keys(desc).map(k=>[k,desc[k]]).sort((a,b)=>b[1]-a[1])[0];
-  if(piorDesc&&piorDesc[1]>=5)A.push(["crit","Operação",`<b>${_esc(piorDesc[0])}</b> acumula <b>${piorDesc[1]}</b> posto(s) descoberto(s) no período — maior déficit de cobertura.`]);
-  /* 2) sem alocação — gente ociosa */
-  const semAloc=(D.dispo||[]).length;
-  if(semAloc>=10)A.push(["aten","Operação",`<b>${semAloc}</b> colaborador(es) sem alocação — realocar antes de abrir vaga nova.`]);
-  /* 3..5) RH, só se o painel de RH já tiver carregado */
-  if(RDASH&&RDASH.loaded){
-    const entrev=gFil(RDASH.entrev,"data_entrevista",{area:false});
-    const vagas=gFil(RDASH.vagas,"data_abertura",{aberto:gVagaAberta});
-    const perdidos=entrev.filter(x=>["DESISTIU","NÃO COMPARECEU","RECUSOU A VAGA"].indexOf(x.situacao)>=0&&x.data_entrevista&&dias(x.data_entrevista)<=7);
-    if(perdidos.length>=5)A.push(["crit","RH",`<b>${perdidos.length} candidato(s)</b> perdidos nesta semana (desistência, não comparecimento ou recusa).`]);
-    const semFb=entrev.filter(x=>x.situacao==="EM PROCESSO"&&x.data_entrevista&&dias(x.data_entrevista)>=7);
-    if(semFb.length>=5)A.push(["aten","RH",`<b>${semFb.length} entrevista(s)</b> sem desfecho há mais de 7 dias — candidatos esfriando.`]);
-    const paradas=vagas.filter(v=>v.data_abertura&&dias(v.data_abertura)>=30).length;
-    if(paradas>=3)A.push(["crit","RH",`<b>${paradas} vaga(s)</b> abertas há mais de 30 dias sem preenchimento.`]);
-    const sc=rhScore(vagas,entrev);
-    if(sc.score!=null&&sc.score>=85)A.push(["ok","RH",`Saúde do recrutamento em <b>${sc.score}/100</b>${sc.tmed!=null?` — tempo médio de <b>${Math.round(sc.tmed)} dias</b>`:""}.`]);
-  }
-  /* 6) comercial: automação muda */
-  const n8n=comAlertaN8N();
-  if(n8n)A.push(["crit","Comercial",`Automação possivelmente fora do ar: ${n8n.txt}`]);
-  /* 7) comercial: propostas paradas */
-  const P=comPF();
-  const parad=P.filter(p=>gPropAberta(p)&&comDiasParado(p)>=15).length;
-  if(parad>=3)A.push(["aten","Comercial",`<b>${parad} proposta(s)</b> sem qualquer movimentação há 15+ dias.`]);
-  return A;
-}
-function comBannerAlertas(){
-  const A=comAlertasEstrategicos();
-  const C={crit:["#dc2626","#fef2f2","#fecaca"],aten:["#b45309","#fff7ed","#fed7aa"],ok:["#16a34a","#f0fdf4","#bbf7d0"]};
-  const corpo=A.length
-    ? A.map(a=>{const c=C[a[0]]||C.aten;return `<div style="display:flex;align-items:center;gap:13px;background:${c[1]};border:1px solid ${c[2]};border-left:4px solid ${c[0]};border-radius:11px;padding:10px 14px;margin-bottom:6px">
-        <span style="width:9px;height:9px;border-radius:50%;background:${c[0]};flex-shrink:0"></span>
-        <span style="min-width:86px;font-size:.6rem;font-weight:900;color:${c[0]};text-transform:uppercase;letter-spacing:.5px">${a[1]}</span>
-        <span style="font-size:.74rem;color:${c[0]};line-height:1.45">${a[2]}</span></div>`;}).join("")
-    : '<div style="font-size:.72rem;color:#16a34a;font-weight:700">✅ Nenhum alerta estratégico ativo no período.</div>';
-  return `<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px;margin-bottom:12px">
-    <div style="font-size:.82rem;font-weight:800;color:#0d1f35;margin-bottom:3px">🚨 Alertas Estratégicos</div>
-    <div style="font-size:.58rem;color:#94a3b8;margin-bottom:9px">operação, RH e comercial cruzados — o que exige decisão agora</div>
-    ${corpo}
-  </div>`;
-}
 function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
   const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
@@ -7346,7 +7287,7 @@ function comDashRender(){
     `${taxa!==null?`, com conversão de <b>${taxa}%</b>`:""}.`+
     `${criticas.length?` <b style="color:#dc2626">${criticas.length} negociação(ões) críticas exigem contato imediato.</b>`:""}`+
     `${probMeta!==null?` Probabilidade de bater a meta: <b>${probMeta}%</b>.`:""}`;
-  let h=comBannerAlertas();
+  let h='';
   /* ── COCKPIT HERO ── */
   h+=`<div style="background:linear-gradient(135deg,#0d1f35,#173a66);border-radius:16px;padding:22px 26px;margin-bottom:14px;color:#fff;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:center;animation:cvFadeUp .4s ease both">
     <div style="text-align:center">
