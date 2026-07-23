@@ -7039,7 +7039,7 @@ function ligRender(){
       <div style="font-size:.58rem;color:#b91c1c;margin:2px 0 6px">🏢 ${_esc(f.posto||"—")} · 🧭 ${_esc(f.supervisor||"—")}</div>
       <div style="font-size:.58rem;color:#7f1d1d">Faltou: ${f.datas.map(d=>rhFmt(d)).join(", ")}</div>
       <div style="display:flex;gap:6px;margin-top:7px;align-items:center">
-        <button onclick="event.stopPropagation();ligForm(null,${JSON.stringify(f).replace(/'/g,"&#39;")})" style="border:none;background:#dc2626;color:#fff;border-radius:8px;padding:3px 9px;font-size:.58rem;font-weight:800;cursor:pointer">📞 Registrar contato</button>
+        <button onclick='event.stopPropagation();ligForm(null,${JSON.stringify(f).replace(/'/g,"&#39;")})' style="border:none;background:#dc2626;color:#fff;border-radius:8px;padding:3px 9px;font-size:.58rem;font-weight:800;cursor:pointer">📞 Registrar contato</button>
         <button onclick="event.stopPropagation();ligWhats('${_esc(f.colaborador).replace(/'/g,"\\'")}','${_esc(ligTelefoneDe(f.colaborador))}')" style="border:none;background:#25d366;color:#fff;border-radius:8px;padding:3px 9px;font-size:.58rem;font-weight:800;cursor:pointer">📱 WhatsApp SAC</button>
       </div>
       <div class="lig-det" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed #fca5a5;font-size:.58rem;color:#7f1d1d;line-height:1.65">
