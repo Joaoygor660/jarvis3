@@ -1329,6 +1329,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔄 Reservas — Aproveitamento</div><div id="rd-c-reservas" style="font-size:.76rem;color:#334155">—</div></div>
         <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🎓 Treinamentos</div><div id="rd-c-treino" style="font-size:.76rem;color:#334155">—</div></div>
       </div>
+      <div id="rd-saude"></div>
       <div id="rd-mapa"></div>
 
       <div style="margin:26px 0 12px;padding-top:18px;border-top:2px solid #e5e9f0;display:flex;align-items:center;gap:10px">
@@ -4697,6 +4698,118 @@ function rhMapaFoco(sl){
   if(g){const r=g.querySelector("rect");if(r){r.setAttribute("stroke","#0d1f35");r.setAttribute("stroke-width","3");}g.parentNode.appendChild(g);}
   rhMapaInfo(sl);
 }
+/* ═════════ SAÚDE DO RECRUTAMENTO — nota 0-100 + insights + Pareto ═════════
+   Cinco pilares de 20 pontos. Cada um vira nota por interpolação linear entre
+   um alvo (20 pts) e um limite ruim (0 pt). Se falta dado para um pilar, ele é
+   omitido e a nota é reescalada — melhor do que punir por ausência de dado. */
+function rhScore(vagas,entrev){
+  const hoje=new Date(),dias=d=>(hoje-new Date(String(d).slice(0,10)+"T12:00:00"))/86400000;
+  const nota=(v,bom,ruim)=>{if(v==null)return null;const t=(v-ruim)/(bom-ruim);return Math.max(0,Math.min(1,t))*20;};
+  const abertas=vagas.filter(gVagaAberta);
+  const fech=vagas.filter(v=>v.status==="PREENCHIDA"&&v.data_abertura&&v.data_fechamento);
+  const P=[];
+  const tmed=fech.length?fech.reduce((t,v)=>t+Math.max(0,(new Date(v.data_fechamento)-new Date(v.data_abertura))/86400000),0)/fech.length:null;
+  P.push({k:"Tempo médio",v:nota(tmed,15,45),txt:tmed!=null?Math.round(tmed)+" dias":"—"});
+  const fin=entrev.filter(x=>x.situacao&&x.situacao!=="EM PROCESSO");
+  const desist=fin.filter(x=>["DESISTIU","NÃO COMPARECEU","RECUSOU A VAGA"].indexOf(x.situacao)>=0).length;
+  const tx=fin.length?desist/fin.length:null;
+  P.push({k:"Desistências",v:nota(tx,0,0.4),txt:tx!=null?Math.round(tx*100)+"%":"—"});
+  const ratio=abertas.length?entrev.length/abertas.length:(entrev.length?3:null);
+  P.push({k:"Entrevistas",v:nota(ratio,3,0),txt:ratio!=null?(Math.round(ratio*10)/10)+" por vaga":"—"});
+  const par=abertas.filter(v=>v.data_abertura&&dias(v.data_abertura)>=15).length;
+  const pTx=abertas.length?par/abertas.length:null;
+  P.push({k:"Vagas abertas",v:nota(pTx,0,0.5),txt:pTx!=null?par+" de "+abertas.length+" paradas":"—"});
+  const atras=entrev.filter(x=>x.situacao==="EM PROCESSO"&&x.data_entrevista&&dias(x.data_entrevista)>=7).length;
+  P.push({k:"Feedbacks",v:entrev.length?nota(atras,0,10):null,txt:entrev.length?atras+" atrasados":"—"});
+  const val=P.filter(x=>x.v!=null);
+  const score=val.length?Math.round(val.reduce((t,x)=>t+x.v,0)/(val.length*20)*100):null;
+  return{score:score,pilares:P,tmed:tmed,desistTx:tx,atrasados:atras,vagasParadas:par,abertas:abertas};
+}
+function rhScoreCor(n){
+  if(n==null)return["#94a3b8","Sem dados","🔘"];
+  if(n>=85)return["#16a34a","Excelente","🟢"];
+  if(n>=70)return["#65a30d","Bom","🟢"];
+  if(n>=50)return["#f59e0b","Atenção","🟡"];
+  return["#dc2626","Crítico","🔴"];
+}
+function rhGauge(n){
+  const cor=rhScoreCor(n),pct=(n==null?0:n)/100;
+  const R=78,cx=100,cy=96;
+  const ang=Math.PI*(1-pct),x=cx+R*Math.cos(ang),y=cy-R*Math.sin(ang);
+  const arco=n==null?"":`<path d="M ${cx-R} ${cy} A ${R} ${R} 0 ${pct>0.5?1:0} 1 ${x.toFixed(1)} ${y.toFixed(1)}" fill="none" stroke="${cor[0]}" stroke-width="15" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 200 118" style="width:100%;max-width:210px;height:auto">
+    <path d="M ${cx-R} ${cy} A ${R} ${R} 0 0 1 ${cx+R} ${cy}" fill="none" stroke="#eef2f7" stroke-width="15" stroke-linecap="round"/>
+    ${arco}
+    <text x="${cx}" y="${cy-16}" text-anchor="middle" style="font-size:36px;font-weight:900;fill:${cor[0]}">${n==null?"—":n}</text>
+    <text x="${cx}" y="${cy}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#94a3b8">de 100</text>
+  </svg>`;
+}
+function rhInsights(sc,vagas,entrev,desl){
+  const hoje=new Date(),dias=d=>(hoje-new Date(String(d).slice(0,10)+"T12:00:00"))/86400000;
+  const ins=[];
+  const semFb=entrev.filter(x=>x.situacao==="EM PROCESSO"&&x.data_entrevista&&dias(x.data_entrevista)>=2);
+  if(semFb.length)ins.push(["ama",`<b>${semFb.length} candidato(s)</b> aguardando desfecho há mais de 48h — retome o contato antes que desistam.`]);
+  const paradas=sc.abertas.filter(v=>v.data_abertura&&dias(v.data_abertura)>=20);
+  if(paradas.length){const v=paradas.sort((a,b)=>dias(b.data_abertura)-dias(a.data_abertura))[0];
+    ins.push(["ver",`A vaga <b>${_esc(v.numero_vaga||v.posto||"s/ número")}</b> está aberta há <b>${Math.round(dias(v.data_abertura))} dias</b> — risco alto de desistência do solicitante.`]);}
+  if(sc.tmed!=null)ins.push([sc.tmed<=20?"ver2":"ama",`Tempo médio de contratação em <b>${Math.round(sc.tmed)} dias</b>${sc.tmed<=20?" — dentro do alvo de 15 dias.":" — acima do alvo de 15 dias, revise as etapas mais lentas."}`]);
+  const porArea={};vagas.forEach(v=>{if(!gVagaAberta(v)||!v.area)return;if(v.data_abertura&&dias(v.data_abertura)>=15)porArea[v.area]=(porArea[v.area]||0)+1;});
+  const pior=Object.keys(porArea).map(k=>[k,porArea[k]]).sort((a,b)=>b[1]-a[1])[0];
+  if(pior&&pior[1]>=2)ins.push(["ama",`<b>${_esc(pior[0])}</b> concentra <b>${pior[1]} vaga(s)</b> paradas há 15+ dias — priorize essa área.`]);
+  const perdidos=entrev.filter(x=>["DESISTIU","NÃO COMPARECEU","RECUSOU A VAGA"].indexOf(x.situacao)>=0&&x.data_entrevista&&dias(x.data_entrevista)<=7);
+  if(perdidos.length>=3){
+    const porLoc={};perdidos.forEach(x=>{const l=String(x.bairro||x.cidade||"").trim();if(l)porLoc[l]=(porLoc[l]||0)+1;});
+    const top=Object.keys(porLoc).map(k=>[k,porLoc[k]]).sort((a,b)=>b[1]-a[1])[0];
+    ins.push(["ver",top?`<b>${_esc(top[0])}</b> perdeu <b>${top[1]} candidato(s)</b> nesta semana.`:`<b>${perdidos.length} candidatos</b> perdidos nesta semana.`]);
+  }
+  if(!ins.length)ins.push(["ver2","Nenhum ponto de atenção no período — recrutamento fluindo."]);
+  return ins;
+}
+function rhPareto(entrev){
+  const mot={};
+  entrev.forEach(x=>{if(!x.motivo_reprovacao)return;if(x.situacao==="EM PROCESSO"||x.situacao==="CONTRATADO")return;
+    const k=String(x.motivo_reprovacao).trim().toUpperCase();if(k)mot[k]=(mot[k]||0)+1;});
+  const r=Object.keys(mot).map(k=>[k,mot[k]]).sort((a,b)=>b[1]-a[1]);
+  const tot=r.reduce((t,x)=>t+x[1],0);
+  if(!tot)return'<div style="font-size:.7rem;color:#94a3b8">Nenhum motivo de reprovação registrado no período.</div>';
+  let acc=0;const linhas=r.slice(0,7).map(function(par){
+    const k=par[0],n=par[1],pc=n/tot*100;acc+=pc;
+    return `<div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+      <span style="width:30px;font-size:.72rem;font-weight:900;color:#0d1f35">${Math.round(pc)}%</span>
+      <span style="width:150px;font-size:.64rem;font-weight:700;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_esc(k)}">${_esc(k)}</span>
+      <div style="flex:1;background:#f1f5f9;border-radius:6px;height:15px;overflow:hidden"><div style="width:${pc.toFixed(0)}%;height:15px;background:${acc<=80?"#2e8fef":"#cbd5e1"}"></div></div>
+      <span style="width:42px;text-align:right;font-size:.6rem;font-weight:700;color:#94a3b8">${Math.round(acc)}%</span></div>`;}).join("");
+  const vitais=[];let a2=0;
+  for(let i=0;i<r.length;i++){a2+=r[i][1]/tot*100;vitais.push(r[i][0]);if(a2>=80)break;}
+  return linhas+`<div style="font-size:.6rem;color:#64748b;margin-top:7px;line-height:1.5">📌 <b>${vitais.length} motivo(s)</b> concentram 80% das reprovações: ${vitais.map(v=>_esc(v)).join(", ")}. Atacar esses resolve a maior parte.</div>`;
+}
+function rhDashSaude(vagas,entrev,desl){
+  const el=document.getElementById("rd-saude");if(!el)return;
+  const sc=rhScore(vagas,entrev),cor=rhScoreCor(sc.score);
+  const ins=rhInsights(sc,vagas,entrev,desl);
+  const cIns={ver:["#dc2626","#fef2f2","#fecaca"],ama:["#b45309","#fff7ed","#fed7aa"],ver2:["#16a34a","#f0fdf4","#bbf7d0"]};
+  el.innerHTML=`<div style="display:grid;grid-template-columns:minmax(0,250px) minmax(0,1fr);gap:12px;margin-bottom:14px">
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:16px 18px;text-align:center">
+      <div style="font-size:.78rem;font-weight:800;color:#0d1f35;margin-bottom:6px">Saúde do Recrutamento</div>
+      ${rhGauge(sc.score)}
+      <div style="display:inline-block;background:${cor[0]}18;color:${cor[0]};font-size:.72rem;font-weight:900;padding:3px 14px;border-radius:10px;margin-top:2px">${cor[2]} ${cor[1]}</div>
+      <div style="margin-top:11px;text-align:left">${sc.pilares.map(pl=>`<div style="display:flex;justify-content:space-between;font-size:.6rem;color:#64748b;margin-bottom:3px"><span>${pl.k}</span><b style="color:${pl.v==null?"#cbd5e1":pl.v>=14?"#16a34a":pl.v>=8?"#f59e0b":"#dc2626"}">${pl.txt}</b></div>`).join("")}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px">
+        <div style="font-size:.78rem;font-weight:800;color:#0d1f35;margin-bottom:8px">📌 Insights do Dia</div>
+        ${ins.map(function(it){const c=cIns[it[0]]||cIns.ama;return `<div style="display:flex;gap:9px;align-items:flex-start;background:${c[1]};border:1px solid ${c[2]};border-radius:10px;padding:7px 11px;margin-bottom:5px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${c[0]};margin-top:5px;flex-shrink:0"></span>
+          <span style="font-size:.7rem;color:${c[0]};line-height:1.5">${it[1]}</span></div>`;}).join("")}
+      </div>
+      <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px">
+        <div style="font-size:.78rem;font-weight:800;color:#0d1f35;margin-bottom:3px">📉 Motivos de Reprovação — Pareto</div>
+        <div style="font-size:.58rem;color:#94a3b8;margin-bottom:9px">barra azul = os poucos vitais que somam 80%</div>
+        ${rhPareto(entrev)}
+      </div>
+    </div>
+  </div>`;
+}
 function rhDashRender(){
   // Filtro principal do sistema: período (ST.sd/ST.ed) + área. Vagas em aberto
   // seguem visíveis fora do período — continuam abertas hoje.
@@ -4707,6 +4820,7 @@ function rhDashRender(){
   const trein=gFil(RDASH.trein,"data_treinamento",{});
   const ativosN=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos)?new Set(DASHBOARD_DATA.ativos.map(r=>String(r.NOME||"").trim().toUpperCase())).size:0;
   // KPIs
+  rhDashSaude(vagas,entrev,desl);
   const vagasAbArr=vagas.filter(v=>v.status!=="PREENCHIDA"&&v.status!=="CANCELADA");
   const vagasAb=vagasAbArr.length;
   RDASH_CUR={vagasAb:vagasAbArr,entrev:entrev,desl:desl,res:res,trein:trein};
