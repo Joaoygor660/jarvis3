@@ -1889,7 +1889,7 @@ function gVagaAberta(v){return v.status!=="PREENCHIDA"&&v.status!=="CANCELADA";}
 function gPropAberta(p){return p.status!=="FECHADO"&&p.status!=="PERDIDO";}
 function comPF(){
   let r=gFil(COM_P,"criado_em",{area:false,aberto:gPropAberta});
-  if(COM_FTIPO)r=r.filter(p=>String(p.tipo||"").toUpperCase()===COM_FTIPO);
+  if(COM_FTIPO)r=r.filter(p=>String(p.tipo_cliente||"").toUpperCase()===COM_FTIPO);
   return r;
 }
 function comSetTipo(t){COM_FTIPO=t;comRenderAll();}
@@ -5136,7 +5136,7 @@ function comRenderFiltros(){
   const cont={};COM_P.forEach(x=>{const s=x.status||"—";cont[s]=(cont[s]||0)+1;});
   const chips=[["TODAS","Todas","#0d1f35",COM_P.length]];
   COM_ST_ORDER.forEach(s=>{if(cont[s])chips.push([s,s,COM_ST_COLORS[s]||"#64748b",cont[s]]);});
-  const nT=t=>COM_P.filter(x=>!t||String(x.tipo||"").toUpperCase()===t).length;
+  const nT=t=>COM_P.filter(x=>!t||String(x.tipo_cliente||"").toUpperCase()===t).length;
   const tipos=[["","Todos","#0d1f35"],["EMPRESA","🏢 Empresas","#2e8fef"],["CONDOMINIO","🏘️ Condomínios","#7c3aed"]];
   box.innerHTML=tipos.map(([val,lbl,cor])=>{
     const on=COM_FTIPO===val;
