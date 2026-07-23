@@ -6588,6 +6588,36 @@ function audRender(){
     <select class="rhf-i" style="width:130px" onchange="AUD_FST=this.value;audRenderLista()"><option value="TODOS">Status: todos</option><option value="CONFORME">Conforme</option><option value="PENDENTE">Com pendência</option><option value="SEM">Nunca auditado</option></select>
     <span style="font-size:.6rem;color:#94a3b8;font-weight:700">🔗 Período, turno e área seguem o filtro do topo</span>
   </div>`;
+  /* ── pendências por supervisão e por cliente ── */
+  const pendPorSup={},pendPorCli={};
+  postos.forEach(p=>{
+    const u=audUltima(p.posto);if(!u)return;
+    const n=audTotalNC(u);if(!n||u.pendencias_resolvidas)return;
+    const sup=p.supervisor||"— sem supervisor —";
+    pendPorSup[sup]=(pendPorSup[sup]||0)+n;
+    pendPorCli[p.posto]=(pendPorCli[p.posto]||0)+n;
+  });
+  const barras=(obj,cor,vazio,lim)=>{
+    const r=Object.keys(obj).map(k=>[k,obj[k]]).sort((a,b)=>b[1]-a[1]).slice(0,lim||8);
+    if(!r.length)return `<div style="font-size:.66rem;color:#16a34a;padding:6px 0">${vazio}</div>`;
+    const mx=r[0][1];
+    return r.map(([k,v])=>`<div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+      <span style="width:132px;font-size:.62rem;font-weight:700;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${_esc(k)}">${_esc(k)}</span>
+      <div style="flex:1;background:#f1f5f9;border-radius:6px;height:14px;overflow:hidden"><div style="width:${Math.round(v/mx*100)}%;height:14px;background:${cor}"></div></div>
+      <span style="width:34px;text-align:right;font-size:.62rem;font-weight:800;color:#334155">${v}</span></div>`).join("");
+  };
+  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px">
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px">
+      <div style="font-size:.78rem;font-weight:800;color:#0d1f35;margin-bottom:3px">🧭 Pendências por supervisão</div>
+      <div style="font-size:.58rem;color:#94a3b8;margin-bottom:9px">não conformidades em aberto na última vistoria</div>
+      ${barras(pendPorSup,"#dc2626","✅ Nenhuma pendência aberta por supervisão.")}
+    </div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px">
+      <div style="font-size:.78rem;font-weight:800;color:#0d1f35;margin-bottom:3px">🏢 Pendências por cliente</div>
+      <div style="font-size:.58rem;color:#94a3b8;margin-bottom:9px">clientes que mais exigem retorno</div>
+      ${barras(pendPorCli,"#f97316","✅ Nenhum cliente com pendência aberta.")}
+    </div>
+  </div>`;
   h+=`<div id="aud-lista"></div>`;
   el.innerHTML=h;
   audRenderLista();
@@ -6602,15 +6632,27 @@ function audRenderLista(){
   if(AUD_FST!=="TODOS")postos=postos.filter(p=>statusDe(p)===AUD_FST);
   const cor={CONFORME:"#16a34a",PENDENTE:"#dc2626",SEM:"#94a3b8"},lbl={CONFORME:"✅ Conforme",PENDENTE:"⚠️ Pendente",SEM:"○ Nunca auditado"};
   if(!postos.length){el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem">Nenhum posto encontrado.</div>';return;}
-  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:10px">${postos.map(p=>{
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:10px">${postos.map((p,ix)=>{
     const st=statusDe(p),u=audUltima(p.posto),nc=u?audTotalNC(u):0;
-    return `<div class="prj-card" style="background:#fff;border:1px solid #e5e9f0;border-left:3px solid ${cor[st]};border-radius:12px;padding:11px 13px;cursor:pointer" onclick="audFicha(${u?u.id:"null"},'${_esc(p.posto).replace(/'/g,"\\'")}')">
+    const ncs=u?audNC(u):{limpeza:[],colab:[],cliente:[]};
+    const listaNC=[].concat(ncs.limpeza||[],ncs.colab||[],ncs.cliente||[]);
+    const hist=AUD_A.filter(x=>x.posto===p.posto).length;
+    return `<div class="prj-card" id="audc-${ix}" style="background:#fff;border:1px solid #e5e9f0;border-left:3px solid ${cor[st]};border-radius:12px;padding:11px 13px;cursor:pointer" onclick="ligExpandir('audc-${ix}')">
       <div style="font-size:.74rem;font-weight:800;color:#0d1f35;line-height:1.25">${_esc(p.posto)}</div>
-      <div style="font-size:.58rem;color:#94a3b8;margin:2px 0 7px">🧭 ${_esc(p.supervisor||"—")}${p.cliente?" · "+_esc(p.cliente):""}</div>
+      <div style="font-size:.58rem;color:#94a3b8;margin:2px 0 7px">🧭 ${_esc(p.supervisor||"—")}</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span class="rh-badge" style="background:${cor[st]}18;color:${cor[st]}">${lbl[st]}</span>
         <span style="font-size:.58rem;color:#94a3b8">${u?"últ.: "+rhFmt(String(u.data||u.criado_em).slice(0,10))+(nc?` · ${nc} NC`:""):"sem registro"}</span>
-      </div></div>`;}).join("")}</div>`;
+      </div>
+      <div class="lig-det" style="display:none;margin-top:9px;padding-top:9px;border-top:1px dashed #e2e8f0">
+        <div style="font-size:.58rem;color:#64748b;line-height:1.6"><b>${hist}</b> vistoria(s) no histórico${u&&u.criado_por?` · último por <b>${_esc(u.criado_por)}</b>`:""}</div>
+        ${listaNC.length?`<div style="margin-top:6px"><div style="font-size:.56rem;font-weight:800;color:#dc2626;margin-bottom:3px">Não conformidades em aberto</div>${listaNC.slice(0,6).map(t=>`<div style="font-size:.56rem;color:#7f1d1d">• ${_esc(t)}</div>`).join("")}${listaNC.length>6?`<div style="font-size:.54rem;color:#94a3b8">+${listaNC.length-6} outras</div>`:""}</div>`:`<div style="font-size:.58rem;color:#16a34a;margin-top:5px">Sem não conformidades registradas.</div>`}
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <button onclick="event.stopPropagation();audFicha(${u?u.id:"null"},'${_esc(p.posto).replace(/'/g,"\\'")}')" style="border:none;background:#0d1f35;color:#fff;border-radius:8px;padding:4px 10px;font-size:.58rem;font-weight:800;cursor:pointer">${u?"✏️ Abrir vistoria":"➕ Auditar agora"}</button>
+        </div>
+      </div>
+      <div class="lig-mais" style="font-size:.55rem;font-weight:800;color:#64748b;margin-top:6px">▾ detalhes</div>
+    </div>`;}).join("")}</div>`;
 }
 /* ── ficha de auditoria (nova ou revisão) ── */
 let AUD_FORM={};
