@@ -1362,7 +1362,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div style="background:linear-gradient(135deg,#eef6ff,#f5f0ff);border:1px solid #dbe7fb;border-radius:12px;padding:12px 18px;margin-bottom:14px;font-size:.72rem;color:#334155">
       <b style="color:#1e4d8c">🤖 Cadência automática:</b> ao registrar o envio da proposta → <b>Msg 1 no WhatsApp</b> (imediata) · <b>Msg 2</b> e-mail +2 dias · <b>Msg 3</b> +5d · <b>Msg 4</b> +10d · <b>Msg 5</b> +20d (pausa a negociação). Para <b>interromper</b>: clique em ✅ quando o cliente responder, ou feche/perca a proposta.
     </div>
-    <div id="cp-n8n"></div>
     <div id="cp-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
@@ -1894,36 +1893,6 @@ function comPF(){
   return r;
 }
 function comSetTipo(t){COM_FTIPO=t;comRenderAll();}
-/* ── Detector de falha SILENCIOSA do n8n ──
-   O n8n é quem marca respondido_em ao detectar resposta do cliente. Se ele cai,
-   ninguém percebe: as respostas param de chegar e a cadência segue cobrando quem
-   já respondeu. Sintoma observável: existem propostas enviadas e aguardando
-   resposta, mas nenhum respondido_em foi gravado há dias. ── */
-const COM_N8N_DIAS=3;
-function comAlertaN8N(){
-  const P=COM_P||[];
-  const hoje=new Date();
-  const dias=d=>(hoje-new Date(String(d).slice(0,10)+"T12:00:00"))/86400000;
-  // propostas no ar: enviadas, ativas, ainda sem resposta
-  const noAr=P.filter(p=>p.data_envio_proposta&&!p.respondido_em&&COM_ST_ATIVOS.includes(p.status)&&dias(p.data_envio_proposta)<=30);
-  if(noAr.length<2)return null; // pouco volume: silêncio não prova nada
-  const resp=P.filter(p=>p.respondido_em).map(p=>new Date(p.respondido_em)).sort((a,b)=>b-a);
-  const ultima=resp[0]||null;
-  const semRespHa=ultima?Math.floor((hoje-ultima)/86400000):null;
-  if(ultima&&semRespHa<COM_N8N_DIAS)return null;
-  return{noAr:noAr.length,dias:semRespHa,
-    txt:ultima?`Nenhuma resposta detectada há <b>${semRespHa} dia(s)</b>, com <b>${noAr.length}</b> proposta(s) aguardando retorno.`
-              :`Nenhuma resposta jamais registrada, com <b>${noAr.length}</b> proposta(s) aguardando retorno.`};
-}
-function comBannerN8N(){
-  const a=comAlertaN8N();
-  if(!a)return"";
-  return `<div style="background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f97316;border-radius:12px;padding:12px 16px;margin-bottom:12px">
-    <div style="font-size:.78rem;font-weight:800;color:#9a3412">⚠️ Possível falha silenciosa na automação (n8n)</div>
-    <div style="font-size:.7rem;color:#9a3412;margin-top:3px;line-height:1.5">${a.txt} Se o n8n estiver fora do ar, quem já respondeu continua recebendo cobrança da cadência.</div>
-    <div style="font-size:.62rem;color:#b45309;margin-top:5px">Confira o fluxo do n8n. Este é um alerta por <b>sintoma</b> — pode ser apenas um período sem respostas.</div>
-  </div>`;
-}
 function rhEntF(){return gFil(RH_ENT,"data_entrevista",{area:false});}
 function rhDesF(){return gFil(RH_DES,"data_desligamento",{});}
 function rhResF(){return gFil(RH_RES,"data_oportunidade",{});}
@@ -5109,7 +5078,6 @@ function comDet(kind){
 /* ── Dashboard superior: cards com sparkline + comparativo ── */
 function comRenderCards(){
   const el=document.getElementById("cp-kpis");if(!el)return;
-  const bn=document.getElementById("cp-n8n");if(bn)bn.innerHTML=comBannerN8N();
   const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1),mAntIni=new Date(hoje.getFullYear(),hoje.getMonth()-1,1),mAntFim=new Date(hoje.getFullYear(),hoje.getMonth(),0,23,59,59);
   const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
   const noMesAnt=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mAntIni&&x<=mAntFim;};
