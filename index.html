@@ -648,8 +648,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-cat-h" onclick="navCatToggle('gestao')"><span class="nav-cat-t">📊 Gestão</span><span class="nav-cat-ar">▾</span></div>
     <div class="nav-cat-b">
       <div class="ni" data-pg="painelacomp" onclick="navTo('painelacomp',this)"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
-      <div class="ni" data-pg="audqual" data-perm="admin" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span><span class="nib nib-novo">NOVO</span></div>
-      <div class="ni" data-pg="ligacoes" data-perm="admin" onclick="navTo('ligacoes',this)"><span class="ni-ic">📞</span><span>Ligações &amp; Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
+      <div class="ni" data-pg="audqual" data-perm="qual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span><span class="nib nib-novo">NOVO</span></div>
+      <div class="ni" data-pg="ligacoes" data-perm="qual" onclick="navTo('ligacoes',this)"><span class="ni-ic">📞</span><span>Ligações &amp; Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
     </div>
   </div>
   <div class="nav-cat" data-cat="rh">
@@ -1599,7 +1599,7 @@ const USERS={
   "gabrielaalvarenga":{nome:"Gabriela Alvarenga",cargo:"Comercial",senha:"servcamp2026",admin:false,com:true,comDash:true},
   "rosisantos":{nome:"Rosi Santos",cargo:"Diretora Financeiro",senha:"servcamp2026",admin:false},
   "fabianalassala":{nome:"Fabiana Lassala",cargo:"Financeiro",senha:"servcamp2026",admin:false},
-  "raphaelvictor":{nome:"Raphael Victor",cargo:"Auxiliar ADM",senha:"servcamp2026",admin:false},
+  "raphaelvictor":{nome:"Raphael Victor",cargo:"Auxiliar ADM",senha:"servcamp2026",admin:false,qual:true},
   "sandraalves":{nome:"Sandra Alves",cargo:"Responsável RH",senha:"servcamp2026",admin:false,rh:true},
   "testejoao":{nome:"Teste João",cargo:"Usuário de Teste",senha:"servcamp2026",admin:false},
   "rafaelandrade":{nome:"Rafael Andrade",cargo:"Supervisor",senha:"servcamp2026",admin:false},
@@ -1661,6 +1661,7 @@ async function doLogin(e){
   sessionStorage.setItem("userCom",usr.com?"1":"0");
   sessionStorage.setItem("userComDash",usr.comDash?"1":"0");
   sessionStorage.setItem("userPrj",usr.prj?"1":"0");
+  sessionStorage.setItem("userQual",usr.qual?"1":"0");
   // autenticação das APIs: pega um token assinado (só quem já tem senha própria).
   // Sem token (senha padrão) ou AUTH_SECRET ausente = modo graça: nada bloqueia.
   try{
@@ -1723,7 +1724,8 @@ function applyUserUI(){
   const isCom=sessionStorage.getItem("userCom")==="1";
   const isComDash=sessionStorage.getItem("userComDash")==="1";
   const isPrj=sessionStorage.getItem("userPrj")==="1";
-    const navOk={rh:isAdmin||isRh,rhdash:isAdmin||isRh||isRhDash,com:isAdmin||isCom,comdash:isAdmin||isComDash,prj:isAdmin||isPrj,admin:isAdmin};
+    const isQual=sessionStorage.getItem("userQual")==="1";
+    const navOk={rh:isAdmin||isRh,rhdash:isAdmin||isRh||isRhDash,com:isAdmin||isCom,comdash:isAdmin||isComDash,prj:isAdmin||isPrj,admin:isAdmin,qual:isAdmin||isQual};
   document.querySelectorAll('#navRoot [data-perm]').forEach(function(el){el.style.display=navOk[el.dataset.perm]?"":"none";});
   if(typeof navCatsAtualiza==="function")navCatsAtualiza(); // categoria sem itens visíveis some
   if(typeof sbPerfilRender==="function")sbPerfilRender();
@@ -5517,6 +5519,7 @@ const CFG_PANEIS=[
   {key:"rhDash",lbl:"Painel RH",ic:"📈",has:u=>!!(u.admin||u.rh||u.rhDash)},
   {key:"com",lbl:"Comercial",ic:"💼",has:u=>!!(u.admin||u.com)},
   {key:"comDash",lbl:"Painel Comercial",ic:"📊",has:u=>!!(u.admin||u.comDash)},
+  {key:"qual",lbl:"Auditoria e Ligações",ic:"✅",has:u=>!!(u.admin||u.qual)},
   {key:"config",lbl:"Configurações",ic:"⚙️",has:u=>!!u.admin}
 ];
 function cfgPerfil(u){
