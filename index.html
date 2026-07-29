@@ -647,7 +647,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="nav-cat" data-cat="gestao">
     <div class="nav-cat-h" onclick="navCatToggle('gestao')"><span class="nav-cat-t">📊 Gestão</span><span class="nav-cat-ar">▾</span></div>
     <div class="nav-cat-b">
-      <div class="ni" data-pg="painelacomp" onclick="navTo('painelacomp',this)"><span class="ni-ic">🚀</span><span>Painel de Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="audqual" data-perm="qual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="ligacoes" data-perm="qual" onclick="navTo('ligacoes',this)"><span class="ni-ic">📞</span><span>Ligações &amp; Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
     </div>
@@ -1033,23 +1032,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   </div>
 
   <!-- PAINEL DE ACOMPANHAMENTO -->
-  <div class="page" id="pg-painelacomp">
-    <div style="min-height:70vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border-radius:16px;background:linear-gradient(135deg,#0d1f35 0%,#1e4d8c 60%,#0d1f35 100%)">
-      <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(46,143,239,.25),transparent 70%);top:-80px;left:-80px;animation:floatBlob 8s ease-in-out infinite"></div>
-      <div style="position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(249,115,22,.18),transparent 70%);bottom:-60px;right:-60px;animation:floatBlob 10s ease-in-out infinite reverse"></div>
-      <div style="position:relative;text-align:center;padding:50px 30px;max-width:560px">
-        <div style="font-size:3rem;margin-bottom:14px;animation:pulseIcon 2.2s ease-in-out infinite">🚀</div>
-        <div style="display:inline-block;background:linear-gradient(135deg,#f97316,#fbbf24);color:#fff;font-size:.68rem;font-weight:900;letter-spacing:1.5px;padding:6px 16px;border-radius:20px;margin-bottom:18px;text-transform:uppercase">Em Construção</div>
-        <div style="color:#fff;font-size:1.7rem;font-weight:900;margin-bottom:12px;letter-spacing:.3px">Painel de Acompanhamento</div>
-        <div style="color:#b9cce8;font-size:.92rem;line-height:1.6;margin-bottom:28px">Estamos preparando algo muito especial para acompanhar a evolução do Grupo ServCamp de um jeito totalmente novo. Em breve, direto aqui.</div>
-        <div style="display:flex;justify-content:center;gap:8px">
-          <span style="width:9px;height:9px;border-radius:50%;background:#2e8fef;animation:dotBlink 1.4s ease-in-out infinite"></span>
-          <span style="width:9px;height:9px;border-radius:50%;background:#2e8fef;animation:dotBlink 1.4s ease-in-out .2s infinite"></span>
-          <span style="width:9px;height:9px;border-radius:50%;background:#2e8fef;animation:dotBlink 1.4s ease-in-out .4s infinite"></span>
-        </div>
-      </div>
-    </div>
-  </div>
   <div class="page" id="pg-rhvagas">
     <div class="sec-hdr"><span class="sec-hdr-ic">📋</span><div><div class="sec-hdr-t">RH — Controle de Vagas</div><div class="sec-hdr-sub">Abertura, acompanhamento e fechamento de vagas — preenchimento manual do RH</div></div></div>
     <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
@@ -1933,7 +1915,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",painelacomp:"Painel de Acompanhamento",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade",ligacoes:"Ligações & Acompanhamento"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade",ligacoes:"Ligações & Acompanhamento"};
 
 /* ── Sidebar 2.0: accordion com estado salvo + busca de módulos ── */
 function navCatToggle(k){
@@ -2058,7 +2040,6 @@ function navTo(p,btn){
   if(["faltas","coberturas","postos","os","fts","dispo","restec","hrextra","checklist"].includes(p)){rTbl(p);updSecCharts(p);}
   else if(p==="ativos"){renderAtivos();}
   else if(p==="clientes"){renderClientes();}
-  else if(p==="painelacomp"){}
   else if(p==="rhvagas"){rhLoad();}
   else if(p==="rhentrev"){rhEntLoad();}
   else if(p==="rhdesl"){rhDesLoad();}
