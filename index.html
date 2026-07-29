@@ -457,6 +457,26 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 .chat-send:hover{transform:scale(1.1);}
 .chat-send:disabled{opacity:.5;cursor:default;transform:none;}
 @media(max-width:768px){.chat-panel{width:calc(100vw - 32px);right:16px;bottom:80px;}.chat-fab{bottom:16px;right:16px;}}
+.chat-fab-badge{position:absolute;top:-4px;right:-4px;background:#e11d48;color:#fff;font-size:.58rem;font-weight:900;min-width:17px;height:17px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #fff;}
+.chat-back{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;line-height:1;padding:0 2px;margin-right:2px;display:none;}
+.chat-hdr-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.72rem;color:#fff;flex-shrink:0;}
+.chat-search{margin-left:auto;width:120px;background:rgba(255,255,255,.15);border:none;border-radius:12px;padding:5px 10px;color:#fff;font-size:.68rem;outline:none;}
+.chat-search::placeholder{color:rgba(255,255,255,.6);}
+.chat-list{flex:1;overflow-y:auto;max-height:400px;}
+.chat-list::-webkit-scrollbar{width:4px;}.chat-list::-webkit-scrollbar-thumb{background:var(--g300);border-radius:2px;}
+.chat-conv{display:flex;align-items:center;gap:11px;padding:10px 14px;border-bottom:1px solid var(--g100);cursor:pointer;transition:background .12s;}
+.chat-conv:hover{background:var(--g100);}
+.chat-conv-av{position:relative;flex-shrink:0;}
+.chat-conv-av>div{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;color:#fff;}
+.chat-conv-on{position:absolute;bottom:0;right:0;width:11px;height:11px;border-radius:50%;background:#22c55e;border:2px solid var(--wh);}
+.chat-conv-main{flex:1;min-width:0;}
+.chat-conv-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px;}
+.chat-conv-nome{font-weight:700;font-size:.8rem;color:var(--g700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chat-conv-hora{font-size:.6rem;color:var(--g400);flex-shrink:0;}
+.chat-conv-bot{display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.chat-conv-prev{font-size:.68rem;color:var(--g400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chat-conv-badge{background:#22c55e;color:#fff;font-size:.58rem;font-weight:900;min-width:17px;height:17px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;}
+
 /* MOBILE HAMBURGER */
 .mob-header{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--sb);z-index:1000;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);}
 .mob-hamburger{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s;}
@@ -522,18 +542,19 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 </style>
 </head>
 <body>
-<button class="chat-fab" id="chatFab" onclick="toggleChat()">💬</button>
+<button class="chat-fab" id="chatFab" onclick="toggleChat()">💬<span class="chat-fab-badge" id="chatFabBadge" style="display:none">0</span></button>
 <div class="chat-panel" id="chatPanel">
   <div class="chat-hdr">
-    <div class="chat-hdr-dot"></div>
-    <div><div class="chat-hdr-t">Jarvis IA</div><div class="chat-hdr-s">Assistente do Dashboard</div></div>
+    <button class="chat-back" id="chatBack" onclick="gcVoltar()">‹</button>
+    <div class="chat-hdr-av" id="chatHdrAv" style="background:#7c3aed">🤖</div>
+    <div style="min-width:0"><div class="chat-hdr-t" id="chatHdrT">Conversas</div><div class="chat-hdr-s" id="chatHdrS">JARVIS · Grupo ServCamp</div></div>
+    <input class="chat-search" id="chatSearch" type="text" placeholder="Buscar…" oninput="gcRenderList()">
   </div>
-  <div class="chat-msgs" id="chatMsgs">
-    <div class="chat-msg bot">Olá! Sou o Jarvis, assistente inteligente do Dashboard ServCamp. Pergunte-me sobre faltas, coberturas, horas extras, check list ou qualquer dado operacional!</div>
-  </div>
-  <div class="chat-input-wrap">
-    <input class="chat-input" id="chatInput" type="text" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter')sendChat()">
-    <button class="chat-send" id="chatSend" onclick="sendChat()">➤</button>
+  <div class="chat-list" id="chatList"></div>
+  <div class="chat-msgs" id="chatMsgs" style="display:none"></div>
+  <div class="chat-input-wrap" id="chatInputWrap" style="display:none">
+    <input class="chat-input" id="chatInput" type="text" placeholder="Mensagem…" onkeydown="if(event.key==='Enter')gcSend()">
+    <button class="chat-send" id="chatSend" onclick="gcSend()">➤</button>
   </div>
 </div>
 <div class="login-overlay" id="loginOverlay">
@@ -1737,7 +1758,6 @@ if(sessionStorage.getItem("logged")==="1"){
   document.getElementById("loginOverlay").classList.add("hidden");
   applyUserUI();
 }
-function toggleChat(){document.getElementById("chatPanel").classList.toggle("show");document.getElementById("chatFab").classList.toggle("open");if(document.getElementById("chatPanel").classList.contains("show"))document.getElementById("chatInput").focus();}
 function _cnt(arr,key,n){var m={};arr.forEach(function(x){var v=x[key]||"—";m[v]=(m[v]||0)+1;});return Object.entries(m).sort(function(a,b){return b[1]-a[1]}).slice(0,n||10).map(function(e){return e[0]+": "+e[1]}).join("; ");}
 function _chatContext(){
   if(typeof DASHBOARD_DATA==="undefined"||!DASHBOARD_DATA)return"DADOS NÃO CARREGADOS. Peça ao usuário para carregar a planilha.";
@@ -1796,33 +1816,144 @@ function _chatContext(){
   }catch(e){r="Erro ao ler dados: "+e.message;}
   return r;
 }
-function _addMsg(text,type){
-  const el=document.getElementById("chatMsgs");
-  const d=document.createElement("div");
-  d.className="chat-msg "+type;
-  d.textContent=text;
-  el.appendChild(d);
-  el.scrollTop=el.scrollHeight;
-  return d;
+/* ═════════ CHAT GLOBAL estilo WhatsApp — Jarvis IA + DMs entre pessoas ═════════
+   Reaproveita /api/chat (Jarvis, Claude) e /api/hq (mensagens diretas). A bolinha
+   mostra o total de DMs de pessoas ainda não lidas; o Jarvis nunca notifica. */
+var GC={conv:null,ia:[],msgs:[],pres:{},seen:{},timer:null,aberto:false};
+function gcMe(){return sessionStorage.getItem("userKey")||"";}
+function gcSeenLoad(){try{GC.seen=JSON.parse(localStorage.getItem("gcSeen_"+gcMe())||"{}");}catch(e){GC.seen={};}}
+function gcSeenSave(){try{localStorage.setItem("gcSeen_"+gcMe(),JSON.stringify(GC.seen));}catch(e){}}
+function gcCor(k){return(typeof hqCor==="function")?hqCor(k)[1]:"#1e4d8c";}
+function gcIniciais(nome){return String(nome||"?").trim().split(/\s+/).slice(0,2).map(function(x){return x[0];}).join("").toUpperCase();}
+function gcOnline(k){var p=GC.pres[k];return !!(p&&p.presence_at&&(Date.now()-new Date(p.presence_at).getTime())<5*60000);}
+function gcEhDM(m){var pa=m.para;return pa&&String(pa).indexOf("canal_")!==0&&pa!==null;}
+function gcDMsCom(k){var me=gcMe();return GC.msgs.filter(function(m){return gcEhDM(m)&&((m.user_key===me&&m.para===k)||(m.user_key===k&&m.para===me));}).sort(function(a,b){return new Date(a.criado_em)-new Date(b.criado_em);});}
+function gcNaoLidasDe(k){var me=gcMe(),seen=GC.seen[k]||0;return GC.msgs.filter(function(m){return m.user_key===k&&m.para===me&&new Date(m.criado_em).getTime()>seen;}).length;}
+function gcTotalNaoLidas(){var t=0;for(var k in USERS){if(k===gcMe())continue;t+=gcNaoLidasDe(k);}return t;}
+function gcHora(ts){if(!ts)return"";var d=new Date(ts),h=new Date();var mesmoDia=d.toDateString()===h.toDateString();if(mesmoDia)return d.toTimeString().slice(0,5);var ont=new Date(h);ont.setDate(h.getDate()-1);if(d.toDateString()===ont.toDateString())return"ontem";return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});}
+
+function toggleChat(){
+  var pn=document.getElementById("chatPanel");
+  GC.aberto=!pn.classList.contains("show");
+  pn.classList.toggle("show");document.getElementById("chatFab").classList.toggle("open");
+  if(GC.aberto){gcSeenLoad();gcFetch();gcVoltar();}
 }
-async function sendChat(){
-  const inp=document.getElementById("chatInput");
-  const q=inp.value.trim();if(!q)return;
+function gcVoltar(){
+  GC.conv=null;
+  document.getElementById("chatBack").style.display="none";
+  document.getElementById("chatList").style.display="";
+  document.getElementById("chatMsgs").style.display="none";
+  document.getElementById("chatInputWrap").style.display="none";
+  document.getElementById("chatHdrT").textContent="Conversas";
+  document.getElementById("chatHdrS").textContent="JARVIS · Grupo ServCamp";
+  document.getElementById("chatHdrAv").style.background="#7c3aed";
+  document.getElementById("chatHdrAv").textContent="🤖";
+  document.getElementById("chatSearch").style.display="";
+  gcRenderList();
+}
+function gcFetch(){
+  var me=gcMe();if(!me)return;
+  fetch("/api/hq?me="+encodeURIComponent(me)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+    if(!j)return;
+    GC.msgs=(j.mensagens||[]);GC.pres={};(j.presenca||[]).forEach(function(p){GC.pres[p.user_key]=p;});
+    gcBadge();
+    if(GC.aberto){ if(GC.conv&&GC.conv!=="ia"){gcRenderThreadDM();} else if(!GC.conv){gcRenderList();} }
+  }).catch(function(){});
+}
+function gcBadge(){
+  var n=gcTotalNaoLidas(),b=document.getElementById("chatFabBadge");
+  if(!b)return;
+  if(n>0){b.textContent=n>99?"99+":n;b.style.display="";}else b.style.display="none";
+}
+function gcRenderList(){
+  var el=document.getElementById("chatList");if(!el)return;
+  var me=gcMe(),q=(document.getElementById("chatSearch").value||"").toLowerCase();
+  // Jarvis IA fixo no topo
+  var h='<div class="chat-conv" onclick="gcAbrir(\'ia\')" style="background:var(--b1,#eef6ff)">'
+    +'<div class="chat-conv-av"><div style="background:#7c3aed">🤖</div></div>'
+    +'<div class="chat-conv-main"><div class="chat-conv-top"><span class="chat-conv-nome">Jarvis IA</span><span class="chat-conv-hora">agora</span></div>'
+    +'<div class="chat-conv-prev">Pergunte sobre faltas, coberturas…</div></div></div>';
+  // pessoas ordenadas por última mensagem
+  var pessoas=Object.keys(USERS).filter(function(k){return k!==me;}).map(function(k){
+    var dms=gcDMsCom(k),ult=dms[dms.length-1];
+    return{k:k,nome:USERS[k].nome,ult:ult,t:ult?new Date(ult.criado_em).getTime():0,nl:gcNaoLidasDe(k)};
+  });
+  if(q)pessoas=pessoas.filter(function(x){return x.nome.toLowerCase().indexOf(q)>=0;});
+  pessoas.sort(function(a,b){return b.t-a.t;});
+  h+=pessoas.map(function(x){
+    var prev=x.ult?((x.ult.user_key===me?"Você: ":"")+x.ult.texto):"Nenhuma mensagem ainda";
+    return '<div class="chat-conv" onclick="gcAbrir(\''+x.k+'\')">'
+      +'<div class="chat-conv-av"><div style="background:'+gcCor(x.k)+'">'+gcIniciais(x.nome)+'</div>'+(gcOnline(x.k)?'<span class="chat-conv-on"></span>':"")+'</div>'
+      +'<div class="chat-conv-main"><div class="chat-conv-top"><span class="chat-conv-nome">'+_esc(x.nome)+'</span>'+(x.ult?'<span class="chat-conv-hora">'+gcHora(x.ult.criado_em)+'</span>':"")+'</div>'
+      +'<div class="chat-conv-bot"><span class="chat-conv-prev">'+_esc(prev)+'</span>'+(x.nl?'<span class="chat-conv-badge">'+x.nl+'</span>':"")+'</div></div></div>';
+  }).join("");
+  el.innerHTML=h;
+}
+function gcAbrir(conv){
+  GC.conv=conv;
+  document.getElementById("chatBack").style.display="";
+  document.getElementById("chatList").style.display="none";
+  document.getElementById("chatMsgs").style.display="";
+  document.getElementById("chatInputWrap").style.display="";
+  document.getElementById("chatSearch").style.display="none";
+  var av=document.getElementById("chatHdrAv");
+  if(conv==="ia"){
+    document.getElementById("chatHdrT").textContent="Jarvis IA";
+    document.getElementById("chatHdrS").textContent="Assistente do sistema";
+    av.style.background="#7c3aed";av.textContent="🤖";
+    gcRenderIA();
+  }else{
+    var nome=(USERS[conv]||{}).nome||conv;
+    document.getElementById("chatHdrT").textContent=nome;
+    document.getElementById("chatHdrS").textContent=gcOnline(conv)?"online":"offline";
+    av.style.background=gcCor(conv);av.textContent=gcIniciais(nome);
+    GC.seen[conv]=Date.now();gcSeenSave();gcBadge();
+    gcRenderThreadDM();
+  }
+  document.getElementById("chatInput").focus();
+}
+function gcBolha(texto,mine,cls){
+  return '<div class="chat-msg '+(cls||(mine?"user":"bot"))+'">'+_esc(texto)+'</div>';
+}
+function gcRenderIA(){
+  var el=document.getElementById("chatMsgs");
+  if(!GC.ia.length)GC.ia=[{bot:true,t:"Olá! Sou o Jarvis. Pergunte sobre faltas, coberturas, horas extras, check list ou qualquer dado operacional carregado."}];
+  el.innerHTML=GC.ia.map(function(m){return gcBolha(m.t,!m.bot,m.bot?(m.typing?"bot typing":"bot"):"user");}).join("");
+  el.scrollTop=el.scrollHeight;
+}
+function gcRenderThreadDM(){
+  var el=document.getElementById("chatMsgs"),me=gcMe(),dms=gcDMsCom(GC.conv);
+  el.innerHTML=dms.length?dms.map(function(m){return gcBolha(m.texto,m.user_key===me);}).join(""):'<div style="text-align:center;color:var(--g400);font-size:.7rem;padding:20px">Nenhuma mensagem. Diga olá! 👋</div>';
+  el.scrollTop=el.scrollHeight;
+}
+function gcSend(){
+  var inp=document.getElementById("chatInput"),txt=inp.value.trim();if(!txt||!GC.conv)return;
   inp.value="";
-  _addMsg(q,"user");
-  const typing=_addMsg("Pensando...","bot typing");
+  if(GC.conv==="ia"){gcSendIA(txt);}else{gcSendDM(txt);}
+}
+async function gcSendIA(q){
+  GC.ia.push({bot:false,t:q});GC.ia.push({bot:true,typing:true,t:"Pensando…"});gcRenderIA();
   document.getElementById("chatSend").disabled=true;
   try{
-    var ctx="Nenhum dado.";
-    try{ctx=_chatContext();}catch(ce){console.error("[Jarvis] Erro contexto:",ce);ctx="Erro ao ler dados: "+ce.message;}
-    const resp=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,context:ctx})});
-    const data=await resp.json();
-    typing.textContent=data.answer||data.error||"Erro ao obter resposta.";
-    typing.classList.remove("typing");
-  }catch(e){typing.textContent="Erro de conexão. Verifique se a API Key está configurada.";typing.classList.remove("typing");}
-  document.getElementById("chatSend").disabled=false;
-  document.getElementById("chatMsgs").scrollTop=document.getElementById("chatMsgs").scrollHeight;
+    var ctx="Nenhum dado.";try{ctx=_chatContext();}catch(e){ctx="Erro ao ler dados: "+e.message;}
+    var resp=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,context:ctx})});
+    var data=await resp.json();
+    GC.ia[GC.ia.length-1]={bot:true,t:data.answer||data.error||"Sem resposta."};
+  }catch(e){GC.ia[GC.ia.length-1]={bot:true,t:"Erro de conexão com o Jarvis."};}
+  document.getElementById("chatSend").disabled=false;gcRenderIA();
 }
+function gcSendDM(txt){
+  var me=gcMe(),nome=sessionStorage.getItem("userNome")||me;
+  // otimista
+  GC.msgs.push({user_key:me,nome:nome,texto:txt,para:GC.conv,criado_em:new Date().toISOString()});
+  GC.seen[GC.conv]=Date.now();gcSeenSave();gcRenderThreadDM();
+  fetch("/api/hq",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"msg",userKey:me,nome:nome,texto:txt,para:GC.conv})})
+    .then(function(){gcFetch();}).catch(function(){});
+}
+/* polling do badge mesmo com o chat fechado */
+setInterval(function(){if(sessionStorage.getItem("logged")==="1"&&gcMe())gcFetch();},20000);
+if(sessionStorage.getItem("logged")==="1"){gcSeenLoad();setTimeout(gcFetch,1500);}
+
 function toggleSb(){const sb=document.getElementById("sidebar"),ov=document.getElementById("mobOverlay");sb.classList.toggle("open");ov.classList.toggle("show");}
 const _origNavTo=typeof navTo==="function"?navTo:null;
 document.querySelectorAll(".ni").forEach(el=>{const orig=el.getAttribute("onclick");el.addEventListener("click",()=>{if(window.innerWidth<=768){document.getElementById("sidebar").classList.remove("open");document.getElementById("mobOverlay").classList.remove("show");}});});
