@@ -391,6 +391,12 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .page.active .sk,.page.active .cc,.page.active .t10c,.page.active .ts{animation:fu .22s ease both;}
 /* LOGIN */
+#intro-overlay{position:fixed;inset:0;z-index:10000;background:#000;display:flex;align-items:center;justify-content:center;opacity:1;transition:opacity .55s ease;}
+#intro-overlay.intro-out{opacity:0;pointer-events:none;}
+#intro-overlay video{width:100%;height:100%;object-fit:contain;background:#000;}
+#intro-skip{position:absolute;bottom:22px;right:26px;color:rgba(255,255,255,.5);font-size:.66rem;font-weight:700;letter-spacing:.5px;opacity:0;transition:opacity .5s ease .9s;pointer-events:none;}
+#intro-overlay.intro-pronto #intro-skip{opacity:1;}
+@media(max-width:600px){#intro-skip{bottom:14px;right:14px;font-size:.6rem;}}
 .login-overlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0a1628 0%,#0d1f35 40%,#1a3a5c 100%);display:flex;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s;}
 .login-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
 .login-box{background:rgba(255,255,255,.04);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:40px 36px 32px;width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:fu .4s ease both;}
@@ -549,6 +555,12 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 </style>
 </head>
 <body>
+<div id="intro-overlay" style="display:none">
+  <video id="introVid" muted playsinline preload="auto" disablepictureinpicture>
+    <source src="intro.mp4" type="video/mp4">
+  </video>
+  <div id="intro-skip">clique para entrar</div>
+</div>
 <button class="chat-fab" id="chatFab" onclick="toggleChat()">💬<span class="chat-fab-badge" id="chatFabBadge" style="display:none">0</span></button>
 <div class="chat-panel" id="chatPanel">
   <div class="chat-hdr">
@@ -1839,6 +1851,73 @@ function gcNaoLidasDe(k){var me=gcMe(),seen=GC.seen[k]||0;return GC.msgs.filter(
 function gcTotalNaoLidas(){var t=0;for(var k in USERS){if(k===gcMe())continue;t+=gcNaoLidasDe(k);}return t;}
 function gcHora(ts){if(!ts)return"";var d=new Date(ts),h=new Date();var mesmoDia=d.toDateString()===h.toDateString();if(mesmoDia)return d.toTimeString().slice(0,5);var ont=new Date(h);ont.setDate(h.getDate()-1);if(d.toDateString()===ont.toDateString())return"ontem";return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});}
 
+/* ═══════════ ABERTURA (vídeo de entrada) ═══════════
+   Toca antes da tela de login. Sempre saltável (clique ou tecla) e com trava:
+   se o vídeo não engatar em 3s, ou falhar, vai direto para o login — a abertura
+   nunca pode impedir alguém de trabalhar.
+   Os dados carregam em paralelo por trás, então os 4s do vídeo mascaram o
+   carregamento inicial em vez de somar tempo.
+   INTRO_MODO: "sempre" | "sessao" (1x por aba) | "dia" (1x por dia) | "off" */
+var INTRO_MODO="sempre";
+(function(){
+  var ov=document.getElementById("intro-overlay");
+  if(!ov)return;
+  // quem pediu menos animação no sistema operacional não vê vídeo
+  var poucaAnim=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var hoje=new Date().toISOString().slice(0,10);
+  function jaViu(){
+    try{
+      if(INTRO_MODO==="sessao")return sessionStorage.getItem("introVisto")==="1";
+      if(INTRO_MODO==="dia")return localStorage.getItem("introDia")===hoje;
+    }catch(e){}
+    return false;
+  }
+  function marcar(){
+    try{
+      if(INTRO_MODO==="sessao")sessionStorage.setItem("introVisto","1");
+      if(INTRO_MODO==="dia")localStorage.setItem("introDia",hoje);
+    }catch(e){}
+  }
+  if(INTRO_MODO==="off"||poucaAnim||jaViu()){ov.remove();return;}
+
+  var v=document.getElementById("introVid"),fim=false,trava=null;
+  function encerrar(){
+    if(fim)return;fim=true;
+    if(trava)clearTimeout(trava);
+    marcar();
+    try{v.pause();}catch(e){}
+    ov.classList.add("intro-out");
+    setTimeout(function(){if(ov.parentNode)ov.remove();},600);
+    document.removeEventListener("keydown",encerrar,true);
+  }
+  window.introEncerrar=encerrar;
+  ov.style.display="flex";
+  ov.addEventListener("click",encerrar);
+  document.addEventListener("keydown",encerrar,true);
+  v.addEventListener("ended",encerrar);
+  v.addEventListener("error",encerrar);
+  v.addEventListener("playing",function(){ov.classList.add("intro-pronto");});
+  function tentarTocar(){
+    if(fim)return;
+    if(trava)clearTimeout(trava);
+    // trava: se não começar a tocar em 3s, não prende ninguém
+    trava=setTimeout(function(){if(!v.currentTime)encerrar();},3000);
+    var pr=v.play();
+    if(pr&&pr.catch)pr.catch(function(){
+      // Aba em segundo plano aborta o play. Como a pessoa ainda não viu nada,
+      // espera ela focar a aba em vez de descartar a abertura. Se o bloqueio
+      // for do autoplay com a aba visível, aí sim segue direto para o login.
+      if(document.hidden){
+        if(trava)clearTimeout(trava);
+        document.addEventListener("visibilitychange",function once(){
+          document.removeEventListener("visibilitychange",once);
+          tentarTocar();
+        });
+      }else encerrar();
+    });
+  }
+  tentarTocar();
+})();
 function toggleChat(){
   var pn=document.getElementById("chatPanel");
   GC.aberto=!pn.classList.contains("show");
