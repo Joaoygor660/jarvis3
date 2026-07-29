@@ -475,6 +475,13 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 .chat-conv-hora{font-size:.6rem;color:var(--g400);flex-shrink:0;}
 .chat-conv-bot{display:flex;justify-content:space-between;align-items:center;gap:6px;}
 .chat-conv-prev{font-size:.68rem;color:var(--g400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#rt-banner{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(140%);z-index:1200;display:flex;align-items:center;gap:12px;background:#0d1f35;border:1px solid #1e4d8c;border-radius:12px;padding:11px 16px;box-shadow:0 10px 34px rgba(13,31,53,.4);transition:transform .35s cubic-bezier(.2,.9,.3,1.2);max-width:calc(100vw - 32px);}
+#rt-banner.show{transform:translateX(-50%) translateY(0);}
+#rt-banner .rt-t{color:#fff;font-size:.78rem;font-weight:800;}
+#rt-banner .rt-s{color:#94a3b8;font-size:.63rem;}
+#rt-banner .rt-btn{background:#2e8fef;border:none;color:#fff;font-size:.7rem;font-weight:800;padding:6px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;}
+#rt-banner .rt-btn:hover{background:#1e7ad4;}
+#rt-banner .rt-x{background:none;border:none;color:#64748b;font-size:1rem;cursor:pointer;line-height:1;padding:0 2px;}
 .chat-conv-badge{background:#22c55e;color:#fff;font-size:.58rem;font-weight:900;min-width:17px;height:17px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;flex-shrink:0;}
 
 /* MOBILE HAMBURGER */
@@ -749,7 +756,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="fg"><span class="fl">Área</span>
       <select class="as" id="areaS" onchange="setArea()"><option value="">Todas</option></select>
     </div>
-    <button onclick="refresh()" style="padding:5px 14px;border-radius:6px;background:linear-gradient(135deg,#1e4d8c,#2e8fef);border:none;color:#fff;font-size:.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 3px 12px rgba(46,143,239,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">🔄 Atualizar</button>
+    <button onclick="rtAtualizarAgora(this)" style="padding:5px 14px;border-radius:6px;background:linear-gradient(135deg,#1e4d8c,#2e8fef);border:none;color:#fff;font-size:.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;transition:transform .15s,box-shadow .15s" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 3px 12px rgba(46,143,239,.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">🔄 Atualizar</button>
   </div>
   <div class="cnt">
   <!-- VISÃO GERAL -->
@@ -1950,8 +1957,7 @@ function gcSendDM(txt){
   fetch("/api/hq",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"msg",userKey:me,nome:nome,texto:txt,para:GC.conv})})
     .then(function(){gcFetch();}).catch(function(){});
 }
-/* polling do badge mesmo com o chat fechado */
-setInterval(function(){if(sessionStorage.getItem("logged")==="1"&&gcMe())gcFetch();},20000);
+/* o badge é atualizado pelo batimento único (rtPing) */
 if(sessionStorage.getItem("logged")==="1"){gcSeenLoad();setTimeout(gcFetch,1500);}
 
 function toggleSb(){const sb=document.getElementById("sidebar"),ov=document.getElementById("mobOverlay");sb.classList.toggle("open");ov.classList.toggle("show");}
@@ -4621,10 +4627,14 @@ function rhTreExcluir(id){
 let RDASH={vagas:[],entrev:[],desl:[],res:[],trein:[],loaded:false};
 let RDASH_CUR=null;
 /* período e área do Painel RH vêm do filtro principal do sistema */
-function rhDashLoad(){
-  if(RDASH.loaded){rhDashRender();return;}
-  document.getElementById("rdash-loading").style.display="";
-  document.getElementById("rdash-body").style.display="none";
+function rhDashLoad(silencioso){
+  // silencioso=true → rebusca do servidor sem piscar o "carregando" (usado pelo
+  // batimento). Antes o cache RDASH.loaded travava os dados até o F5.
+  if(RDASH.loaded&&!silencioso){rhDashRender();return;}
+  if(!silencioso){
+    document.getElementById("rdash-loading").style.display="";
+    document.getElementById("rdash-body").style.display="none";
+  }
   const get=t=>fetch("/api/rh?t="+t).then(r=>r.json()).then(j=>(j&&j.rows)||[]).catch(()=>[]);
   Promise.all([get("vagas"),get("entrevistas"),get("desligamentos"),get("reservas"),get("treinamentos")]).then(a=>{
     RDASH={vagas:a[0],entrev:a[1],desl:a[2],res:a[3],trein:a[4],loaded:true};
@@ -5780,8 +5790,7 @@ let HQ_CH={},HQ_ANIM=null,HQ_T0=0,HQ_FIRST=true,HQ_DM=null,HQ_SEEN={};
 function hqLoad(){
   hqShell();
   hqFetch();
-  if(HQ_TIMER)clearInterval(HQ_TIMER);
-  HQ_TIMER=setInterval(hqFetch,12000);
+  // presença/chat agora vêm do batimento único (rtPing) — sem poll próprio
   if(!HQ_ANIM){HQ_T0=0;HQ_ANIM=setInterval(hqStep,40);}
   setTimeout(hqIntroCheck,1500);
 }
@@ -7734,11 +7743,119 @@ function toggleTheme(){
   applyTheme(next);
 }
 (function(){try{applyTheme(localStorage.getItem(LS_THEME)||"light");}catch(e){}})();
+/* ═══════════════ TEMPO REAL — batimento único ═══════════════
+   Um /api/ping a cada 15s cobre tudo: versão do deploy, planilha nova,
+   presença, chat e os dados da guia aberta. Substitui os dois polls que
+   batiam no /api/hq (12s e 20s), então o total de chamadas caiu.
+   Pausa quando a aba está oculta. Nunca atualiza a tela por cima de alguém
+   digitando ou com formulário aberto. */
+var RT={v:null,planilha:null,ativo:Date.now(),avisou:false,tick:0};
+var RT_INTERVALO=15000;   // batimento
+var RT_OCIOSO=120000;     // 2 min sem interagir = ocioso (pode recarregar sozinho)
+
+["mousedown","mousemove","keydown","touchstart","scroll","focus"].forEach(function(ev){
+  window.addEventListener(ev,function(){RT.ativo=Date.now();},{passive:true,capture:true});
+});
+document.addEventListener("visibilitychange",function(){
+  if(!document.hidden){RT.ativo=Date.now();rtPing();}
+});
+function rtOcioso(){return(Date.now()-RT.ativo)>RT_OCIOSO;}
+/* "ocupado" = mexendo em algo que seria destruído por um re-render */
+function rtOcupado(){
+  if(document.querySelector("#aud-modal,#lig-modal,#prj-form,#prj-det,#prj-fideia,#hq-perfil,#rhModal.show"))return true;
+  var a=document.activeElement;
+  if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=="button")return true;
+  if(document.getElementById("chatPanel")&&document.getElementById("chatPanel").classList.contains("show"))return true;
+  return false;
+}
+/* loaders que sabem rebuscar sem piscar a tela */
+var RT_GUIA={
+  rhvagas:function(){rhLoad();},rhentrev:function(){rhEntLoad();},rhdesl:function(){rhDesLoad();},
+  rhres:function(){rhResLoad();},rhtrein:function(){rhTreLoad();},
+  rhdash:function(){rhDashLoad(true);},
+  compro:function(){comLoad();},comdash:function(){comDashLoad();},
+  audqual:function(){audLoad();},ligacoes:function(){ligLoad();},prj:function(){prjLoad();}
+};
+function rtBanner(){
+  if(RT.avisou)return;RT.avisou=true;
+  var d=document.createElement("div");d.id="rt-banner";
+  d.innerHTML='<span style="font-size:1.05rem">✨</span>'
+    +'<div style="min-width:0"><div class="rt-t">Nova versão disponível</div><div class="rt-s">Recarregue para ver as novidades</div></div>'
+    +'<button class="rt-btn" onclick="rtRecarregar()">Atualizar</button>'
+    +'<button class="rt-x" onclick="this.parentNode.remove()" title="Agora não">✕</button>';
+  document.body.appendChild(d);
+  setTimeout(function(){d.classList.add("show");},60);
+}
+function rtRecarregar(){
+  // volta para a mesma guia depois do reload, para não jogar a pessoa na Visão Geral
+  try{sessionStorage.setItem("rtVoltarPara",ST.pg||"");}catch(e){}
+  location.reload();
+}
+function rtAtualizarAgora(btn){
+  // O botão "Atualizar" antes só reprocessava o que já estava na memória.
+  // Agora busca de verdade: planilha + dados da guia aberta.
+  if(btn){btn.disabled=true;var t=btn.innerHTML;btn.innerHTML="⏳ Atualizando…";
+    setTimeout(function(){btn.disabled=false;btn.innerHTML=t;},1200);}
+  if(typeof loadFromSupabase==="function"){
+    loadFromSupabase().then(function(){refresh();}).catch(function(){refresh();});
+  }else refresh();
+  var f=RT_GUIA[ST.pg];if(f){try{f();}catch(e){}}
+  rtPing();
+}
+function rtPing(){
+  if(document.hidden)return;
+  if(sessionStorage.getItem("logged")!=="1")return;
+  var me=sessionStorage.getItem("userKey")||"";
+  fetch("/api/ping?me="+encodeURIComponent(me)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+    if(!j)return;
+    RT.tick++;
+    /* 1) versão nova → recarrega se estiver ocioso, senão avisa */
+    if(RT.v===null)RT.v=j.v;
+    else if(j.v&&j.v!==RT.v){
+      if(rtOcioso()&&!rtOcupado())return rtRecarregar();
+      rtBanner();
+    }
+    /* 2) presença + chat (o que os dois polls antigos faziam) */
+    if(typeof GC!=="undefined"){
+      GC.msgs=j.mensagens||[];GC.pres={};(j.presenca||[]).forEach(function(x){GC.pres[x.user_key]=x;});
+      if(typeof gcBadge==="function")gcBadge();
+      if(GC.aberto){ if(GC.conv&&GC.conv!=="ia"){gcRenderThreadDM();} else if(!GC.conv){gcRenderList();} }
+    }
+    if(ST.pg==="sede"&&typeof hqSync==="function"&&j.presenca){
+      HQ_STATE={presenca:j.presenca,mensagens:j.mensagens||[]};
+      try{hqStep();hqSync(HQ_FIRST);HQ_FIRST=false;}catch(e){}
+    }
+    /* 3) planilha nova → recarrega os dados operacionais */
+    if(RT.planilha===null)RT.planilha=j.planilha;
+    else if(j.planilha&&j.planilha!==RT.planilha){
+      RT.planilha=j.planilha;
+      if(!rtOcupado()&&typeof loadFromSupabase==="function"){
+        loadFromSupabase().then(function(){refresh();if(typeof hqToast==="function")hqToast("📥 Planilha atualizada");}).catch(function(){});
+      }
+    }
+    /* 4) dados da guia aberta (registros de outras pessoas) */
+    if(!rtOcupado()){
+      var f=RT_GUIA[ST.pg];
+      if(f){var y=window.scrollY;try{f();}catch(e){}setTimeout(function(){window.scrollTo(0,y);},0);}
+    }
+  }).catch(function(){});
+}
+setInterval(rtPing,RT_INTERVALO);
 function init(){
   applyTheme(localStorage.getItem(LS_THEME)||"light");
   loadFromSupabase().then(function(got){
     if(!got)loadFromStorage();
     renderAfterLoad();
+    // se o reload foi automático (versão nova), devolve a pessoa para a guia dela
+    try{
+      var volta=sessionStorage.getItem("rtVoltarPara");
+      sessionStorage.removeItem("rtVoltarPara");
+      if(volta&&volta!=="visao"&&document.getElementById("pg-"+volta)){
+        var it=document.querySelector('.ni[data-pg="'+volta+'"]');
+        if(!it||it.style.display!=="none")navTo(volta,it||null);
+      }
+    }catch(e){}
+    setTimeout(rtPing,2000);
   });
 }
 document.addEventListener("DOMContentLoaded",init);
