@@ -24,7 +24,7 @@ const TABLES = {
   }
 };
 
-const MSG1 = (nome) => `Olá, ${nome}! 👋\n\nPassando para avisar que a proposta foi encaminhada.\n\nFico à disposição caso surja qualquer dúvida durante a análise ou caso precise de algum esclarecimento adicional.\n\nAssim que possível, me confirme o recebimento.\n\n*Grupo Serv Camp*`;
+const MSG1 = (nome) => `${nome}\n\nPassando para avisar que a proposta solicitada foi encaminhada.\n\nFico à disposição caso surja qualquer dúvida durante a análise ou caso precise de algum esclarecimento adicional.\n\nAssim que possível, peço a gentileza de confirmar o recebimento.\n\nObrigada!\n\nGabriela Alvarenga`;
 
 const _auth = require("./_auth");
 module.exports = async function handler(req, res) {
