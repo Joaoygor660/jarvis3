@@ -13,8 +13,15 @@ module.exports = async function handler(req, res) {
   }
   const headers = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 
-  // GET → estado completo: presença de todos + mensagens (geral + DMs do usuário).
-  // "me" identifica quem pergunta: só as DMs DELE voltam (enviadas ou recebidas).
+  // GET → batimento completo do sistema, numa só chamada:
+  //   presenca  → quem está online
+  //   mensagens → chat geral + canais + DMs de quem perguntou ("me")
+  //   v         → versão do deploy (o front detecta publicação nova)
+  //   planilha  → data da última planilha enviada (detecta base nova)
+  //
+  // Os dois últimos moravam num /api/ping separado, mas o plano Hobby da Vercel
+  // permite no máximo 12 funções e o ping era o 13º — e era redundante, porque
+  // repetia exatamente estas mesmas consultas. Foi dobrado aqui.
   if (req.method === "GET") {
     try {
       const me = String((req.query && req.query.me) || "").slice(0, 60);
@@ -22,13 +29,22 @@ module.exports = async function handler(req, res) {
       const filtro = me
         ? `&or=(para.is.null,para.like.canal_*,para.eq.${encodeURIComponent(me)},and(user_key.eq.${encodeURIComponent(me)},para.not.is.null))`
         : `&or=(para.is.null,para.like.canal_*)`;
-      const [pr, mr] = await Promise.all([
+      const [pr, mr, sr] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/app_users?select=user_key,presence_page,presence_at`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,para,criado_em&order=criado_em.desc&limit=80${filtro}`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,para,criado_em&order=criado_em.desc&limit=80${filtro}`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/dashboard_snapshots?select=created_at&order=created_at.desc&limit=1`, { headers })
       ]);
       const presenca = pr.ok ? await pr.json() : [];
       const msgs = mr.ok ? await mr.json() : [];
-      return res.status(200).json({ presenca, mensagens: msgs.reverse() });
+      let planilha = null;
+      if (sr.ok) { const snap = await sr.json().catch(() => []); planilha = (snap && snap[0] && snap[0].created_at) || null; }
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).json({
+        presenca,
+        mensagens: msgs.reverse(),
+        v: process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || "dev",
+        planilha
+      });
     } catch (e) {
       return res.status(500).json({ error: "Erro ao consultar estado da base." });
     }

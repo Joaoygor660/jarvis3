@@ -7823,9 +7823,9 @@ function toggleTheme(){
 }
 (function(){try{applyTheme(localStorage.getItem(LS_THEME)||"light");}catch(e){}})();
 /* ═══════════════ TEMPO REAL — batimento único ═══════════════
-   Um /api/ping a cada 15s cobre tudo: versão do deploy, planilha nova,
+   Um /api/hq a cada 15s cobre tudo: versão do deploy, planilha nova,
    presença, chat e os dados da guia aberta. Substitui os dois polls que
-   batiam no /api/hq (12s e 20s), então o total de chamadas caiu.
+   batiam nesse mesmo endpoint (12s e 20s), então o total de chamadas caiu.
    Pausa quando a aba está oculta. Nunca atualiza a tela por cima de alguém
    digitando ou com formulário aberto. */
 var RT={v:null,planilha:null,ativo:Date.now(),avisou:false,tick:0};
@@ -7885,7 +7885,7 @@ function rtPing(){
   if(document.hidden)return;
   if(sessionStorage.getItem("logged")!=="1")return;
   var me=sessionStorage.getItem("userKey")||"";
-  fetch("/api/ping?me="+encodeURIComponent(me)).then(function(r){return r.ok?r.json():null;}).then(function(j){
+  fetch("/api/hq?me="+encodeURIComponent(me)).then(function(r){return r.ok?r.json():null;}).then(function(j){
     if(!j)return;
     RT.tick++;
     /* 1) versão nova → recarrega se estiver ocioso, senão avisa */
