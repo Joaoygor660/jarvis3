@@ -113,12 +113,14 @@ module.exports = async function handler(req, res) {
 
   const data = await resp.json().catch(() => null);
 
-  // ── Msg 1 da cadência: WhatsApp imediato quando a proposta foi enviada ──────
-  // Regras: só propostas, só POST/PATCH, precisa de telefone + data_envio_proposta,
-  // etapa 0 (nunca enviada), cadência ativa, cliente não respondeu, status não-final.
+  // ── Msg 1 da cadência: WhatsApp imediato SOMENTE no CADASTRO da proposta ─────
+  // Antes disparava também em PATCH, então mover o card no kanban (troca de
+  // status = PATCH) reenviava a mensagem. Agora só no POST (novo cadastro):
+  // precisa de telefone + data_envio_proposta, etapa 0, cadência ativa, cliente
+  // não respondeu, status não-final.
   let whatsapp = null;
   let wpErro = null;
-  if ((req.method === "POST" || req.method === "PATCH") && tKey === "propostas" && process.env.EVOLUTION_APIKEY) {
+  if (req.method === "POST" && tKey === "propostas" && process.env.EVOLUTION_APIKEY) {
     const p = Array.isArray(data) ? data[0] : null;
     const statusFinal = p && ["FECHADO", "PERDIDO", "PAUSADO"].includes(p.status);
     if (p && p.telefone && p.data_envio_proposta && (p.cadencia_etapa || 0) === 0 && p.cadencia_ativa !== false && !p.respondido_em && !statusFinal) {

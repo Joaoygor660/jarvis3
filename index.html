@@ -5972,7 +5972,7 @@ function hqShell(){
     .hq-zbtn:hover{border-color:#7c3aed}
     @media(max-width:1100px){#hq-grid{grid-template-columns:1fr!important}}
   </style>
-  <div id="hq-grid" style="display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:14px;align-items:start">
+  <div id="hq-grid" style="display:grid;grid-template-columns:1fr;gap:14px;align-items:start">
     <div>
       <div id="hq-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
       <div id="hq-cena" style="position:relative;background:${NOITE?"linear-gradient(160deg,#1b1430,#0e0b18 70%)":"linear-gradient(160deg,#bfdbfe,#e0f2fe 70%)"};border-radius:16px;overflow:hidden;border:1px solid ${NOITE?"#2c2450":"#93c5fd"}">
@@ -5993,7 +5993,6 @@ function hqShell(){
       </div>
       <div style="font-size:.62rem;color:#94a3b8;margin-top:6px">🖱️ Clique num personagem para conversar ou ver o perfil · roda do mouse dá zoom, arraste para mover · o personagem levanta, atravessa o corredor e senta na sala da guia em uso</div>
     </div>
-    <div id="hq-chat"></div>
   </div>`;
   const svg=document.getElementById("hq-svg");
   if(svg){
@@ -6155,6 +6154,13 @@ function hqEhCanal(v){return typeof v==="string"&&v.indexOf("canal_")===0;}
 function hqAbrirDM(k){
   const meu=sessionStorage.getItem("userKey")||"";
   if(k===meu)return;
+  // O chat lateral da Base Virtual foi removido: "Conversar" abre a conversa
+  // no chat global (bolinha 💬). Canais de setor não existem lá → mantém legado.
+  if(typeof gcAbrir==="function"&&k&&String(k).indexOf("canal_")!==0){
+    if(!document.getElementById("chatPanel").classList.contains("show"))toggleChat();
+    gcAbrir(k);
+    return;
+  }
   HQ_DM=k||null;
   hqRenderChat();
   const inp=document.getElementById("hq-input");if(inp)inp.focus();
