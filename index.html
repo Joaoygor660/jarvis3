@@ -7663,6 +7663,22 @@ function _relDates(){
   });
   return [...set].sort();
 }
+/* Data de HOJE no fuso local. Não dá para usar ymd() aqui: ela passa por
+   toISOString(), que é UTC — à noite viraria o dia seguinte. */
+function _hojeLocal(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+/* Dia que o relatório abre: HOJE quando há movimento, senão o dia mais recente
+   que não esteja no futuro. A planilha traz OS agendadas (DTPONTO adiante), que
+   criam dias à frente na lista — eles seguem selecionáveis, mas não abrem
+   sozinhos, senão o relatório abre num dia que ainda não aconteceu. */
+function _relPadrao(ds){
+  const hj=_hojeLocal();
+  if(ds.includes(hj))return hj;
+  const passado=ds.filter(d=>d<=hj);
+  return passado.length?passado[passado.length-1]:ds[ds.length-1];
+}
 function relSetDate(d){RELDIA_DATE=d;RELDIA_EXP={};renderRelDia();}
 function relNav(dir){
   const ds=_relDates();if(!ds.length)return;
@@ -7685,10 +7701,20 @@ function renderRelDia(){
     if(blocksEl)blocksEl.innerHTML='<div style="grid-column:1/-1;padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Nenhum dado carregado ainda. Carregue a planilha do dia.</div>';
     return;
   }
-  if(!RELDIA_DATE||!ds.includes(RELDIA_DATE))RELDIA_DATE=ds[ds.length-1];
+  if(!RELDIA_DATE||!ds.includes(RELDIA_DATE))RELDIA_DATE=_relPadrao(ds);
   if(sel)sel.innerHTML=ds.slice().reverse().map(d=>`<option value="${d}"${d===RELDIA_DATE?" selected":""}>${d.split("-").reverse().join("/")}</option>`).join("");
   const info=document.getElementById("reldia-info");
-  if(info)info.textContent=ds.indexOf(RELDIA_DATE)===ds.length-1?"(dia mais recente)":"";
+  if(info){
+    const hj=_hojeLocal();
+    // deixa explícito quando o dia aberto é hoje, e avisa quando é um dia
+    // que ainda não aconteceu (OS agendadas criam esses dias na lista)
+    // "mais recente" = último dia que já ocorreu; os agendados ficam de fora
+    const ocorridos=ds.filter(d=>d<=hj);
+    info.textContent=RELDIA_DATE===hj?"(hoje)"
+      :RELDIA_DATE>hj?"(agendado — ainda não ocorreu)"
+      :RELDIA_DATE===ocorridos[ocorridos.length-1]?"(dia mais recente com movimento)":"";
+    info.style.color=RELDIA_DATE>hj?"#b45309":"";
+  }
   const day=k=>(D[k]||[]).filter(r=>String(r.DATA||"").slice(0,10)===RELDIA_DATE);
   RELDIA_DET={};let detN=0;
   const reg=(title,headers,rows)=>{const k="k"+(detN++);RELDIA_DET[k]={title,headers,rows};return k;};
