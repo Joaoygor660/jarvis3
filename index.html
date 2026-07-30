@@ -2118,7 +2118,14 @@ function setPeriod(p,btn){
   document.querySelectorAll(".fb .pg:first-of-type .pi").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   document.getElementById("dCust").classList.toggle("show",p==="custom");
-  const{min,max}=getRange();const t=max||new Date();
+  const{min,max}=getRange();
+  // Âncora de "hoje": o dia mais recente COM dado, mas NUNCA no futuro.
+  // A planilha traz OS agendadas (DTPONTO adiante — treinamentos marcados para
+  // os próximos dias). Sem esta trava, uma única OS futura puxava o painel
+  // inteiro para uma data sem movimento e tudo aparecia zerado.
+  // Se a planilha estiver atrasada, max < hoje e continua valendo max.
+  const _hj=new Date();_hj.setHours(0,0,0,0);
+  const t=(max&&max<_hj)?max:_hj;
   if(p==="today"){ST.sd=t;ST.ed=t;}
   else if(p==="week"){const s=new Date(t);s.setDate(s.getDate()-6);ST.sd=s;ST.ed=t;}
   else if(p==="month"){const s=new Date(t);s.setDate(s.getDate()-30);ST.sd=s;ST.ed=t;}
