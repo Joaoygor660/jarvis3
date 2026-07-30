@@ -3494,7 +3494,12 @@ function buildDataFromWorkbook(wb){
   ext("OS AVULSOS",(r,I)=>{
     const tipoCol=I["TIPO DE OS"]??I["TIPO OS"]??I["TIPOOS"]??I["TIPO"];
     const tipo=(r[tipoCol]||"").toString().toUpperCase().trim();
-    const dtCol=I["DTINICIO"]??I["DATA INICIO"]??I["DATA"];
+    // Data do serviço = DTPONTO (o dia em que o serviço foi de fato prestado).
+    // Antes usava DTINICIO, que é o início da SOLICITAÇÃO: numa OS que se estende
+    // por vários dias, todas as linhas repetem o mesmo DTINICIO e variam o DTPONTO,
+    // então a guia empilhava tudo no dia da abertura. Sem retorno a outra coluna de
+    // data — usar DTINICIO como reserva reintroduziria exatamente essa divergência.
+    const dtCol=I["DTPONTO"]??I["DT PONTO"]??I["DATAPONTO"]??I["DATA PONTO"];
     return{
       DATA:isoDate(r[dtCol]),LOCAL:r[I["NOMELOCAL"]],
       CARGO:r[I["CARGO"]],TIPO:tipo,
