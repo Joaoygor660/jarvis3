@@ -7441,24 +7441,9 @@ function comDashRender(){
   const vips=(COM_VALORES&&ticket)?ativas.filter(p=>(Number(p.valor)||0)>=ticket*1.5&&comDiasParado(p)>=5):[];
   const mesNome=mIni.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
   /* receita prevista (pipeline ponderado) e previsão de meta */
-  const previstaR$=fecMesR$+ativas.reduce((s,p)=>s+(Number(p.valor)||0)*comChance(p)/100,0);
   const diasMes=mFim.getDate();
-  // projeção só faz sentido no mês corrente (extrapola o que já correu);
-  // num mês já fechado o próprio total é o resultado, sem extrapolar
-  const _mesCorrente=(mIni.getFullYear()===hoje.getFullYear()&&mIni.getMonth()===hoje.getMonth());
-  const _diasCorridos=_mesCorrente?Math.max(1,hoje.getDate()):diasMes;
-  const runRate=fecMesR$/_diasCorridos*diasMes;
   const metaV=Number(meta.meta_valor)||0;
   const probMeta=metaV?Math.min(99,Math.max(1,Math.round((Math.max(runRate,previstaR$)/metaV)*100*0.9))):null;
-  /* saúde comercial (0-100) */
-  let saude=0;
-  saude+=ativas.length?Math.round((1-Math.min(1,parados.length/ativas.length))*25):12;
-  saude+=taxa===null?12:Math.min(25,Math.round(taxa/40*25));
-  saude+=COM_VALORES?(metaV?Math.min(25,Math.round(fecMesR$/metaV*25)):(pipeR$>0?15:5)):(meta.meta_fechamentos?Math.min(25,Math.round(fecMes.length/Number(meta.meta_fechamentos)*25)):(fecMes.length>0?18:8));
-  const respondidas=P.filter(p=>p.data_envio_proposta).length?Math.round(P.filter(p=>p.respondido_em).length/P.filter(p=>p.data_envio_proposta).length*100):null;
-  saude+=respondidas===null?12:Math.min(25,Math.round(respondidas/60*25));
-  saude=Math.min(100,saude);
-  const saudeInfo=saude>=80?{lbl:"Excelente",cor:"#16a34a",ic:"🟢"}:saude>=60?{lbl:"Boa",cor:"#2e8fef",ic:"🔵"}:saude>=40?{lbl:"Atenção",cor:"#f97316",ic:"🟠"}:{lbl:"Crítica",cor:"#dc2626",ic:"🔴"};
   /* insights automáticos */
   const insights=[];
   if(taxa!==null&&taxaAnt!==null&&taxaAnt>0)insights.push({ic:taxa>=taxaAnt?"📈":"📉",cor:taxa>=taxaAnt?"#16a34a":"#dc2626",t:`Conversão ${taxa>=taxaAnt?"subiu":"caiu"} de <b>${taxaAnt}%</b> para <b>${taxa}%</b> vs mês anterior.`});
@@ -7479,58 +7464,13 @@ function comDashRender(){
   if(taxa!==null&&taxaAnt!==null&&taxa<taxaAnt)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`🎯 Conversão caiu vs mês anterior (${taxaAnt}% → ${taxa}%).`});
   if(envMes.length<envAnt.length)alertas.push({cor:"#f97316",bg:"#fff7ed",t:`🗂️ Pipeline desacelerou: ${envMes.length} propostas enviadas vs ${envAnt.length} no mês anterior.`});
   parados.slice(0,3).forEach(o=>{if(!criticas.includes(o.p)&&!vips.includes(o.p))alertas.push({cor:"#64748b",bg:"#f8fafc",t:`⏸️ <b>${o.p.nome}</b> — ${o.d}d parado (${o.p.status})`});});
-  /* ranking por responsável */
-  const ranking=(function(){const m={};P.forEach(p=>{const r=(p.responsavel||"—").trim()||"—";if(!m[r])m[r]={env:0,fec:0,rec:0,pipe:0};if(p.data_envio_proposta)m[r].env++;if(p.status==="FECHADO"){m[r].fec++;m[r].rec+=Number(p.valor)||0;}if(COM_ST_ATIVOS.includes(p.status))m[r].pipe+=Number(p.valor)||0;});return Object.entries(m).sort((a,b)=>(b[1].rec-a[1].rec)||(b[1].fec-a[1].fec)||(b[1].env-a[1].env));})();
   /* série 6 meses p/ gráficos */
   const mesesLbl=[];for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);mesesLbl.push(d.toLocaleDateString("pt-BR",{month:"short"}));}
   const sFecR=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
   const sEnvN=comSerieMensal(P,p=>p.data_envio_proposta,()=>1,6);
   const sFecN=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,()=>1,6);
   const kpi=(kind,ic,lbl,val,sub,cor,spark)=>`<div class="cvk" style="border-top:3px solid ${cor};cursor:pointer" onclick="comDet('${kind}')" title="Clique para ver os registros"><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:5px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${val}</div><div style="font-size:.64rem;color:#94a3b8">${sub}</div>${spark||""}</div>`;
-  const metaBar=(lbl,real,alvo,fmt)=>{
-    const pct=alvo?Math.min(100,Math.round(real/alvo*100)):0;
-    const c=pct>=100?"#16a34a":pct>=60?"#2e8fef":"#f97316";
-    return `<div style="margin-bottom:12px"><div class="rd-bar-row"><span style="font-weight:700;color:#334155">${lbl}</span><b>${fmt(real)} / ${alvo?fmt(alvo):"sem meta"}</b></div><div style="background:#eef2f7;border-radius:6px;height:9px"><div style="width:${alvo?Math.max(3,pct):0}%;height:9px;border-radius:6px;background:${c};transition:width .4s"></div></div>${alvo?`<div style="font-size:.62rem;color:${c};font-weight:800;margin-top:2px">${pct}% da meta</div>`:""}</div>`;
-  };
-  const resumoAuto=`O comercial está com saúde <b style="color:${saudeInfo.cor}">${saudeInfo.lbl.toLowerCase()} (${saude}/100)</b>. `+
-    `${envMes.length} proposta(s) enviadas em ${mesNome} (${emp} empresas, ${cond} condomínios), ${COM_VALORES?`pipeline de <b>${fmtBRL0(pipeR$)}</b> em negociação e <b>${fmtBRL0(fecMesR$)}</b> já fechados no mês`:`<b>${ativas.length}</b> em andamento no funil e <b>${fecMes.length}</b> contrato(s) fechados no mês`}`+
-    `${taxa!==null?`, com conversão de <b>${taxa}%</b>`:""}.`+
-    `${criticas.length?` <b style="color:#dc2626">${criticas.length} negociação(ões) críticas exigem contato imediato.</b>`:""}`+
-    `${probMeta!==null?` Probabilidade de bater a meta: <b>${probMeta}%</b>.`:""}`;
   let h='';
-  /* ── COCKPIT HERO ── */
-  h+=`<div style="background:linear-gradient(135deg,#0d1f35,#173a66);border-radius:16px;padding:22px 26px;margin-bottom:14px;color:#fff;display:grid;grid-template-columns:150px 1fr;gap:24px;align-items:center;animation:cvFadeUp .4s ease both">
-    <div style="text-align:center">
-      <div style="position:relative;width:118px;height:118px;margin:0 auto">
-        <svg width="118" height="118" viewBox="0 0 118 118">
-          <circle cx="59" cy="59" r="50" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="10"/>
-          <circle cx="59" cy="59" r="50" fill="none" stroke="${saudeInfo.cor}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(saude/100*314).toFixed(0)} 314" transform="rotate(-90 59 59)" style="transition:stroke-dasharray .8s ease"/>
-        </svg>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:1.7rem;font-weight:900">${saude}</div><div style="font-size:.56rem;color:#9fb3d1;text-transform:uppercase;letter-spacing:.5px">Saúde</div></div>
-      </div>
-      <div style="font-size:.7rem;font-weight:800;color:${saudeInfo.cor};margin-top:6px">${saudeInfo.ic} ${saudeInfo.lbl}</div>
-    </div>
-    <div>
-      <div style="font-size:.66rem;font-weight:800;color:#9fb3d1;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">🧭 Cockpit Executivo — ${mesNome}</div>
-      <div style="font-size:.82rem;line-height:1.6;color:#e6eefc">${resumoAuto}</div>
-      <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap">
-        ${COM_VALORES?`
-        <div onclick="comDet('prevista')" style="cursor:pointer" title="Clique para ver o cálculo por proposta"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Receita prevista</div><div style="font-size:1.05rem;font-weight:900">${fmtBRL0(previstaR$)}</div></div>
-        <div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver os contratos"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Confirmada</div><div style="font-size:1.05rem;font-weight:900;color:#4ade80">${fmtBRL0(fecMesR$)}</div></div>
-        <div onclick="comDet('perdidaMes')" style="cursor:pointer" title="Clique para ver as perdas"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Perdida (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#f87171">${fmtBRL0(perMesR$)}</div></div>
-        <div onclick="comDet('negociacao')" style="cursor:pointer" title="Clique para ver o pipeline"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Pipeline</div><div style="font-size:1.05rem;font-weight:900;color:#93c5fd">${fmtBRL0(pipeR$)}</div></div>
-        ${metaV?`<div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver o realizado"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Meta</div><div style="font-size:1.05rem;font-weight:900">${Math.round(fecMesR$/metaV*100)}%</div></div>`:""}
-        ${probMeta!==null?`<div onclick="comDet('prevista')" style="cursor:pointer" title="Clique para ver a base do cálculo"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Prob. de bater meta</div><div style="font-size:1.05rem;font-weight:900;color:${probMeta>=70?"#4ade80":probMeta>=40?"#fbbf24":"#f87171"}">${probMeta}%</div></div>`:""}
-        `:`
-        <div onclick="comDet('abertas')" style="cursor:pointer" title="Clique para ver as propostas"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Ativas no funil</div><div style="font-size:1.05rem;font-weight:900">${ativas.length}</div></div>
-        <div onclick="comDet('fechadaMes')" style="cursor:pointer" title="Clique para ver os contratos"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Fechadas (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#4ade80">${fecMes.length}</div></div>
-        <div onclick="comDet('perdidaMes')" style="cursor:pointer" title="Clique para ver as perdas"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Perdidas (mês)</div><div style="font-size:1.05rem;font-weight:900;color:#f87171">${perMes.length}</div></div>
-        <div onclick="comDet('negociacao')" style="cursor:pointer" title="Clique para ver o funil ativo"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Em negociação</div><div style="font-size:1.05rem;font-weight:900;color:#93c5fd">${P.filter(p=>["PROPOSTA","NEGOCIAÇÃO","CONTRATO"].includes(p.status)).length}</div></div>
-        ${respondidas!==null?`<div onclick="comDet('semresp')" style="cursor:pointer" title="Clique para ver quem não respondeu"><div style="font-size:.58rem;color:#9fb3d1;text-transform:uppercase">Respondidas</div><div style="font-size:1.05rem;font-weight:900;color:${respondidas>=60?"#4ade80":"#fbbf24"}">${respondidas}%</div></div>`:""}
-        `}
-      </div>
-    </div>
-  </div>`;
   /* ── KPIs ── */
   h+=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px">`;
   h+=kpi("envMes","📨","Propostas no mês",envMes.length,`${emp} empresas · ${cond} condomínios`,"#2e8fef",comSpark(sEnvN,"#2e8fef"));
@@ -7574,33 +7514,11 @@ function comDashRender(){
     ?`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Receita por Serviço</div><div style="font-size:.76rem">${servicoR$.length?_cdBarRows(servicoR$.map(([k,v])=>[k+" — "+fmtBRL0(v),v]),()=>"#1e4d8c"):'<div style="color:#94a3b8">Sem contratos fechados ainda.</div>'}</div></div>`
     :`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Propostas por Serviço</div><div style="font-size:.76rem">${(function(){const m={};P.forEach(p=>{m[p.servico||"NÃO INFORMADO"]=(m[p.servico||"NÃO INFORMADO"]||0)+1});const a=Object.entries(m).sort((x,y)=>y[1]-x[1]).slice(0,8);return a.length?_cdBarRows(a,()=>"#1e4d8c"):'<div style="color:#94a3b8">Sem propostas ainda.</div>';})()}</div></div>`;
   h+=`</div>`;
-  /* ── RANKING + TIMELINE GERAL ── */
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🏅 Ranking Comercial <span style="font-size:.6rem;color:#94a3b8;font-weight:700">por responsável</span></div>
-    <table style="width:100%;border-collapse:collapse;font-size:.72rem"><thead><tr>${(COM_VALORES?["","Responsável","Receita","Contratos","Conversão","Pipeline"]:["","Responsável","Propostas","Contratos","Conversão"]).map(c=>`<th style="text-align:left;padding:6px 8px;color:#64748b;font-size:.6rem;text-transform:uppercase;border-bottom:1px solid #e5e9f0">${c}</th>`).join("")}</tr></thead><tbody>
-    ${ranking.map(([r,d],i)=>`<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:7px 8px">${["🥇","🥈","🥉"][i]||(i+1)+"º"}</td><td style="padding:7px 8px;font-weight:800;color:#0d1f35">${r}</td>${COM_VALORES?`<td style="padding:7px 8px;font-weight:700;color:#16a34a">${fmtBRL0(d.rec)}</td>`:`<td style="padding:7px 8px">${d.env}</td>`}<td style="padding:7px 8px">${d.fec}</td><td style="padding:7px 8px">${d.env?Math.round(d.fec/d.env*100)+"%":"—"}</td>${COM_VALORES?`<td style="padding:7px 8px">${fmtBRL0(d.pipe)}</td>`:""}</tr>`).join("")}</tbody></table></div>`;
+  /* ── TIMELINE GERAL ── */
+  h+=`<div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px">`;
   const tlGeral=COM_LOG.slice(0,10);
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🕐 Últimas Atividades</div>
     <div style="font-size:.7rem">${tlGeral.length?tlGeral.map(l=>{const p=P.find(x=>x.id===l.proposta_id);const ic=l.etapa>0?(l.canal==="WHATSAPP"?"📱":"✉️"):({VISITA:"🏠",WHATSAPP:"📱",EMAIL:"✉️"}[l.canal]||"⚙️");return`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;align-items:baseline"><span>${ic}</span><div style="flex:1"><b style="color:#0d1f35">${p?p.nome:"#"+l.proposta_id}</b> — ${l.etapa>0?(COM_ETAPA_LBL[l.etapa]||"")+(l.status==="falhou"?" ⚠️":""):l.detalhe||"evento"}</div><span style="color:#94a3b8;white-space:nowrap;font-size:.62rem">${new Date(l.enviado_em).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</span></div>`;}).join(""):'<div style="color:#94a3b8">Sem atividades registradas ainda.</div>'}</div></div>`;
-  h+=`</div>`;
-  /* ── METAS + IA ── */
-  h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
-  const melhorMes=(function(){const s=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,12);const mx=Math.max(...s);if(!mx)return null;const i=s.indexOf(mx);const d=new Date(hoje.getFullYear(),hoje.getMonth()-(11-i),1);return{lbl:d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"}),val:mx};})();
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🎯 Metas de ${mesNome}</div>
-    ${metaBar("Propostas enviadas",envMes.length,meta.meta_propostas,v=>v)}
-    ${metaBar("Contratos fechados",fecMes.length,meta.meta_fechamentos,v=>v)}
-    ${COM_VALORES?metaBar("Valor fechado",fecMesR$,meta.meta_valor?Number(meta.meta_valor):null,fmtBRL0):""}
-    ${COM_VALORES&&melhorMes?`<div style="font-size:.64rem;color:#64748b;margin-top:2px">🏆 Melhor mês: <b>${melhorMes.lbl}</b> (${fmtBRL0(melhorMes.val)})</div>`:""}
-    <div style="display:flex;gap:8px;margin-top:14px;align-items:end">
-      <div style="flex:1"><label class="rhf-l">Meta propostas</label><input class="rhf-i" id="cm-mp" type="number" min="0" value="${meta.meta_propostas||""}"></div>
-      <div style="flex:1"><label class="rhf-l">Meta fechamentos</label><input class="rhf-i" id="cm-mf" type="number" min="0" value="${meta.meta_fechamentos||""}"></div>
-      ${COM_VALORES?`<div style="flex:1"><label class="rhf-l">Meta valor (R$)</label><input class="rhf-i" id="cm-mv" type="number" step="0.01" min="0" value="${meta.meta_valor||""}"></div>`:""}
-      <button class="rh-btn" style="padding:9px 16px" onclick="comSalvarMeta('${mesKey}')">💾</button>
-    </div><div id="cm-msg" style="font-size:.7rem;font-weight:700;margin-top:6px"></div></div>`;
-  h+=`<div style="background:linear-gradient(135deg,#0d1f35,#1e4d8c);border-radius:14px;padding:18px 22px;color:#fff"><div style="font-size:.8rem;font-weight:800;margin-bottom:10px">🤖 Resumo Executivo por IA</div>
-    <div style="font-size:.7rem;color:#c7d6ec;margin-bottom:12px">O JARVIS analisa o mês comercial e gera um resumo com destaques, riscos e recomendações.</div>
-    <button class="rh-btn" style="background:#fff;color:#1e4d8c" onclick="comResumoIA()" id="cd-ia-btn">✨ Gerar resumo do mês</button>
-    <div id="cd-ia-out" style="margin-top:12px;font-size:.76rem;line-height:1.55;white-space:pre-wrap"></div></div>`;
   h+=`</div>`;
   el.innerHTML=h;
   /* gráficos Chart.js */
@@ -7608,29 +7526,6 @@ function comDashRender(){
     if(COM_VALORES){dc2("cdRev");CH["cdRev"]=new Chart(document.getElementById("cdRev"),{type:"line",data:{labels:mesesLbl,datasets:[{label:"Receita fechada",data:sFecR,borderColor:"#16a34a",backgroundColor:"rgba(22,163,74,.10)",borderWidth:2.5,pointRadius:4,pointBackgroundColor:"#16a34a",fill:true,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL0(c.parsed.y)}}},scales:{y:{ticks:{callback:v=>"R$ "+(v>=1000?(v/1000)+"k":v),font:{size:10}}},x:{ticks:{font:{size:10}}}}}});}
     dc2("cdEnvFec");CH["cdEnvFec"]=new Chart(document.getElementById("cdEnvFec"),{type:"bar",data:{labels:mesesLbl,datasets:[{label:"Enviadas",data:sEnvN,backgroundColor:"#2e8fef",borderRadius:4},{label:"Fechadas",data:sFecN,backgroundColor:"#16a34a",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:10}}},scales:{y:{ticks:{stepSize:1,font:{size:10}}},x:{ticks:{font:{size:10}}}}}});
   }catch(e){console.warn("charts comercial:",e);}
-}
-function comSalvarMeta(mesKey){
-  const mvEl=document.getElementById("cm-mv"); /* o campo de meta em R$ não existe quando COM_VALORES=false */
-  const body={mes:mesKey,meta_propostas:document.getElementById("cm-mp").value||null,meta_fechamentos:document.getElementById("cm-mf").value||null,meta_valor:mvEl?(mvEl.value||null):null};
-  const m=document.getElementById("cm-msg");m.style.color="#64748b";m.textContent="Salvando meta…";
-  fetch("/api/comercial?t=metas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
-    .then(r=>r.json().then(j=>({ok:r.ok,j})))
-    .then(({ok,j})=>{if(!ok)throw new Error((j&&j.error)||"");m.style.color="#16a34a";m.textContent="✔ Meta salva!";comFetchAll().then(comDashRender);})
-    .catch(()=>{m.style.color="#dc2626";m.textContent="Erro ao salvar a meta.";});
-}
-function comResumoIA(){
-  const btn=document.getElementById("cd-ia-btn"),out=document.getElementById("cd-ia-out");
-  btn.disabled=true;btn.textContent="🧠 Analisando…";out.textContent="";
-  const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
-  const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
-  const envMes=COM_P.filter(p=>noMes(p.data_envio_proposta));
-  const resumoDados=COM_P.map(p=>`${p.nome} (${p.tipo_cliente}, ${p.cidade||"?"}): ${p.servico||"?"} | ${fmtBRL(p.valor)} | status ${p.status} | origem ${p.origem_lead||"?"} | enviada ${p.data_envio_proposta||"não"} | cadência etapa ${p.cadencia_etapa||0}/5${p.respondido_em?" | RESPONDEU":""}${p.motivo_perda?" | perda: "+p.motivo_perda:""}`).join("\n");
-  const ctx=`MÓDULO COMERCIAL — ${hoje.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}\nPropostas enviadas no mês: ${envMes.length}\nTotal de propostas na base: ${COM_P.length}\n\nLISTA DE PROPOSTAS:\n${resumoDados}`;
-  fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:"Você é o analista comercial do Grupo ServCamp. Gere um RESUMO EXECUTIVO do mês comercial em até 10 linhas: 1) panorama geral (números-chave), 2) destaques positivos, 3) riscos/atenções (propostas paradas, perdas e motivos), 4) recomendações práticas para a diretoria. Seja direto, use os dados fornecidos.",context:ctx})})
-    .then(r=>r.json())
-    .then(j=>{out.textContent=j.answer||j.error||"Sem resposta.";})
-    .catch(()=>{out.textContent="Erro ao gerar o resumo. Tente novamente.";})
-    .finally(()=>{btn.disabled=false;btn.textContent="✨ Gerar resumo do mês";});
 }
 function _rdModal(title,headers,rows){
   const ex=document.getElementById("rdModal");if(ex)ex.remove();
