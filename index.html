@@ -5543,7 +5543,13 @@ function comSalvar(e){
     observacao:document.getElementById("cpf-obs").value.trim(),
     criado_por:sessionStorage.getItem("userNome")||null
   };
-  if(body.data_envio_proposta&&["LEAD","PROSPECÇÃO"].includes(body.status))body.status="PROPOSTA";
+  // O status escolhido é sempre respeitado. Havia aqui uma regra que forçava
+  // PROPOSTA quando existia data de envio: quem selecionava PROSPECÇÃO salvava e
+  // via o card continuar onde estava, sem nenhuma explicação — e arrastar no
+  // kanban funcionava, porque aquele caminho não aplicava a regra. Em vez de
+  // reescrever a escolha em silêncio, apenas avisamos quando a combinação é
+  // incomum (voltar para uma etapa anterior ao envio).
+  const _voltouAntesDoEnvio=!!body.data_envio_proposta&&["LEAD","PROSPECÇÃO"].includes(body.status);
   if(id){const orig=COM_P.find(p=>String(p.id)===String(id));if(orig&&orig.status!==body.status)comLogEvento(Number(id),`Status: ${orig.status} → ${body.status}`);}
   const msg=document.getElementById("cp-form-msg");
   const btn=document.getElementById("cpBtnSalvar");
@@ -5558,6 +5564,7 @@ function comSalvar(e){
       const wa=j&&j.whatsapp;
       if(wa==="enviado"){txt="✔ Salva! 📲 Msg 1 (WhatsApp) enviada ao cliente.";}
       else if(wa==="falhou"){txt="✔ Salva — mas o WhatsApp FALHOU. "+((j&&j.wpErro)?("["+j.wpErro+"]"):"Verifique a Evolution.");cor="#d97706";hold=15000;}
+      else if(id&&_voltouAntesDoEnvio){txt="✔ Movida para "+body.status+". A data de envio ("+fd(body.data_envio_proposta)+") segue registrada.";cor="#b45309";hold=6000;}
       else if(id){txt="✔ Proposta atualizada!";}
       else if(!body.data_envio_proposta){txt="✔ Salva! Cadência inicia quando registrar a data de envio da proposta.";cor="#64748b";hold=5000;}
       else if(!body.telefone){txt="✔ Salva! Sem telefone — Msg 1 (WhatsApp) não enviada; e-mails seguem normalmente.";cor="#64748b";hold=5000;}
