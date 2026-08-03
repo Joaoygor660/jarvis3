@@ -2050,11 +2050,21 @@ const ymd=d=>d?d.toISOString().split("T")[0]:"";
 const fd=s=>s&&s!=="—"?s.slice(5).split("-").reverse().join("/"):s||"—";
 
 function getRange(){
-  let mn=null,mx=null;
+  let mn=null,mx=null,mxr=null;
+  // limite de "já aconteceu": a planilha traz OS agendadas (DTPONTO adiante),
+  // que não podem servir de âncora para o que o painel chama de "hoje"
+  const _lim=new Date();_lim.setHours(23,59,59,999);
   for(const k of["faltas","fts","os","cobertura","hrextra","justif","presenca"]){
-    for(const r of(DASHBOARD_DATA[k]||[])){const d=pd(r.DATA);if(!d)continue;if(!mn||d<mn)mn=d;if(!mx||d>mx)mx=d;}
+    for(const r of(DASHBOARD_DATA[k]||[])){
+      const d=pd(r.DATA);if(!d)continue;
+      if(!mn||d<mn)mn=d;
+      if(!mx||d>mx)mx=d;
+      if(d<=_lim&&(!mxr||d>mxr))mxr=d;
+    }
   }
-  return{min:mn,max:mx};
+  // max  = maior data da base (inclui agendados) — usado por "Todos"
+  // maxReal = maior data que JÁ OCORREU e tem movimento — âncora de "hoje"
+  return{min:mn,max:mx,maxReal:mxr};
 }
 function inR(s){if(!s)return true;const d=pd(s);if(ST.sd&&d<ST.sd)return false;if(ST.ed&&d>ST.ed)return false;return true;}
 function mT(r){if(ST.turno==="TODOS")return true;return(r.TURNO||"DIURNO")===ST.turno;}
@@ -2118,14 +2128,12 @@ function setPeriod(p,btn){
   document.querySelectorAll(".fb .pg:first-of-type .pi").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   document.getElementById("dCust").classList.toggle("show",p==="custom");
-  const{min,max}=getRange();
-  // Âncora de "hoje": o dia mais recente COM dado, mas NUNCA no futuro.
-  // A planilha traz OS agendadas (DTPONTO adiante — treinamentos marcados para
-  // os próximos dias). Sem esta trava, uma única OS futura puxava o painel
-  // inteiro para uma data sem movimento e tudo aparecia zerado.
-  // Se a planilha estiver atrasada, max < hoje e continua valendo max.
-  const _hj=new Date();_hj.setHours(0,0,0,0);
-  const t=(max&&max<_hj)?max:_hj;
+  const{min,max,maxReal}=getRange();
+  // Âncora de "hoje": o dia mais recente que JÁ OCORREU e tem movimento.
+  // Não serve usar a data de hoje pura: a planilha costuma subir com atraso
+  // (hoje pode não ter nada) e ainda traz OS agendadas para os próximos dias.
+  // Qualquer um dos dois casos aterrissava num dia vazio, com tudo zerado.
+  const t=maxReal||max||new Date();
   if(p==="today"){ST.sd=t;ST.ed=t;}
   else if(p==="week"){const s=new Date(t);s.setDate(s.getDate()-6);ST.sd=s;ST.ed=t;}
   else if(p==="month"){const s=new Date(t);s.setDate(s.getDate()-30);ST.sd=s;ST.ed=t;}
