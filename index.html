@@ -278,7 +278,26 @@ html[data-theme="dark"] .status.stale{background:#3a1414!important;border-color:
 .det-sub-nm{font-weight:700;color:var(--g700);}
 .det-sub-mt{color:var(--g400);font-size:.62rem;margin-top:1px;}
 /* OP CARDS */
-.oc-row{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:12px;}
+/* auto-fit em vez de 8 fixas: com 11 cards a linha quebra sozinha em vez de espremer */
+.oc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px;margin-bottom:12px;}
+/* semáforo do Sem Alocação: verde no zero, vermelho fixo no normal, pulsante no atípico */
+.oc-ok .oc-lb{color:#16a34a!important;}.oc-ok .oc-v{color:#16a34a!important;}
+.oc-ok::before{background:#16a34a!important;}
+.oc-pulse{animation:ocPulse 1.8s ease-in-out infinite;}
+@keyframes ocPulse{
+  0%,100%{box-shadow:var(--sh),0 0 0 0 rgba(239,68,68,.55);}
+  50%{box-shadow:var(--sh),0 0 0 7px rgba(239,68,68,0);}
+}
+.oc-pulse .oc-v{animation:ocPulseV 1.8s ease-in-out infinite;}
+@keyframes ocPulseV{0%,100%{opacity:1}50%{opacity:.55}}
+@media(prefers-reduced-motion:reduce){.oc-pulse,.oc-pulse .oc-v{animation:none;}.oc-pulse{box-shadow:var(--sh),0 0 0 3px rgba(239,68,68,.45);}}
+/* sub-linha de comparação com o dia anterior */
+.oc-cmp{font-size:.56rem;font-weight:800;margin-top:2px;letter-spacing:.2px;}
+.oc-cmp .up{color:#dc2626;}.oc-cmp .dn{color:#16a34a;}.oc-cmp .eq{color:#94a3b8;}
+/* card composto (Check List / Ligações): dois números lado a lado */
+.oc-duo{display:flex;gap:10px;align-items:baseline;}
+.oc-duo .d2{font-size:.72rem;font-weight:900;color:#dc2626;}
+.oc-lock{position:absolute;top:6px;right:8px;font-size:.5rem;color:#cbd5e1;}
 .oc{background:var(--wh);border-radius:var(--r);padding:10px 12px;box-shadow:var(--sh);border:1px solid var(--g200);cursor:pointer;transition:all .15s;position:relative;}
 .oc:hover{box-shadow:var(--shm);border-color:var(--b1);}
 .oc::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--r) var(--r) 0 0;}
@@ -790,7 +809,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="oc c2" onclick="navTo('coberturas',null)"><div class="oc-ic">🛡️</div><div class="oc-lb">Coberturas</div><div class="oc-v" id="oc2">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c3" onclick="navTo('os',null)"><div class="oc-ic">📋</div><div class="oc-lb">OS Avulsos</div><div class="oc-v" id="oc3">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
-      <div class="oc c6 oc-alert" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb">registros</div></div>
+      <div class="oc c6 oc-alert" id="ocDispo" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb" id="oc6s">registros</div><div class="oc-cmp" id="oc6c"></div></div>
+      <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
+      <div class="oc c1" id="ocLig" onclick="vgAbrir('ligacoes','qual')"><div class="oc-ic">📞</div><div class="oc-lb">Ligações</div><div class="oc-duo"><span class="oc-v" id="ocLigV">—</span><span class="d2" id="ocLigP">—</span></div><div class="oc-sb" id="ocLigSub">feitas · pendentes</div></div>
+      <div class="oc c2" id="ocVagas" onclick="vgAbrir('rhvagas','rh')"><div class="oc-ic">📋</div><div class="oc-lb">Vagas Abertas</div><div class="oc-v" id="ocVagasV">—</div><div class="oc-sb" id="ocVagasSub">total, sem filtro de data</div></div>
       <div class="oc c7"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c8"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
       <div class="oc oc-alert" onclick="_postoVagoClick()" style="cursor:pointer;border-color:#e53e3e;background:linear-gradient(135deg,#fff5f5,#fed7d7)"><div class="oc-ic">🚨</div><div class="oc-lb" style="color:#c53030">Posto Descoberto</div><div class="oc-v" id="oc9" style="color:#e53e3e">—</div><div class="oc-sb" style="color:#e53e3e">vago sem cobertura</div></div>
@@ -2330,6 +2352,114 @@ function updOC(){
   const _ncList=DASHBOARD_DATA.novosClientes||[];
   document.getElementById("vg-novoscli").textContent=_ncList.length;
   document.getElementById("vg-novosclis").innerHTML=_ncList.length?`<b>${_ncList[_ncList.length-1].CLIENTE}</b>`:"nenhum ainda";
+  vgSemaforo();
+  vgComparativos();
+  vgCardChecklist();
+  vgCardLigacoes();
+  vgCardVagas();
+}
+
+/* ═════════ CARDS DA VISÃO GERAL — semáforo, comparativo e cards novos ═════════
+   VG guarda o que vem de carona no batimento de 15s (/api/hq). Os números
+   aparecem para todos; o CLIQUE só navega para quem tem a permissão da guia,
+   porque as guias seguem restritas. */
+var VG={vagasAbertas:null,ligContatos:[]};
+/* acima deste número o Sem Alocação passa a pulsar. O card soma os dias que a
+   planilha trouxer, então o limiar é aproximado de propósito — mexer aqui é a
+   forma de calibrar sem tocar em mais nada. */
+var VG_ALERTA_DISPO=20;
+
+function vgPode(perm){
+  if(sessionStorage.getItem("userAdmin")==="1")return true;
+  return sessionStorage.getItem("user"+perm.charAt(0).toUpperCase()+perm.slice(1))==="1";
+}
+/* clique dos cards restritos: navega para quem pode, informa quem não pode */
+function vgAbrir(pg,perm){
+  if(vgPode(perm))return navTo(pg,null);
+  if(typeof hqToast==="function")hqToast("Você não tem acesso a essa guia — o número fica visível aqui.");
+}
+
+function vgSemaforo(){
+  const el=document.getElementById("ocDispo");if(!el)return;
+  const n=(F.dispo||[]).length;
+  el.classList.remove("oc-ok","oc-alert","oc-pulse");
+  if(n===0){el.classList.add("oc-ok");}
+  else{el.classList.add("oc-alert");if(n>VG_ALERTA_DISPO)el.classList.add("oc-pulse");}
+  const sub=document.getElementById("oc6s");
+  if(sub)sub.textContent=n===0?"todos alocados":(n>VG_ALERTA_DISPO?"acima do normal":"registros");
+}
+
+/* Compara os DOIS ÚLTIMOS DIAS presentes na planilha. É uma leitura diária
+   explícita ("hoje X · ontem Y"), e não um delta sobre o total do card —
+   os cards somam o período inteiro, então um percentual sobre eles enganaria. */
+function _vgDoisDias(){
+  const D=DASHBOARD_DATA||{},set=new Set();
+  ["faltas","cobertura","os","fts","justif","dispo"].forEach(k=>{
+    (D[k]||[]).forEach(r=>{const d=String(r.DATA||"").slice(0,10);if(d.length===10)set.add(d);});
+  });
+  const ds=[...set].sort();
+  return{hoje:ds[ds.length-1]||null,ontem:ds[ds.length-2]||null};
+}
+function _vgNoDia(arr,dia){return dia?(arr||[]).filter(r=>String(r.DATA||"").slice(0,10)===dia).length:0;}
+function vgComparativos(){
+  const{hoje,ontem}=_vgDoisDias();
+  const alvos=[["oc6c",DASHBOARD_DATA.dispo]];
+  alvos.forEach(([id,arr])=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(!hoje||!ontem){el.textContent="";return;}
+    const h=_vgNoDia(arr,hoje),o=_vgNoDia(arr,ontem),d=h-o;
+    const cls=d>0?"up":d<0?"dn":"eq",sinal=d>0?"▲ +":d<0?"▼ ":"■ ";
+    el.innerHTML=`hoje <b>${h}</b> · ontem <b>${o}</b> <span class="${cls}">${sinal}${d===0?"0":Math.abs(d)}</span>`;
+  });
+}
+
+function vgCardChecklist(){
+  const v=document.getElementById("ocCkV");if(!v)return;
+  const D=DASHBOARD_DATA||{};
+  const visit=(typeof _ckVisitas==="function")?_ckVisitas(F.checklist||D.checklist||[]):{};
+  const visitados=new Set(Object.keys(visit).map(c=>c.trim().toUpperCase()));
+  const nomes=new Set((D.clientes||[]).map(r=>(r.NOME||"").trim().toUpperCase()).filter(c=>c&&c!=="—"));
+  const total=nomes.size;
+  const sem=[...nomes].filter(c=>!visitados.has(c)).length;
+  const pct=total?Math.round(visitados.size/total*100):0;
+  v.textContent=visitados.size;
+  document.getElementById("ocCkS").textContent=sem?("−"+sem):"0";
+  document.getElementById("ocCkSub").innerHTML=`de <b>${total}</b> clientes · <b>${pct}%</b>`;
+}
+
+function vgCardLigacoes(){
+  const v=document.getElementById("ocLigV");if(!v)return;
+  const contatos=VG.ligContatos||[];
+  const feitas=contatos.filter(c=>{
+    const d=String(c.data_contato||c.criado_em||"").slice(0,10);
+    return d&&(typeof inR==="function"?inR(d):true);
+  }).length;
+  // pendentes: quem faltou no período e ainda não recebeu contato posterior à falta
+  let pend=0;
+  try{
+    const ult={};
+    contatos.forEach(c=>{
+      const n=(c.colaborador||"").trim();if(!n)return;
+      const d=String(c.data_contato||c.criado_em||"").slice(0,10);
+      if(!ult[n]||d>ult[n])ult[n]=d;
+    });
+    pend=(typeof ligFaltasRecentes==="function"?ligFaltasRecentes():[]).filter(f=>{
+      const c=ult[f.colaborador];return !c||c<f.ultima;
+    }).length;
+  }catch(e){pend=0;}
+  v.textContent=feitas;
+  document.getElementById("ocLigP").textContent=pend?("−"+pend):"0";
+  document.getElementById("ocLigSub").innerHTML=pend?`<b>${pend}</b> aguardando contato`:"nenhuma pendência";
+  const el=document.getElementById("ocLig");
+  if(el){el.classList.toggle("oc-alert",pend>0);el.style.cursor=vgPode("qual")?"pointer":"default";}
+}
+
+function vgCardVagas(){
+  const v=document.getElementById("ocVagasV");if(!v)return;
+  const n=VG.vagasAbertas;
+  v.textContent=(n===null||n===undefined)?"—":n;
+  const el=document.getElementById("ocVagas");
+  if(el)el.style.cursor=vgPode("rh")?"pointer":"default";
 }
 function _showNovosClientes(){
   const lista=(DASHBOARD_DATA.novosClientes||[]).slice().sort((a,b)=>(b.DATA||"").localeCompare(a.DATA||""));
@@ -7711,6 +7841,12 @@ function rtPing(){
     else if(j.v&&j.v!==RT.v){
       if(rtOcioso()&&!rtOcupado())return rtRecarregar();
       rtBanner();
+    }
+    /* 1b) agregados dos cards da Visão Geral (vêm de carona neste batimento) */
+    if(typeof VG!=="undefined"){
+      if(j.vagasAbertas!==undefined&&j.vagasAbertas!==null)VG.vagasAbertas=j.vagasAbertas;
+      if(Array.isArray(j.ligContatos))VG.ligContatos=j.ligContatos;
+      if(ST.pg==="visao"&&typeof updOC==="function"){try{updOC();}catch(e){}}
     }
     /* 2) presença + chat (o que os dois polls antigos faziam) */
     if(typeof GC!=="undefined"){

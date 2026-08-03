@@ -29,21 +29,33 @@ module.exports = async function handler(req, res) {
       const filtro = me
         ? `&or=(para.is.null,para.like.canal_*,para.eq.${encodeURIComponent(me)},and(user_key.eq.${encodeURIComponent(me)},para.not.is.null))`
         : `&or=(para.is.null,para.like.canal_*)`;
-      const [pr, mr, sr] = await Promise.all([
+      // Os dois últimos são para os cards da Visão Geral. Vêm de carona neste
+      // batimento em vez de virarem chamadas próprias: rh_vagas tem +1200 linhas
+      // e baixá-las inteiras a cada carregamento, só para exibir um número,
+      // seria desperdício. Aqui volta apenas o essencial.
+      const [pr, mr, sr, vr, lr] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/app_users?select=user_key,presence_page,presence_at`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,para,criado_em&order=criado_em.desc&limit=80${filtro}`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/dashboard_snapshots?select=created_at&order=created_at.desc&limit=1`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/dashboard_snapshots?select=created_at&order=created_at.desc&limit=1`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/rh_vagas?select=id&status=not.in.(%22PREENCHIDA%22,%22CANCELADA%22)`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/lig_contatos?select=colaborador,data_contato,criado_em&limit=5000`, { headers })
       ]);
       const presenca = pr.ok ? await pr.json() : [];
       const msgs = mr.ok ? await mr.json() : [];
       let planilha = null;
       if (sr.ok) { const snap = await sr.json().catch(() => []); planilha = (snap && snap[0] && snap[0].created_at) || null; }
+      let vagasAbertas = null;
+      if (vr.ok) { const v = await vr.json().catch(() => null); if (Array.isArray(v)) vagasAbertas = v.length; }
+      let ligContatos = [];
+      if (lr.ok) { const l = await lr.json().catch(() => []); if (Array.isArray(l)) ligContatos = l; }
       res.setHeader("Cache-Control", "no-store");
       return res.status(200).json({
         presenca,
         mensagens: msgs.reverse(),
         v: process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || "dev",
-        planilha
+        planilha,
+        vagasAbertas,
+        ligContatos
       });
     } catch (e) {
       return res.status(500).json({ error: "Erro ao consultar estado da base." });
