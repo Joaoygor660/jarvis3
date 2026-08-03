@@ -7389,9 +7389,18 @@ function ligExcluir(id){
 }
 function comDashRender(){
   const el=document.getElementById("cd-content");if(!el)return;
-  const hoje=new Date();const mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
-  const mAntIni=new Date(hoje.getFullYear(),hoje.getMonth()-1,1),mAntFim=new Date(hoje.getFullYear(),hoje.getMonth(),0,23,59,59);
-  const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=hoje;};
+  const hoje=new Date();
+  // MÊS DE REFERÊNCIA do cockpit e das metas. Este painel é mensal por natureza
+  // — a meta é gravada por mês em com_metas —, então ele fecha sempre em cima de
+  // um mês inteiro. Quando há período selecionado no topo, adota o mês do FIM
+  // desse período, de modo que rótulo, números e meta falem do mesmo mês.
+  // Antes o rótulo saía de new Date() enquanto os números seguiam o intervalo do
+  // filtro: o painel anunciava "agosto" contando propostas enviadas em julho.
+  const _ref=ST.ed||ST.sd||hoje;
+  const mIni=new Date(_ref.getFullYear(),_ref.getMonth(),1);
+  const mFim=new Date(_ref.getFullYear(),_ref.getMonth()+1,0,23,59,59);
+  const mAntIni=new Date(_ref.getFullYear(),_ref.getMonth()-1,1),mAntFim=new Date(_ref.getFullYear(),_ref.getMonth(),0,23,59,59);
+  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=mFim;};
   const noMesAnt=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mAntIni&&x<=mAntFim;};
   const P=comPF();
   const envMes=P.filter(p=>noMes(p.data_envio_proposta)),envAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
@@ -7422,11 +7431,15 @@ function comDashRender(){
   const parados=ativas.map(p=>({p,d:comDiasParado(p)})).filter(o=>o.d>=7).sort((a,b)=>b.d-a.d);
   const criticas=ativas.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status)&&comDiasParado(p)>=5);
   const vips=(COM_VALORES&&ticket)?ativas.filter(p=>(Number(p.valor)||0)>=ticket*1.5&&comDiasParado(p)>=5):[];
-  const mesNome=hoje.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  const mesNome=mIni.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
   /* receita prevista (pipeline ponderado) e previsão de meta */
   const previstaR$=fecMesR$+ativas.reduce((s,p)=>s+(Number(p.valor)||0)*comChance(p)/100,0);
-  const diasMes=new Date(hoje.getFullYear(),hoje.getMonth()+1,0).getDate();
-  const runRate=hoje.getDate()>0?fecMesR$/hoje.getDate()*diasMes:0;
+  const diasMes=mFim.getDate();
+  // projeção só faz sentido no mês corrente (extrapola o que já correu);
+  // num mês já fechado o próprio total é o resultado, sem extrapolar
+  const _mesCorrente=(mIni.getFullYear()===hoje.getFullYear()&&mIni.getMonth()===hoje.getMonth());
+  const _diasCorridos=_mesCorrente?Math.max(1,hoje.getDate()):diasMes;
+  const runRate=fecMesR$/_diasCorridos*diasMes;
   const metaV=Number(meta.meta_valor)||0;
   const probMeta=metaV?Math.min(99,Math.max(1,Math.round((Math.max(runRate,previstaR$)/metaV)*100*0.9))):null;
   /* saúde comercial (0-100) */
