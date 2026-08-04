@@ -283,6 +283,17 @@ html[data-theme="dark"] .status.stale{background:#3a1414!important;border-color:
 /* semáforo do Sem Alocação: verde no zero, vermelho fixo no normal, pulsante no atípico */
 .oc-ok .oc-lb{color:#16a34a!important;}.oc-ok .oc-v{color:#16a34a!important;}
 .oc-ok::before{background:#16a34a!important;}
+/* vermelho forte: o card inteiro se pinta, para saltar aos olhos na faixa */
+.oc-forte{background:#fee2e2!important;border-color:#f87171!important;}
+.oc-forte .oc-lb{color:#991b1b!important;}
+.oc-forte .oc-v{color:#b91c1c!important;font-size:1.35rem!important;}
+.oc-forte .oc-sb,.oc-forte .oc-cmp{color:#b91c1c!important;}
+.oc-forte .oc-cmp .eq{color:#b91c1c!important;}
+.oc-forte::before{background:#dc2626!important;}
+html[data-theme="dark"] .oc-forte{background:#3b1414!important;border-color:#7f1d1d!important;}
+html[data-theme="dark"] .oc-forte .oc-lb,
+html[data-theme="dark"] .oc-forte .oc-v,
+html[data-theme="dark"] .oc-forte .oc-sb{color:#fca5a5!important;}
 .oc-pulse{animation:ocPulse 1.8s ease-in-out infinite;}
 @keyframes ocPulse{
   0%,100%{box-shadow:var(--sh),0 0 0 0 rgba(239,68,68,.55);}
@@ -813,6 +824,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
       <div class="oc c1" id="ocLig" onclick="vgAbrir('ligacoes','qual')"><div class="oc-ic">📞</div><div class="oc-lb">Ligações</div><div class="oc-duo"><span class="oc-v" id="ocLigV">—</span><span class="d2" id="ocLigP">—</span></div><div class="oc-sb" id="ocLigSub">feitas · pendentes</div></div>
       <div class="oc c2" id="ocVagas" onclick="vgAbrir('rhvagas','rh')"><div class="oc-ic">📋</div><div class="oc-lb">Vagas Abertas</div><div class="oc-v" id="ocVagasV">—</div><div class="oc-sb" id="ocVagasSub">total, sem filtro de data</div></div>
+      <div class="oc c8" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div></div>
       <div class="oc c7"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c8"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
       <div class="oc oc-alert" onclick="_postoVagoClick()" style="cursor:pointer;border-color:#e53e3e;background:linear-gradient(135deg,#fff5f5,#fed7d7)"><div class="oc-ic">🚨</div><div class="oc-lb" style="color:#c53030">Posto Descoberto</div><div class="oc-v" id="oc9" style="color:#e53e3e">—</div><div class="oc-sb" style="color:#e53e3e">vago sem cobertura</div></div>
@@ -2358,6 +2370,7 @@ function updOC(){
   vgCardLigacoes();
   vgCardVagas();
   vgEfetivoTendencia();
+  vgCardHoraExtra();
 }
 
 /* ═════════ CARDS DA VISÃO GERAL — semáforo, comparativo e cards novos ═════════
@@ -2383,9 +2396,11 @@ function vgAbrir(pg,perm){
 function vgSemaforo(){
   const el=document.getElementById("ocDispo");if(!el)return;
   const n=(F.dispo||[]).length;
-  el.classList.remove("oc-ok","oc-alert","oc-pulse");
+  el.classList.remove("oc-ok","oc-alert","oc-forte","oc-pulse");
+  // havendo alguém sem alocação o card inteiro fica vermelho, não só o número:
+  // é o dado que mais custa dinheiro parado, então precisa saltar na faixa
   if(n===0){el.classList.add("oc-ok");}
-  else{el.classList.add("oc-alert");if(n>VG_ALERTA_DISPO)el.classList.add("oc-pulse");}
+  else{el.classList.add("oc-alert","oc-forte");if(n>VG_ALERTA_DISPO)el.classList.add("oc-pulse");}
   const sub=document.getElementById("oc6s");
   if(sub)sub.textContent=n===0?"todos alocados":(n>VG_ALERTA_DISPO?"acima do normal":"registros");
 }
@@ -2473,6 +2488,29 @@ function vgSpark(vals,cor){
   return '<svg width="'+w+'" height="'+h+'" style="display:block;margin-top:4px;overflow:visible">'
     +'<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+cor+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'
     +'<circle cx="'+ult[0]+'" cy="'+ult[1]+'" r="2.4" fill="'+cor+'"/></svg>';
+}
+/* Horas extras na Visão Geral: soma APENAS "EXTRA ENTRADA" e "EXTRA SAIDA".
+   O tipo FT fica de fora a pedido do João — e com razão: sozinho ele passa de
+   500h contra ~35h dos dois extras juntos, então dominaria o card e esconderia
+   exatamente o que se quer acompanhar. */
+function vgCardHoraExtra(){
+  const v=document.getElementById("ocHEV");if(!v)return;
+  const norm=t=>String(t||"").toUpperCase().replace(/[ÍÌÎ]/g,"I").replace(/[ÁÀÂÃ]/g,"A").replace(/\s+/g," ").trim();
+  let ent=0,sai=0;
+  (F.hrextra||[]).forEach(r=>{
+    const t=norm(r.TIPO),seg=Number(r.MINUTOS)||0;   // MINUTOS guarda SEGUNDOS
+    if(t.indexOf("FT")===0)return;                    // FT não entra
+    if(t.indexOf("ENTRADA")>=0)ent+=seg;
+    else if(t.indexOf("SAIDA")>=0)sai+=seg;
+  });
+  const tot=ent+sai;
+  v.textContent=_heMinToStr(tot);
+  document.getElementById("ocHESub").textContent=tot?"entrada + saída · sem FT":"sem horas extras";
+  document.getElementById("ocHEDet").innerHTML=tot
+    ?'<span style="color:#0891b2">↓ entra '+_heMinToStr(ent)+'</span> · <span style="color:#f97316">↑ sai '+_heMinToStr(sai)+'</span>'
+    :"";
+  const el=document.getElementById("ocHE");
+  if(el)el.title="Entrada "+_heMinToStr(ent)+" · Saída "+_heMinToStr(sai)+" · FT não considerado";
 }
 function vgEfetivoTendencia(){
   const el=document.getElementById("vg-fns");if(!el)return;
