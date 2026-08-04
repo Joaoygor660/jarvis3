@@ -801,7 +801,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div class="sk-v" id="vg-novoscli" style="color:#d97706">—</div>
         <div class="sk-sub" id="vg-novosclis" style="color:#b5790f">—</div>
       </div>
-      <div class="sk sk-gr clickable" onclick="skDet('vg','funcs',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-gr">Fixo</span></div><div class="sk-lbl">Funcionários Ativos</div><div class="sk-v" id="vg-fn">—</div><div class="sk-sub" id="vg-fns">—</div></div>
+      <div class="sk sk-gr clickable" onclick="skDet('vg','funcs',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-gr">Fixo</span></div><div class="sk-lbl">Funcionários Ativos</div><div class="sk-v" id="vg-fn">—</div><div class="sk-sub" id="vg-fns">—</div><div id="vg-efet-trend"></div></div>
     </div>
     <div class="det-panel" id="det-vg"><div class="det-hdr" id="det-vg-hdr"><span class="det-title" id="det-vg-title"></span><button class="det-close" onclick="closeDet('vg')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-vg-body"></div><div class="det-sub" id="det-vg-sub"></div></div></div>
     <div class="oc-row">
@@ -2357,13 +2357,14 @@ function updOC(){
   vgCardChecklist();
   vgCardLigacoes();
   vgCardVagas();
+  vgEfetivoTendencia();
 }
 
 /* ═════════ CARDS DA VISÃO GERAL — semáforo, comparativo e cards novos ═════════
    VG guarda o que vem de carona no batimento de 15s (/api/hq). Os números
    aparecem para todos; o CLIQUE só navega para quem tem a permissão da guia,
    porque as guias seguem restritas. */
-var VG={vagasAbertas:null,ligContatos:[]};
+var VG={vagasAbertas:null,ligContatos:[],histEfetivo:[]};
 /* acima deste número o Sem Alocação passa a pulsar. O card soma os dias que a
    planilha trouxer, então o limiar é aproximado de propósito — mexer aqui é a
    forma de calibrar sem tocar em mais nada. */
@@ -2455,6 +2456,52 @@ function vgCardLigacoes(){
   if(el){el.classList.toggle("oc-alert",pend>0);el.style.cursor=vgPode("qual")?"pointer":"default";}
 }
 
+/* ═════════ QUADRO DE PESSOAL — tendência desde o início do sistema ═════════
+   A série vem de hist_efetivo: uma linha por dia, gravada a cada planilha
+   enviada. Mostra se o efetivo está subindo ou caindo em vez de só o número
+   de hoje, que sozinho não diz nada. */
+function vgSpark(vals,cor){
+  if(!vals||vals.length<2)return"";
+  const w=104,h=22,mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals);
+  const amp=(mx-mn)||1;
+  const pts=vals.map((v,i)=>{
+    const x=(i/(vals.length-1))*w;
+    const y=h-((v-mn)/amp)*(h-4)-2;
+    return x.toFixed(1)+","+y.toFixed(1);
+  });
+  const ult=pts[pts.length-1].split(",");
+  return '<svg width="'+w+'" height="'+h+'" style="display:block;margin-top:4px;overflow:visible">'
+    +'<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+cor+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'
+    +'<circle cx="'+ult[0]+'" cy="'+ult[1]+'" r="2.4" fill="'+cor+'"/></svg>';
+}
+function vgEfetivoTendencia(){
+  const el=document.getElementById("vg-fns");if(!el)return;
+  const h=(VG.histEfetivo||[]).filter(x=>x&&x.ativos!=null);
+  const atual=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.ativos)
+    ? new Set(DASHBOARD_DATA.ativos.map(r=>String(r.NOME||"").trim().toUpperCase()).filter(Boolean)).size : null;
+  // sem histórico ainda: mantém a divisão diurno/noturno que já existia
+  if(h.length<2){
+    const el2=document.getElementById("vg-efet-trend");if(el2)el2.innerHTML="";
+    return;
+  }
+  const prim=h[0],ult=h[h.length-1];
+  const base=(atual!=null)?atual:ult.ativos;
+  const d=base-prim.ativos;
+  const pct=prim.ativos?(d/prim.ativos*100):0;
+  const cor=d>0?"#16a34a":d<0?"#dc2626":"#64748b";
+  const seta=d>0?"▲":d<0?"▼":"■";
+  const desde=String(prim.dia).slice(0,10).split("-").reverse().slice(0,2).join("/");
+  const vals=h.map(x=>x.ativos);if(atual!=null)vals[vals.length-1]=base;
+  const alvo=document.getElementById("vg-efet-trend");
+  if(alvo){
+    alvo.innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<span style="font-size:.62rem;font-weight:800;color:'+cor+'">'+seta+' '+(d>0?"+":"")+d+' ('+(pct>0?"+":"")+pct.toFixed(1)+'%)</span>'
+      +'<span style="font-size:.58rem;color:#94a3b8">desde '+desde+' · '+h.length+' dias</span>'
+      +'</div>'+vgSpark(vals,cor);
+    alvo.title="Início "+prim.ativos+" em "+String(prim.dia).slice(0,10).split("-").reverse().join("/")
+      +" · menor "+Math.min.apply(null,vals)+" · maior "+Math.max.apply(null,vals);
+  }
+}
 function vgCardVagas(){
   const v=document.getElementById("ocVagasV");if(!v)return;
   const n=VG.vagasAbertas;
@@ -7851,6 +7898,7 @@ function rtPing(){
     if(typeof VG!=="undefined"){
       if(j.vagasAbertas!==undefined&&j.vagasAbertas!==null)VG.vagasAbertas=j.vagasAbertas;
       if(Array.isArray(j.ligContatos))VG.ligContatos=j.ligContatos;
+      if(Array.isArray(j.histEfetivo))VG.histEfetivo=j.histEfetivo;
       if(ST.pg==="visao"&&typeof updOC==="function"){try{updOC();}catch(e){}}
     }
     /* 2) presença + chat (o que os dois polls antigos faziam) */

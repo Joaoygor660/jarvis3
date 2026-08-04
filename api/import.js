@@ -71,5 +71,42 @@ module.exports = async function handler(req, res) {
   }
 
   const inserted = await supabaseResp.json();
+
+  // ── Série histórica do quadro de pessoal ──────────────────────────────────
+  // Guarda só a CONTAGEM do dia numa tabela pequena. O snapshot inteiro é um
+  // JSON grande: reconstruir a série a partir dele a cada consulta ficaria caro
+  // e mais lento a cada planilha nova. Uma linha por dia resolve para sempre.
+  // Falha aqui nunca derruba o upload — o snapshot já está salvo.
+  try {
+    const dist = (arr, campo, filtro) => {
+      const s = new Set();
+      (arr || []).forEach(r => {
+        if (filtro && !filtro(r)) return;
+        const v = String((r && r[campo]) || "").trim().toUpperCase();
+        if (v) s.add(v);
+      });
+      return s.size;
+    };
+    const turno = t => r => String((r && r.TURNO) || "").trim().toUpperCase() === t;
+    const hoje = new Date().toISOString().slice(0, 10);
+    await fetch(`${SUPABASE_URL}/rest/v1/hist_efetivo?on_conflict=dia`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal"
+      },
+      body: JSON.stringify({
+        dia: hoje,
+        ativos: dist(data.ativos, "NOME"),
+        clientes: dist(data.clientes, "NOME"),
+        diurno: dist(data.ativos, "NOME", turno("DIURNO")),
+        noturno: dist(data.ativos, "NOME", turno("NOTURNO")),
+        atualizado_em: new Date().toISOString()
+      })
+    });
+  } catch (e) { /* histórico é acessório: não pode impedir o envio da planilha */ }
+
   return res.status(200).json({ ok: true, row: inserted[0] || null });
 };

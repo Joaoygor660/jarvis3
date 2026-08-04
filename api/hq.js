@@ -33,12 +33,15 @@ module.exports = async function handler(req, res) {
       // batimento em vez de virarem chamadas próprias: rh_vagas tem +1200 linhas
       // e baixá-las inteiras a cada carregamento, só para exibir um número,
       // seria desperdício. Aqui volta apenas o essencial.
-      const [pr, mr, sr, vr, lr] = await Promise.all([
+      const [pr, mr, sr, vr, lr, hr] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/app_users?select=user_key,presence_page,presence_at`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,para,criado_em&order=criado_em.desc&limit=80${filtro}`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/dashboard_snapshots?select=created_at&order=created_at.desc&limit=1`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/rh_vagas?select=id&status=not.in.(%22PREENCHIDA%22,%22CANCELADA%22)`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/lig_contatos?select=colaborador,data_contato,criado_em&limit=5000`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/lig_contatos?select=colaborador,data_contato,criado_em&limit=5000`, { headers }),
+        // série do quadro de pessoal: 1 linha por dia, ~365/ano — leve o bastante
+        // para vir junto em vez de virar uma consulta própria
+        fetch(`${SUPABASE_URL}/rest/v1/hist_efetivo?select=dia,ativos&order=dia.asc&limit=400`, { headers })
       ]);
       const presenca = pr.ok ? await pr.json() : [];
       const msgs = mr.ok ? await mr.json() : [];
@@ -48,6 +51,8 @@ module.exports = async function handler(req, res) {
       if (vr.ok) { const v = await vr.json().catch(() => null); if (Array.isArray(v)) vagasAbertas = v.length; }
       let ligContatos = [];
       if (lr.ok) { const l = await lr.json().catch(() => []); if (Array.isArray(l)) ligContatos = l; }
+      let histEfetivo = [];
+      if (hr.ok) { const h = await hr.json().catch(() => []); if (Array.isArray(h)) histEfetivo = h; }
       res.setHeader("Cache-Control", "no-store");
       return res.status(200).json({
         presenca,
@@ -55,7 +60,8 @@ module.exports = async function handler(req, res) {
         v: process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || "dev",
         planilha,
         vagasAbertas,
-        ligContatos
+        ligContatos,
+        histEfetivo
       });
     } catch (e) {
       return res.status(500).json({ error: "Erro ao consultar estado da base." });
