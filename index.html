@@ -2417,8 +2417,9 @@ function vgCardChecklist(){
   const v=document.getElementById("ocCkV");if(!v)return;
   const D=DASHBOARD_DATA||{};
   const visit=(typeof _ckVisitas==="function")?_ckVisitas(F.checklist||D.checklist||[]):{};
-  const visitados=new Set(Object.keys(visit).map(c=>c.trim().toUpperCase()));
   const nomes=new Set((D.clientes||[]).map(r=>(r.NOME||"").trim().toUpperCase()).filter(c=>c&&c!=="—"));
+  // mesma regra da guia Check List: só conta visita a cliente da carteira
+  const visitados=new Set(Object.keys(visit).map(c=>c.trim().toUpperCase()).filter(c=>c&&c!=="—"&&nomes.has(c)));
   const total=nomes.size;
   const sem=[...nomes].filter(c=>!visitados.has(c)).length;
   const pct=total?Math.round(visitados.size/total*100):0;
@@ -2882,11 +2883,15 @@ function updChecklistC(){
   const totalVisitas=Object.values(visited).reduce((s,set)=>s+set.size,0);
   const allClientes=DASHBOARD_DATA.clientes||[];
   const clienteNomes=new Set(allClientes.map(r=>(r.NOME||"").trim().toUpperCase()));
-  const visitadosNorm=new Set(clientesVisitados.map(c=>c.trim().toUpperCase()));
+  // "Visitado" conta apenas quem está na CARTEIRA de clientes. A aba de checklist
+  // traz registros sem cliente ("—") e visitas ao endereço da própria Serv Camp;
+  // contá-los inflava o total (89 em vez de 87) e a cobertura (71% em vez de 69%),
+  // e fazia a soma não fechar com os 126 clientes.
+  const visitadosNorm=new Set(clientesVisitados.map(c=>c.trim().toUpperCase()).filter(c=>c&&c!=="—"&&clienteNomes.has(c)));
   const semChecklist=[...clienteNomes].filter(c=>!visitadosNorm.has(c)&&c!=="—"&&c);
-  const totalCli=clienteNomes.size||clientesVisitados.length;
+  const totalCli=clienteNomes.size||visitadosNorm.size;
   const cobPct=totalCli?Math.round(visitadosNorm.size/totalCli*100):0;
-  document.getElementById("ck-visit").textContent=clientesVisitados.length;
+  document.getElementById("ck-visit").textContent=visitadosNorm.size;
   document.getElementById("ck-visits").innerHTML=`de <b>${totalCli}</b> clientes`;
   document.getElementById("ck-sem").textContent=semChecklist.length;
   document.getElementById("ck-sems").innerHTML=`<b>${semChecklist.length}</b> sem visita`;
