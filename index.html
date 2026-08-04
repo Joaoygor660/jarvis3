@@ -945,11 +945,13 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Registro de Coberturas</span></div><div class="tc2"><input class="sb2" type="text" placeholder="Buscar..." id="s-coberturas" oninput="rTbl('coberturas')"></div></div><div id="tbl-coberturas"></div><div class="pag"><div class="pi2" id="pi-coberturas"></div><div class="pbs" id="pb-coberturas"></div></div></div>
 
     <div class="sec-hdr" style="margin-top:16px"><span class="sec-hdr-ic">🚗</span><div><div class="sec-hdr-t">Coberturas Realizadas pelo Supervisor</div><div class="sec-hdr-sub">Supervisores que foram pessoalmente ao local realizar a cobertura (BDV)</div></div></div>
-    <div class="sec-kpis" style="grid-template-columns:repeat(3,1fr)">
+    <div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">
       <div class="sk sk-bl clickable" onclick="_bdvClick('total')"><div class="sk-top"><span class="sk-ic">🚗</span><span class="sk-tag t-bl">BDV</span></div><div class="sk-lbl">Total Coberturas</div><div class="sk-v" id="bdv-tot">—</div><div class="sk-sub" id="bdv-tots">—</div></div>
+      <div class="sk sk-pu"><div class="sk-top"><span class="sk-ic">⏱️</span><span class="sk-tag t-pu">Resposta</span></div><div class="sk-lbl">Tempo Médio de Resposta</div><div class="sk-v" id="bdv-resp">—</div><div class="sk-sub" id="bdv-resps">do início do posto até a chegada</div></div>
       <div class="sk sk-gr clickable" onclick="_bdvClick('sups')"><div class="sk-top"><span class="sk-ic">👤</span></div><div class="sk-lbl">Supervisores</div><div class="sk-v" id="bdv-sups">—</div><div class="sk-sub">que realizaram</div></div>
       <div class="sk sk-or clickable" onclick="_bdvClick('dest')"><div class="sk-top"><span class="sk-ic">📍</span></div><div class="sk-lbl">Destinos</div><div class="sk-v" id="bdv-dest">—</div><div class="sk-sub">locais atendidos</div></div>
     </div>
+    <div id="bdv-resp-box" style="margin-top:11px"></div>
     <div class="grid-2" style="margin-top:11px">
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Coberturas por Supervisor</span></div><div class="cw" style="height:250px"><canvas id="cBDV1"></canvas></div></div>
       <div class="cc"><div class="ch"><div class="chb"></div><span class="ct">Coberturas por Dia</span></div><div class="cw" style="height:250px"><canvas id="cBDV2"></canvas></div></div>
@@ -2494,6 +2496,106 @@ function vgSpark(vals,cor){
    O tipo FT fica de fora a pedido do João — e com razão: sozinho ele passa de
    500h contra ~35h dos dois extras juntos, então dominaria o card e esconderia
    exatamente o que se quer acompanhar. */
+/* ═════════ TEMPO DE RESPOSTA DA COBERTURA (BDV) ═════════
+   Mede quanto tempo passa entre o POSTO INICIAR e o SUPERVISOR CHEGAR nele.
+
+   De onde sai cada peça:
+     · chegada  → campo HORARIO do BDV, que varia por destino (é por visita)
+     · abertura → campo JORNADA dos ativos ("09H 06:30 - 15:30 C/ 1H INT"),
+                  a única fonte da hora do posto na planilha
+
+   Não use o campo TEMPO do BDV para isto: ele é a duração TOTAL do dia do
+   supervisor, repetida em todas as linhas daquele dia (o mesmo vale para o KM).
+   Cinco destinos do Frank em 03/08 trazem todos "10:01" e "111 km".
+
+   Um posto pode ter mais de um turno. Adota-se o turno cuja abertura seja a
+   última ANTES da chegada — é o que estava rodando quando o supervisor chegou.
+   Chegadas anteriores a qualquer abertura são contadas à parte, não como
+   resposta negativa. */
+function _bdvMin(h){
+  const m=String(h||"").match(/(\d{1,2}):(\d{2})/);
+  return m?parseInt(m[1],10)*60+parseInt(m[2],10):null;
+}
+/* posto -> horas de início dos turnos, tiradas da JORNADA dos ativos */
+function bdvAberturas(){
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  const m={};
+  (D.ativos||[]).forEach(a=>{
+    const posto=String(a.LOCAL||"").trim().toUpperCase();if(!posto||posto==="—")return;
+    const jm=String(a.JORNADA||"").match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+    if(!jm)return;
+    const ini=parseInt(jm[1],10)*60+parseInt(jm[2],10);
+    if(!m[posto])m[posto]=[];
+    if(m[posto].indexOf(ini)<0)m[posto].push(ini);
+  });
+  Object.keys(m).forEach(k=>m[k].sort((x,y)=>x-y));
+  return m;
+}
+function bdvRespostas(){
+  const ab=bdvAberturas();
+  const out={itens:[],semJornada:0,antesDaAbertura:0};
+  (F.bdvCobertura||[]).forEach(r=>{
+    const cheg=_bdvMin(r.HORARIO);if(cheg===null)return;
+    const posto=String(r.DESTINO||"").split("/")[0].trim().toUpperCase();
+    const turnos=ab[posto];
+    if(!turnos||!turnos.length){out.semJornada++;return;}
+    // último turno aberto antes da chegada
+    let ini=null;
+    for(let i=0;i<turnos.length;i++)if(turnos[i]<=cheg)ini=turnos[i];
+    if(ini===null){out.antesDaAbertura++;return;}
+    out.itens.push({sup:r.NOME||"—",posto:posto,dia:r.DATA,cheg:cheg,ini:ini,delta:cheg-ini});
+  });
+  return out;
+}
+function _bdvHM(min){
+  const neg=min<0;min=Math.abs(Math.round(min));
+  const h=Math.floor(min/60),m=min%60;
+  return (neg?"-":"")+(h?h+"h":"")+(h?String(m).padStart(2,"0"):m)+(h?"":"min");
+}
+function bdvTempoResposta(){
+  const el=document.getElementById("bdv-resp");if(!el)return;
+  const box=document.getElementById("bdv-resp-box");
+  const R=bdvRespostas();
+  if(!R.itens.length){
+    el.textContent="—";
+    document.getElementById("bdv-resps").innerHTML=R.semJornada
+      ? '<span style="color:#b45309">reenvie a planilha para ativar</span>'
+      : "sem dados de horário";
+    if(box)box.innerHTML=R.semJornada
+      ? '<div style="background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #f97316;border-radius:10px;padding:11px 15px;font-size:.72rem;color:#9a3412">⏱️ <b>Tempo de resposta ainda não disponível.</b> O horário de abertura dos postos passou a ser lido agora, no campo <b>Jornada</b> da aba Funcionários Ativos. Envie a planilha novamente pelo botão <b>Novo arquivo Excel</b> e a métrica aparece — inclusive para as coberturas já registradas.</div>'
+      : "";
+    return;
+  }
+  const deltas=R.itens.map(x=>x.delta);
+  const media=deltas.reduce((a,b)=>a+b,0)/deltas.length;
+  const ord=deltas.slice().sort((a,b)=>a-b);
+  const mediana=ord[Math.floor(ord.length/2)];
+  el.textContent=_bdvHM(media);
+  document.getElementById("bdv-resps").innerHTML='mediana <b>'+_bdvHM(mediana)+'</b> · '+R.itens.length+' cobertura(s)';
+  // ranking por supervisor
+  const porSup={};
+  R.itens.forEach(x=>{(porSup[x.sup]=porSup[x.sup]||[]).push(x.delta);});
+  const linhas=Object.keys(porSup).map(k=>{
+    const v=porSup[k];return{sup:k,n:v.length,med:v.reduce((a,b)=>a+b,0)/v.length};
+  }).sort((a,b)=>a.med-b.med);
+  const mx=Math.max.apply(null,linhas.map(x=>x.med))||1;
+  if(box)box.innerHTML='<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px">'
+    +'<div style="font-size:.78rem;font-weight:800;color:#0d1f35;margin-bottom:3px">⏱️ Tempo de resposta por supervisor</div>'
+    +'<div style="font-size:.58rem;color:#94a3b8;margin-bottom:10px">do horário de início do posto até a chegada · menor é melhor</div>'
+    +linhas.map(x=>{
+      const pc=Math.round(x.med/mx*100);
+      const cor=x.med<=60?"#16a34a":x.med<=180?"#f59e0b":"#dc2626";
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'
+        +'<span style="width:150px;font-size:.66rem;font-weight:700;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+_esc(x.sup)+'</span>'
+        +'<div style="flex:1;background:#f1f5f9;border-radius:6px;height:14px;overflow:hidden"><div style="width:'+pc+'%;height:14px;background:'+cor+'"></div></div>'
+        +'<span style="width:74px;text-align:right;font-size:.66rem;font-weight:800;color:'+cor+'">'+_bdvHM(x.med)+'</span>'
+        +'<span style="width:56px;text-align:right;font-size:.58rem;color:#94a3b8">'+x.n+' cob.</span></div>';
+    }).join("")
+    +((R.semJornada||R.antesDaAbertura)?'<div style="font-size:.58rem;color:#94a3b8;margin-top:8px">'
+      +(R.semJornada?R.semJornada+' sem jornada cadastrada no posto. ':"")
+      +(R.antesDaAbertura?R.antesDaAbertura+' com chegada anterior à abertura (não entram na média).':"")+'</div>':"")
+    +'</div>';
+}
 /* ═════════ FALTAS — linha de acompanhamento ═════════
    Série diária das faltas (sem abandono, igual ao número do card), respeitando
    turno e área do filtro, mas NÃO o período: a linha é histórico, não recorte.
@@ -2832,6 +2934,7 @@ function updCobC(){
   mkLine("cBDV2",[{label:"Coberturas BDV",data:bdvDay.vals,borderColor:"#16a34a",backgroundColor:"rgba(22,163,74,.1)",borderWidth:2,pointRadius:3,fill:true,tension:.35}],bdvDay.labels);
   const bdvDest=topN(bdv,"DESTINO",12);
   mkBar("cBDV3",bdvDest.map(([k])=>{const s=k.split("/")[0];return s.length>22?s.substring(0,22)+"…":s;}),bdvDest.map(([,v])=>v),blues.slice(0,bdvDest.length),true);
+  bdvTempoResposta();
   rTbl("bdvcob");
 }
 
@@ -3836,7 +3939,11 @@ function buildDataFromWorkbook(wb){
         AREA:r[sa.idx["AREASUPERVISAO"]]||"—",ESCALA:r[sa.idx["ESCALA"]]||"—",
         TPCLIENTE:r[sa.idx["CLIENTE"]]||"—",LOCAL:r[sa.idx["LOCALSERVICO"]]||"—",
         TURNO:r[sa.idx["TURNO"]]||"DIURNO",TIPO:r[sa.idx["TIPO"]]||"—",
-        SITUACAO:r[sa.idx["SITMOBRAHOJE"]]||"—",EMPRESA:r[sa.idx["EMPRESA"]]||"—"
+        SITUACAO:r[sa.idx["SITMOBRAHOJE"]]||"—",EMPRESA:r[sa.idx["EMPRESA"]]||"—",
+        // JORNADA traz o horário do posto em texto: "09H 06:30 - 15:30 C/ 1H INT".
+        // É a única fonte da hora de abertura, e é o que permite medir quanto
+        // tempo o supervisor leva para chegar depois de o posto iniciar.
+        JORNADA:r[sa.idx["JORNADA"]]||""
       };
     }
   });
