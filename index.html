@@ -816,7 +816,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="det-panel" id="det-vg"><div class="det-hdr" id="det-vg-hdr"><span class="det-title" id="det-vg-title"></span><button class="det-close" onclick="closeDet('vg')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-vg-body"></div><div class="det-sub" id="det-vg-sub"></div></div></div>
     <div class="oc-row">
-      <div class="oc c1" onclick="navTo('faltas',null)"><div class="oc-ic">🚫</div><div class="oc-lb">Faltas</div><div class="oc-v" id="oc1">—</div><div class="oc-sb">registros</div></div>
+      <div class="oc c1" id="ocFaltas" onclick="navTo('faltas',null)"><div class="oc-ic">🚫</div><div class="oc-lb">Faltas</div><div class="oc-v" id="oc1">—</div><div class="oc-sb" id="oc1s">registros</div><div id="ocFaltasTrend"></div></div>
       <div class="oc c2" onclick="navTo('coberturas',null)"><div class="oc-ic">🛡️</div><div class="oc-lb">Coberturas</div><div class="oc-v" id="oc2">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c3" onclick="navTo('os',null)"><div class="oc-ic">📋</div><div class="oc-lb">OS Avulsos</div><div class="oc-v" id="oc3">—</div><div class="oc-sb">registros</div></div>
       <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
@@ -2371,6 +2371,7 @@ function updOC(){
   vgCardVagas();
   vgEfetivoTendencia();
   vgCardHoraExtra();
+  vgFaltasTendencia();
 }
 
 /* ═════════ CARDS DA VISÃO GERAL — semáforo, comparativo e cards novos ═════════
@@ -2493,6 +2494,55 @@ function vgSpark(vals,cor){
    O tipo FT fica de fora a pedido do João — e com razão: sozinho ele passa de
    500h contra ~35h dos dois extras juntos, então dominaria o card e esconderia
    exatamente o que se quer acompanhar. */
+/* ═════════ FALTAS — linha de acompanhamento ═════════
+   Série diária das faltas (sem abandono, igual ao número do card), respeitando
+   turno e área do filtro, mas NÃO o período: a linha é histórico, não recorte.
+
+   A comparação é contra a MÉDIA DOS 7 DIAS FECHADOS anteriores, e não contra
+   ontem. O motivo está no próprio dado: segunda-feira tem cerca do dobro de um
+   dia comum (22 e 17 nas últimas duas, contra 8 a 10 nas terças e quartas).
+   Comparar terça com segunda mostraria uma queda enorme que é só o calendário.
+
+   O dia corrente é marcado como parcial: a planilha sobe no meio da manhã, e
+   comparar meio dia com dias inteiros faz o último ponto sempre parecer baixo. */
+var VG_FALTAS_DIAS=14;
+function vgFaltasSerie(){
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  const m={};
+  (D.faltas||[]).forEach(r=>{
+    if(String(r.LOCAL||"").toUpperCase().indexOf("ABANDONO")>=0)return;  // como o card
+    if(typeof mT==="function"&&!mT(r))return;
+    if(typeof mA==="function"&&!mA(r))return;
+    const d=String(r.DATA||"").slice(0,10);if(d.length!==10)return;
+    m[d]=(m[d]||0)+1;
+  });
+  return Object.keys(m).sort().map(d=>({dia:d,n:m[d]}));
+}
+function vgFaltasTendencia(){
+  const box=document.getElementById("ocFaltasTrend");if(!box)return;
+  const serie=vgFaltasSerie();
+  if(serie.length<3){box.innerHTML="";return;}
+  const ult=serie.slice(-VG_FALTAS_DIAS);
+  const hojeStr=(typeof _hojeLocal==="function")?_hojeLocal():new Date().toISOString().slice(0,10);
+  const ultimo=ult[ult.length-1];
+  const parcial=(ultimo.dia===hojeStr);
+  // média dos até 7 dias FECHADOS antes do último ponto
+  const fechados=ult.slice(0,-1).slice(-7);
+  if(!fechados.length){box.innerHTML="";return;}
+  const media=fechados.reduce((t,x)=>t+x.n,0)/fechados.length;
+  const d=ultimo.n-media;
+  const pct=media?Math.round(d/media*100):0;
+  // mais faltas é pior: acima da média em vermelho, abaixo em verde
+  const cor=d>0.5?"#dc2626":d<-0.5?"#16a34a":"#64748b";
+  const seta=d>0.5?"▲":d<-0.5?"▼":"■";
+  box.innerHTML='<div class="oc-cmp" style="color:'+cor+'">'+seta+' '+(d>0?"+":"")+pct+'% vs média 7d ('+media.toFixed(1)+')'
+    +(parcial?'<span style="color:#b45309;font-weight:700"> · dia parcial</span>':"")+'</div>'
+    +vgSpark(ult.map(x=>x.n),cor);
+  const el=document.getElementById("ocFaltas");
+  if(el)el.title=ult.map(x=>x.dia.slice(8,10)+"/"+x.dia.slice(5,7)+": "+x.n).join("  ·  ")
+    +"\nMédia dos 7 dias fechados: "+media.toFixed(1)
+    +(parcial?"\nHoje ainda em andamento — a planilha sobe durante o dia.":"");
+}
 function vgCardHoraExtra(){
   const v=document.getElementById("ocHEV");if(!v)return;
   const norm=t=>String(t||"").toUpperCase().replace(/[ÍÌÎ]/g,"I").replace(/[ÁÀÂÃ]/g,"A").replace(/\s+/g," ").trim();
