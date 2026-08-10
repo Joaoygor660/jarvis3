@@ -7447,6 +7447,39 @@ function ligRETag(nome,direto,cor){
     +(cor||"#b91c1c")+';background:rgba(0,0,0,.06);border-radius:4px;padding:1px 5px;white-space:nowrap">RE '
     +_esc(re)+'</span>';
 }
+/* BUSCA por nome ou RE nas pendências e no acompanhamento.
+   Filtra o que já está na tela em vez de reconstruir o HTML: re-renderizar a
+   cada tecla faria o cursor sair do campo a cada letra digitada.
+   O termo fica guardado em LIG_BUSCA_P e é reaplicado no fim do ligRender,
+   senão qualquer atualização automática apagaria a busca em andamento.
+   (LIG_BUSCA, sem o _P, é outra coisa: filtra o Histórico de Contatos.) */
+var LIG_BUSCA_P="";
+function _ligNorm(v){
+  return String(v||"").trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+function ligFiltraPend(termo){
+  if(termo!==undefined)LIG_BUSCA_P=termo;
+  const t=_ligNorm(LIG_BUSCA_P);
+  // Só dígitos = está procurando MATRÍCULA. Nesse caso compara apenas com a RE
+  // e pelo INÍCIO dela, não em qualquer posição: buscar "18" casando com 118,
+  // 182 e 180 devolve uma tela cheia de gente errada, que é o oposto de buscar.
+  const soNumero=t!==""&&/^\d+$/.test(t);
+  let vis=0,tot=0;
+  document.querySelectorAll("#lig-content [data-lb]").forEach(el=>{
+    tot++;
+    let ok;
+    if(!t)ok=true;
+    else if(soNumero)ok=String(el.getAttribute("data-re")||"").indexOf(t)===0;
+    else ok=el.getAttribute("data-lb").indexOf(t)>=0;
+    el.style.display=ok?"":"none";
+    if(ok)vis++;
+  });
+  const cnt=document.getElementById("lig-busca-n");
+  if(cnt)cnt.textContent=t?(vis+" de "+tot):"";
+  const vazio=document.getElementById("lig-busca-vazio");
+  if(vazio)vazio.style.display=(t&&vis===0)?"":"none";
+  return{visiveis:vis,total:tot};
+}
 function ligFaltasRecentes(){
   const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
   const m={};
@@ -7577,7 +7610,14 @@ function ligRender(){
   /* pendências do dia */
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:14px 18px;margin-bottom:12px">
     <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">⏳ Pendências de Contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">faltou em ${_esc(ligPeriodoTxt())} e ainda não foi contatado${LIG_ABANDONO_N?` · <b style="color:#b45309">${LIG_ABANDONO_N} em abandono ocultado(s)</b>`:""}</span></div>
-    ${pend.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px">${pend.map((f,ix)=>`<div id="ligp-${ix}" style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 11px;cursor:pointer" onclick="ligExpandir('ligp-${ix}')">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 2px">
+      <input id="lig-busca-p" class="rhf-i" placeholder="🔎 Nome ou RE (só números = busca matrícula)" style="flex:1;min-width:200px;max-width:340px"
+             value="${_esc(LIG_BUSCA_P)}" oninput="ligFiltraPend(this.value)">
+      <span id="lig-busca-n" style="font-size:.6rem;color:#94a3b8;font-weight:800"></span>
+      <span style="font-size:.58rem;color:#94a3b8">busca também no acompanhamento abaixo</span>
+    </div>
+    <div id="lig-busca-vazio" style="display:none;font-size:.7rem;color:#b45309;font-weight:700;margin:6px 0">Ninguém encontrado com esse nome ou RE nesta tela.</div>
+    ${pend.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px">${pend.map((f,ix)=>`<div id="ligp-${ix}" data-lb="${_ligNorm(f.colaborador)}" data-re="${_esc(ligRE(f.colaborador,f.re))}" style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 11px;cursor:pointer" onclick="ligExpandir('ligp-${ix}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
         <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}<div style="margin-top:2px">${ligRETag(f.colaborador,f.re)}</div></div>${ligAbonoTag(f.abono)}
       </div>
@@ -7601,7 +7641,7 @@ function ligRender(){
       <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">📈 Acompanhamento pós-contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">a barra cresce a cada dia firme depois do contato · quebra se faltar de novo</span></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:9px;margin-top:8px">${acomp.map(a=>{
         if(a.quebrou){
-          return `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:11px;padding:10px 12px">
+          return `<div data-lb="${_ligNorm(a.colaborador)}" data-re="${_esc(ligRE(a.colaborador))}" style="background:#fef2f2;border:1px solid #fecaca;border-radius:11px;padding:10px 12px">
             <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(a.colaborador)} ${ligRETag(a.colaborador,null,"#b91c1c")}</span><span style="font-size:.6rem;font-weight:800;color:#dc2626">💔 Quebrou</span></div>
             <div style="font-size:.56rem;color:#b91c1c;margin:2px 0 6px">🧭 ${_esc(a.supervisor||"—")} · contato ${rhFmt(a.contato)}</div>
             <div style="background:#fee2e2;border-radius:6px;height:9px;overflow:hidden"><div style="width:100%;height:9px;background:repeating-linear-gradient(45deg,#f87171,#f87171 5px,#fca5a5 5px,#fca5a5 10px)"></div></div>
@@ -7610,7 +7650,7 @@ function ligRender(){
         }
         const pct=Math.min(100,Math.round(a.dias/LIG_SAC_META*100));
         const cor=a.dias>=LIG_SAC_META?"#16a34a":a.dias>=7?"#22c55e":"#84cc16";
-        return `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:11px;padding:10px 12px">
+        return `<div data-lb="${_ligNorm(a.colaborador)}" data-re="${_esc(ligRE(a.colaborador))}" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:11px;padding:10px 12px">
           <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.72rem;font-weight:800;color:#166534">${_esc(a.colaborador)} ${ligRETag(a.colaborador,null,"#15803d")}</span><span style="font-size:.6rem;font-weight:800;color:#16a34a">${a.dias>=LIG_SAC_META?"🏆 Firme":"💪 Firme"}</span></div>
           <div style="font-size:.56rem;color:#15803d;margin:2px 0 6px">🧭 ${_esc(a.supervisor||"—")} · contato ${rhFmt(a.contato)}</div>
           <div style="background:#dcfce7;border-radius:6px;height:9px;overflow:hidden"><div style="width:${Math.max(4,pct)}%;height:9px;border-radius:6px;background:${cor};transition:width .6s"></div></div>
@@ -7633,6 +7673,8 @@ function ligRender(){
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;overflow:hidden"><div style="padding:12px 16px;font-size:.8rem;font-weight:800;color:#0d1f35;border-bottom:1px solid #e5e9f0">🕐 Histórico de Contatos</div><div id="lig-hist"></div></div>`;
   el.innerHTML=h;
   ligRenderHist();
+  // o render acabou de recriar os cards: reaplica o termo que estava sendo usado
+  if(LIG_BUSCA_P)ligFiltraPend();
 }
 function ligRenderHist(){
   const el=document.getElementById("lig-hist");if(!el)return;
