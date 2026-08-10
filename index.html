@@ -293,9 +293,11 @@ html[data-theme="dark"] .status.stale{background:#3a1414!important;border-color:
 html[data-theme="dark"] .vg-s-op{background:#16304f;color:#93c5fd;}
 html[data-theme="dark"] .vg-s-sac{background:#12281c;color:#86efac;}
 html[data-theme="dark"] .vg-s-rh{background:#241a3d;color:#c4b5fd;}
-/* 7 colunas na seção operacional; os cards que sobram descem sozinhos */
-.oc-row.oc-row-7{grid-template-columns:repeat(7,1fr);}
-@media(max-width:1200px){.oc-row.oc-row-7{grid-template-columns:repeat(4,1fr);}}
+/* 8 colunas: é o número exato de cards que a seção operacional tem hoje,
+   então tudo cabe numa fileira só. Entrando um nono card, ele desce sozinho
+   e vale rever este número. */
+.oc-row.oc-row-op{grid-template-columns:repeat(8,1fr);}
+@media(max-width:1200px){.oc-row.oc-row-op{grid-template-columns:repeat(4,1fr);}}
 /* SAC e RH têm um card só: ocupar a largura toda deixaria um retângulo vazio
    gigante, então limita-se a largura e o card vira horizontal. */
 .oc-row.oc-row-1{grid-template-columns:minmax(0,340px);}
@@ -867,7 +869,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
          continuam nas guias próprias e na barra de navegação. -->
     <div class="vg-sec">
       <div class="vg-sec-lbl vg-s-op"><span class="i">🔧</span>Operacional</div>
-      <div class="oc-row oc-row-7">
+      <div class="oc-row oc-row-op">
         <div class="oc c1 oc-t-alert" id="ocFaltas" onclick="navTo('faltas',null)"><div class="oc-ic">🚫</div><div class="oc-lb">Faltas</div><div class="oc-v" id="oc1">—</div><div class="oc-sb" id="oc1s">registros</div><div id="ocFaltasTrend"></div></div>
         <div class="oc c7 oc-t-warn"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
         <div class="oc c8 oc-t-warn"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
