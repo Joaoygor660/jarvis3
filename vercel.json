@@ -1,5 +1,5 @@
 {
-  "crons": [
+  "_crons_PAUSADO": [
     { "path": "/api/comercial-cron", "schedule": "0 12 * * *" }
   ],
   "headers": [
