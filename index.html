@@ -293,10 +293,10 @@ html[data-theme="dark"] .status.stale{background:#3a1414!important;border-color:
 html[data-theme="dark"] .vg-s-op{background:#16304f;color:#93c5fd;}
 html[data-theme="dark"] .vg-s-sac{background:#12281c;color:#86efac;}
 html[data-theme="dark"] .vg-s-rh{background:#241a3d;color:#c4b5fd;}
-/* 8 colunas: é o número exato de cards que a seção operacional tem hoje,
+/* 9 colunas: é o número exato de cards que a seção operacional tem hoje,
    então tudo cabe numa fileira só. Entrando um nono card, ele desce sozinho
    e vale rever este número. */
-.oc-row.oc-row-op{grid-template-columns:repeat(8,1fr);}
+.oc-row.oc-row-op{grid-template-columns:repeat(9,1fr);}
 @media(max-width:1200px){.oc-row.oc-row-op{grid-template-columns:repeat(4,1fr);}}
 /* SAC e RH têm um card só: ocupar a largura toda deixaria um retângulo vazio
    gigante, então limita-se a largura e o card vira horizontal. */
@@ -873,6 +873,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div class="oc c1 oc-t-alert" id="ocFaltas" onclick="navTo('faltas',null)"><div class="oc-ic">🚫</div><div class="oc-lb">Faltas</div><div class="oc-v" id="oc1">—</div><div class="oc-sb" id="oc1s">registros</div><div id="ocFaltasTrend"></div></div>
         <div class="oc c7 oc-t-warn"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
         <div class="oc c8 oc-t-warn"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
+        <div class="oc c8 oc-t-warn"><div class="oc-ic">🏢</div><div class="oc-lb">Faltas Departamento</div><div class="oc-v" id="oc10">—</div><div class="oc-sb">pessoal interno</div></div>
         <div class="oc oc-t-alert" onclick="_postoVagoClick()"><div class="oc-ic">🚨</div><div class="oc-lb">Posto Descoberto</div><div class="oc-v" id="oc9">—</div><div class="oc-sb">vago sem cobertura</div></div>
         <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
         <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
@@ -2431,6 +2432,9 @@ function updOC(){
   document.getElementById("oc6").textContent=F.dispo.length;
   document.getElementById("oc7").textContent=F.faltas.filter(r=>r.TIPO==="CONTRATO").length;
   document.getElementById("oc8").textContent=F.faltas.filter(r=>r.TIPO==="RESERVA").length;
+  // Pessoal interno (Mesa Operacional, Supervisao, DP, Financeiro). Entra no
+  // total de Faltas; sem este card a soma Contrato+Reserva nao fechava com ele.
+  document.getElementById("oc10").textContent=F.faltas.filter(r=>r.TIPO==="DEPARTAMENTO").length;
   document.getElementById("oc9").textContent=(F.justif||[]).filter(r=>(r.MOTIVO||"").toUpperCase().includes("VAGO SEM COBERTURA")).length;
   const _ncList=DASHBOARD_DATA.novosClientes||[];
   document.getElementById("vg-novoscli").textContent=_ncList.length;
@@ -2666,7 +2670,8 @@ function bdvTempoResposta(){
     +'</div>';
 }
 /* ═════════ FALTAS — linha de acompanhamento ═════════
-   Série diária das faltas (sem abandono, igual ao número do card), respeitando
+   Série diária das faltas, na mesma base do card acima (sem abandono, que o
+   filtro separa em F.abandono), respeitando
    turno e área do filtro, mas NÃO o período: a linha é histórico, não recorte.
 
    A comparação é contra a MÉDIA DOS 7 DIAS FECHADOS anteriores, e não contra
@@ -2681,7 +2686,9 @@ function vgFaltasSerie(){
   const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
   const m={};
   (D.faltas||[]).forEach(r=>{
-    if(String(r.LOCAL||"").toUpperCase().indexOf("ABANDONO")>=0)return;  // como o card
+    // Abandono fica de fora, igual ao card: F.faltas ja e montado sem ele na
+    // linha ~2219, onde abandono vira uma lista propria (F.abandono).
+    if(String(r.LOCAL||"").toUpperCase().indexOf("ABANDONO")>=0)return;
     if(typeof mT==="function"&&!mT(r))return;
     if(typeof mA==="function"&&!mA(r))return;
     const d=String(r.DATA||"").slice(0,10);if(d.length!==10)return;
