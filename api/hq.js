@@ -38,7 +38,9 @@ module.exports = async function handler(req, res) {
         fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,para,criado_em&order=criado_em.desc&limit=80${filtro}`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/dashboard_snapshots?select=created_at&order=created_at.desc&limit=1`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/rh_vagas?select=id&status=not.in.(%22PREENCHIDA%22,%22CANCELADA%22)`, { headers }),
-        fetch(`${SUPABASE_URL}/rest/v1/lig_contatos?select=colaborador,data_contato,criado_em&limit=5000`, { headers }),
+        // duracao_min entra aqui para a Visão Geral poder mostrar o tempo médio
+        // de conversa sem precisar abrir a guia Ligações.
+        fetch(`${SUPABASE_URL}/rest/v1/lig_contatos?select=colaborador,data_contato,criado_em,duracao_min&limit=5000`, { headers }),
         // série do quadro de pessoal: 1 linha por dia, ~365/ano — leve o bastante
         // para vir junto em vez de virar uma consulta própria
         fetch(`${SUPABASE_URL}/rest/v1/hist_efetivo?select=dia,ativos&order=dia.asc&limit=400`, { headers })
