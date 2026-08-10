@@ -86,7 +86,10 @@ function buildDataFromWorkbook(wb){
       const tipo=(r["DESCTPCOBERTURA"]||"").toUpperCase().trim();
       const sit=(r["DESCSITUACAOHOJE"]||"").toUpperCase().trim();
       const base={
-        NOME:nome,DATA:isoDate(r["DATA"]),LOCAL:r["NOMELOCAL"],
+        // RE = matricula do colaborador. Vem da FICHA DE PRESENCA e era
+        // descartada aqui; sem ela o SAC nao consegue identificar quem e quem
+        // na hora de abrir o cadastro no sistema de origem.
+        NOME:nome,RE:r["RE"]||"",DATA:isoDate(r["DATA"]),LOCAL:r["NOMELOCAL"],
         CARGO:r["DESC_CARGO"],AREA:r["AREASUPERVISAO"],
         TIPO:r["TPCLIENTE"],TURNO:turnoFromEscala(r["DESCESCALA"],r["HRENTRADA"])
       };
@@ -101,7 +104,7 @@ function buildDataFromWorkbook(wb){
     data.faltas=faltas;data.fts=ftsArr;data.cobertura=cobArr;
   }else{
     ext("FALTAS",(r,I)=>({
-      NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
+      NOME:r[I["NOMEFUNCIONARIO"]],RE:r[I["RE"]]||"",DATA:isoDate(r[I["DATA"]]),
       LOCAL:r[I["NOMELOCAL"]],CARGO:r[I["DESC_CARGO"]],
       AREA:r[I["AREASUPERVISAO"]],ABONO:r[I["DESCTPABONO"]],
       TIPO:r[I["TPCLIENTE"]],TURNO:turnoFromEscala(r[I["DESCESCALA"]],r[I["HRENTRADA"]])

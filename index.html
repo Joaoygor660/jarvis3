@@ -3869,7 +3869,10 @@ function buildDataFromWorkbook(wb){
       const tipo=(r["DESCTPCOBERTURA"]||"").toUpperCase().trim();
       const sit=(r["DESCSITUACAOHOJE"]||"").toUpperCase().trim();
       const base={
-        NOME:nome,DATA:isoDate(r["DATA"]),LOCAL:r["NOMELOCAL"],
+        // RE = matricula do colaborador. Vem da FICHA DE PRESENCA e era
+        // descartada aqui; sem ela o SAC nao consegue identificar quem e quem
+        // na hora de abrir o cadastro no sistema de origem.
+        NOME:nome,RE:r["RE"]||"",DATA:isoDate(r["DATA"]),LOCAL:r["NOMELOCAL"],
         CARGO:r["DESC_CARGO"],AREA:r["AREASUPERVISAO"],
         TIPO:r["TPCLIENTE"],TURNO:turnoFromEscala(r["DESCESCALA"],r["HRENTRADA"])
       };
@@ -3884,7 +3887,7 @@ function buildDataFromWorkbook(wb){
     data.faltas=faltas;data.fts=ftsArr;data.cobertura=cobArr;
   }else{
     ext("FALTAS",(r,I)=>({
-      NOME:r[I["NOMEFUNCIONARIO"]],DATA:isoDate(r[I["DATA"]]),
+      NOME:r[I["NOMEFUNCIONARIO"]],RE:r[I["RE"]]||"",DATA:isoDate(r[I["DATA"]]),
       LOCAL:r[I["NOMELOCAL"]],CARGO:r[I["DESC_CARGO"]],
       AREA:r[I["AREASUPERVISAO"]],ABONO:r[I["DESCTPABONO"]],
       TIPO:r[I["TPCLIENTE"]],TURNO:turnoFromEscala(r[I["DESCESCALA"]],r[I["HRENTRADA"]])
@@ -7413,6 +7416,37 @@ function ligLoad(){
 }
 /* colaboradores que faltaram DENTRO do período selecionado no filtro do
    sistema (além de turno e área) — nada de janela fixa própria. */
+/* RE (matrícula) do colaborador.
+   A falta passou a trazer RE direto da planilha, mas os snapshots enviados
+   ANTES dessa mudança não têm o campo. Nesses casos a RE é buscada nos ATIVOS
+   pelo nome — seguro aqui, porque a base tem 582 nomes para 582 registros, sem
+   homônimos. Assim a tela já funciona antes de a planilha nova subir, e passa a
+   usar o dado direto assim que ela subir. */
+var _LIG_RE_MAP=null;
+function ligREMapa(){
+  if(_LIG_RE_MAP)return _LIG_RE_MAP;
+  _LIG_RE_MAP={};
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  (D.ativos||[]).forEach(a=>{
+    const n=String(a.NOME||"").trim().toUpperCase();
+    if(n&&a.RE)_LIG_RE_MAP[n]=a.RE;
+  });
+  return _LIG_RE_MAP;
+}
+function ligRE(nome,direto){
+  if(direto)return String(direto);
+  const v=ligREMapa()[String(nome||"").trim().toUpperCase()];
+  return v?String(v):"";
+}
+/* Etiqueta da RE. Some quando não há matrícula, em vez de exibir "RE —":
+   um campo vazio rotulado só gera dúvida sobre se o dado sumiu. */
+function ligRETag(nome,direto,cor){
+  const re=ligRE(nome,direto);
+  if(!re)return "";
+  return '<span style="font-family:ui-monospace,monospace;font-size:.55rem;font-weight:800;color:'
+    +(cor||"#b91c1c")+';background:rgba(0,0,0,.06);border-radius:4px;padding:1px 5px;white-space:nowrap">RE '
+    +_esc(re)+'</span>';
+}
 function ligFaltasRecentes(){
   const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
   const m={};
@@ -7425,7 +7459,7 @@ function ligFaltasRecentes(){
     if(String(f.LOCAL||"").toUpperCase().indexOf("ABANDONO")>=0){LIG_ABANDONO_N++;return;}
     if(typeof mT==="function"&&!mT(f))return;
     if(typeof mA==="function"&&!mA(f))return;
-    if(!m[nome])m[nome]={colaborador:nome,posto:(f.LOCAL||"").trim(),supervisor:(f.AREA||"").trim(),datas:[],abonos:{}};
+    if(!m[nome])m[nome]={colaborador:nome,re:f.RE||"",posto:(f.LOCAL||"").trim(),supervisor:(f.AREA||"").trim(),datas:[],abonos:{}};
     m[nome].datas.push(dia);
     m[nome].abonos[dia]=f.ABONO||"";
   });
@@ -7545,7 +7579,7 @@ function ligRender(){
     <div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:4px">⏳ Pendências de Contato <span style="font-size:.6rem;color:#94a3b8;font-weight:700">faltou em ${_esc(ligPeriodoTxt())} e ainda não foi contatado${LIG_ABANDONO_N?` · <b style="color:#b45309">${LIG_ABANDONO_N} em abandono ocultado(s)</b>`:""}</span></div>
     ${pend.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-top:8px">${pend.map((f,ix)=>`<div id="ligp-${ix}" style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:9px 11px;cursor:pointer" onclick="ligExpandir('ligp-${ix}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
-        <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}</div>${ligAbonoTag(f.abono)}
+        <div style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(f.colaborador)}<div style="margin-top:2px">${ligRETag(f.colaborador,f.re)}</div></div>${ligAbonoTag(f.abono)}
       </div>
       <div style="font-size:.58rem;color:#b91c1c;margin:2px 0 6px">🏢 ${_esc(f.posto||"—")} · 🧭 ${_esc(f.supervisor||"—")}</div>
       <div style="font-size:.58rem;color:#7f1d1d">Faltou: ${f.datas.map(d=>rhFmt(d)).join(", ")}</div>
@@ -7568,7 +7602,7 @@ function ligRender(){
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:9px;margin-top:8px">${acomp.map(a=>{
         if(a.quebrou){
           return `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:11px;padding:10px 12px">
-            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(a.colaborador)}</span><span style="font-size:.6rem;font-weight:800;color:#dc2626">💔 Quebrou</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.72rem;font-weight:800;color:#991b1b">${_esc(a.colaborador)} ${ligRETag(a.colaborador,null,"#b91c1c")}</span><span style="font-size:.6rem;font-weight:800;color:#dc2626">💔 Quebrou</span></div>
             <div style="font-size:.56rem;color:#b91c1c;margin:2px 0 6px">🧭 ${_esc(a.supervisor||"—")} · contato ${rhFmt(a.contato)}</div>
             <div style="background:#fee2e2;border-radius:6px;height:9px;overflow:hidden"><div style="width:100%;height:9px;background:repeating-linear-gradient(45deg,#f87171,#f87171 5px,#fca5a5 5px,#fca5a5 10px)"></div></div>
             <div style="font-size:.58rem;color:#7f1d1d;margin-top:5px">Aguentou <b>${a.diasFirme} dia(s)</b> e faltou de novo em <b>${rhFmt(a.dataQuebra)}</b> — reforçar tratativa.</div>
@@ -7577,7 +7611,7 @@ function ligRender(){
         const pct=Math.min(100,Math.round(a.dias/LIG_SAC_META*100));
         const cor=a.dias>=LIG_SAC_META?"#16a34a":a.dias>=7?"#22c55e":"#84cc16";
         return `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:11px;padding:10px 12px">
-          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.72rem;font-weight:800;color:#166534">${_esc(a.colaborador)}</span><span style="font-size:.6rem;font-weight:800;color:#16a34a">${a.dias>=LIG_SAC_META?"🏆 Firme":"💪 Firme"}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:.72rem;font-weight:800;color:#166534">${_esc(a.colaborador)} ${ligRETag(a.colaborador,null,"#15803d")}</span><span style="font-size:.6rem;font-weight:800;color:#16a34a">${a.dias>=LIG_SAC_META?"🏆 Firme":"💪 Firme"}</span></div>
           <div style="font-size:.56rem;color:#15803d;margin:2px 0 6px">🧭 ${_esc(a.supervisor||"—")} · contato ${rhFmt(a.contato)}</div>
           <div style="background:#dcfce7;border-radius:6px;height:9px;overflow:hidden"><div style="width:${Math.max(4,pct)}%;height:9px;border-radius:6px;background:${cor};transition:width .6s"></div></div>
           <div style="font-size:.58rem;color:#15803d;margin-top:5px"><b>${a.dias}</b> dia(s) sem faltar desde o contato ${a.dias>=LIG_SAC_META?"— feedback consolidado! 🎉":`(meta ${LIG_SAC_META}d)`}</div>
