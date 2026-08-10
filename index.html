@@ -277,6 +277,52 @@ html[data-theme="dark"] .status.stale{background:#3a1414!important;border-color:
 .det-sub-item:last-child{border-bottom:none;}
 .det-sub-nm{font-weight:700;color:var(--g700);}
 .det-sub-mt{color:var(--g400);font-size:.62rem;margin-top:1px;}
+/* ── SEÇÕES DA VISÃO GERAL ──────────────────────────────────────────────
+   Os cards estavam todos numa faixa só, sem hierarquia: quem batia o olho
+   não sabia o que era operação, o que era SAC e o que era RH. Agrupar por
+   dono do assunto responde isso antes de a pessoa ler qualquer número.
+   Nada foi removido — só reorganizado. Todos os IDs continuam os mesmos,
+   então as funções que preenchem os valores seguem intactas. */
+.vg-sec{margin-bottom:14px;}
+.vg-sec-lbl{display:inline-flex;align-items:center;gap:6px;font-size:.6rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.6px;padding:4px 11px;border-radius:20px;margin-bottom:7px;}
+.vg-sec-lbl .i{font-size:.75rem;line-height:1;}
+.vg-s-op{background:#dbeafe;color:#1d4ed8;}
+.vg-s-sac{background:#dcfce7;color:#15803d;}
+.vg-s-rh{background:#ede9fe;color:#6d28d9;}
+html[data-theme="dark"] .vg-s-op{background:#16304f;color:#93c5fd;}
+html[data-theme="dark"] .vg-s-sac{background:#12281c;color:#86efac;}
+html[data-theme="dark"] .vg-s-rh{background:#241a3d;color:#c4b5fd;}
+/* 7 colunas na seção operacional; os cards que sobram descem sozinhos */
+.oc-row.oc-row-7{grid-template-columns:repeat(7,1fr);}
+@media(max-width:1200px){.oc-row.oc-row-7{grid-template-columns:repeat(4,1fr);}}
+/* SAC e RH têm um card só: ocupar a largura toda deixaria um retângulo vazio
+   gigante, então limita-se a largura e o card vira horizontal. */
+.oc-row.oc-row-1{grid-template-columns:minmax(0,340px);}
+.oc-h{display:flex;align-items:center;gap:13px;}
+.oc-h .oc-ic{font-size:1.5rem;margin:0;flex:none;}
+.oc-h .oc-txt{min-width:0;}
+.oc-h .oc-lb{margin-bottom:2px;}
+/* Tons pedidos: alerta (vermelho) e atenção (âmbar). Ficam em classe própria
+   em vez de style inline para valerem também no tema escuro. */
+.oc.oc-t-alert{background:#fef2f2;border-color:#fca5a5;}
+.oc-t-alert .oc-lb{color:#b91c1c;}
+.oc-t-alert .oc-v{color:#dc2626!important;}
+.oc-t-alert .oc-sb{color:#c2410c;}
+.oc-t-alert::before{background:#dc2626!important;}
+.oc.oc-t-warn{background:#fffbeb;border-color:#fcd34d;}
+.oc-t-warn .oc-lb{color:#b45309;}
+.oc-t-warn .oc-v{color:#d97706!important;}
+.oc-t-warn .oc-sb{color:#b45309;}
+.oc-t-warn::before{background:#f59e0b!important;}
+html[data-theme="dark"] .oc.oc-t-alert{background:#2c1414;border-color:#7f1d1d;}
+html[data-theme="dark"] .oc-t-alert .oc-lb,
+html[data-theme="dark"] .oc-t-alert .oc-sb{color:#fca5a5;}
+html[data-theme="dark"] .oc-t-alert .oc-v{color:#f87171!important;}
+html[data-theme="dark"] .oc.oc-t-warn{background:#2c2210;border-color:#78350f;}
+html[data-theme="dark"] .oc-t-warn .oc-lb,
+html[data-theme="dark"] .oc-t-warn .oc-sb{color:#fcd34d;}
+html[data-theme="dark"] .oc-t-warn .oc-v{color:#fbbf24!important;}
 /* OP CARDS */
 /* auto-fit em vez de 8 fixas: com 11 cards a linha quebra sozinha em vez de espremer */
 .oc-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:8px;margin-bottom:12px;}
@@ -815,19 +861,43 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="sk sk-gr clickable" onclick="skDet('vg','funcs',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-gr">Fixo</span></div><div class="sk-lbl">Funcionários Ativos</div><div class="sk-v" id="vg-fn">—</div><div class="sk-sub" id="vg-fns">—</div><div id="vg-efet-trend"></div></div>
     </div>
     <div class="det-panel" id="det-vg"><div class="det-hdr" id="det-vg-hdr"><span class="det-title" id="det-vg-title"></span><button class="det-close" onclick="closeDet('vg')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-vg-body"></div><div class="det-sub" id="det-vg-sub"></div></div></div>
-    <div class="oc-row">
-      <div class="oc c1" id="ocFaltas" onclick="navTo('faltas',null)"><div class="oc-ic">🚫</div><div class="oc-lb">Faltas</div><div class="oc-v" id="oc1">—</div><div class="oc-sb" id="oc1s">registros</div><div id="ocFaltasTrend"></div></div>
-      <div class="oc c2" onclick="navTo('coberturas',null)"><div class="oc-ic">🛡️</div><div class="oc-lb">Coberturas</div><div class="oc-v" id="oc2">—</div><div class="oc-sb">registros</div></div>
-      <div class="oc c3" onclick="navTo('os',null)"><div class="oc-ic">📋</div><div class="oc-lb">OS Avulsos</div><div class="oc-v" id="oc3">—</div><div class="oc-sb">registros</div></div>
-      <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
-      <div class="oc c6 oc-alert" id="ocDispo" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb" id="oc6s">registros</div><div class="oc-cmp" id="oc6c"></div></div>
-      <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
-      <div class="oc c1" id="ocLig" onclick="vgAbrir('ligacoes','qual')"><div class="oc-ic">📞</div><div class="oc-lb">Ligações</div><div class="oc-duo"><span class="oc-v" id="ocLigV">—</span><span class="d2" id="ocLigP">—</span></div><div class="oc-sb" id="ocLigSub">feitas · pendentes</div></div>
-      <div class="oc c2" id="ocVagas" onclick="vgAbrir('rhvagas','rh')"><div class="oc-ic">📋</div><div class="oc-lb">Vagas Abertas</div><div class="oc-v" id="ocVagasV">—</div><div class="oc-sb" id="ocVagasSub">total, sem filtro de data</div></div>
-      <div class="oc c8" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div></div>
-      <div class="oc c7"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
-      <div class="oc c8"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
-      <div class="oc oc-alert" onclick="_postoVagoClick()" style="cursor:pointer;border-color:#e53e3e;background:linear-gradient(135deg,#fff5f5,#fed7d7)"><div class="oc-ic">🚨</div><div class="oc-lb" style="color:#c53030">Posto Descoberto</div><div class="oc-v" id="oc9" style="color:#e53e3e">—</div><div class="oc-sb" style="color:#e53e3e">vago sem cobertura</div></div>
+    <!-- OPERACIONAL: o dia a dia da operação. Os sete primeiros são os que o
+         João pediu, nesta ordem; Sem Alocação, Coberturas e OS Avulsos vêm em
+         seguida porque também são operacionais e não podiam sumir. -->
+    <div class="vg-sec">
+      <div class="vg-sec-lbl vg-s-op"><span class="i">🔧</span>Operacional</div>
+      <div class="oc-row oc-row-7">
+        <div class="oc c1 oc-t-alert" id="ocFaltas" onclick="navTo('faltas',null)"><div class="oc-ic">🚫</div><div class="oc-lb">Faltas</div><div class="oc-v" id="oc1">—</div><div class="oc-sb" id="oc1s">registros</div><div id="ocFaltasTrend"></div></div>
+        <div class="oc c7 oc-t-warn"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
+        <div class="oc c8 oc-t-warn"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
+        <div class="oc oc-t-alert" onclick="_postoVagoClick()"><div class="oc-ic">🚨</div><div class="oc-lb">Posto Descoberto</div><div class="oc-v" id="oc9">—</div><div class="oc-sb">vago sem cobertura</div></div>
+        <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
+        <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
+        <div class="oc c8 oc-t-warn" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div></div>
+        <div class="oc c6 oc-alert" id="ocDispo" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb" id="oc6s">registros</div><div class="oc-cmp" id="oc6c"></div></div>
+        <div class="oc c2" onclick="navTo('coberturas',null)"><div class="oc-ic">🛡️</div><div class="oc-lb">Coberturas</div><div class="oc-v" id="oc2">—</div><div class="oc-sb">registros</div></div>
+        <div class="oc c3" onclick="navTo('os',null)"><div class="oc-ic">📋</div><div class="oc-lb">OS Avulsos</div><div class="oc-v" id="oc3">—</div><div class="oc-sb">registros</div></div>
+      </div>
+    </div>
+
+    <div class="vg-sec">
+      <div class="vg-sec-lbl vg-s-sac"><span class="i">🎧</span>SAC</div>
+      <div class="oc-row oc-row-1">
+        <div class="oc c1 oc-h" id="ocLig" onclick="vgAbrir('ligacoes','qual')">
+          <div class="oc-ic">📞</div>
+          <div class="oc-txt"><div class="oc-lb">Ligações</div><div class="oc-duo"><span class="oc-v" id="ocLigV">—</span><span class="d2" id="ocLigP">—</span></div><div class="oc-sb" id="ocLigSub">feitas · pendentes</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="vg-sec">
+      <div class="vg-sec-lbl vg-s-rh"><span class="i">💼</span>RH</div>
+      <div class="oc-row oc-row-1">
+        <div class="oc c2 oc-h" id="ocVagas" onclick="vgAbrir('rhvagas','rh')">
+          <div class="oc-ic">💼</div>
+          <div class="oc-txt"><div class="oc-lb">Vagas Abertas</div><div class="oc-v" id="ocVagasV">—</div><div class="oc-sb" id="ocVagasSub">total, sem filtro de data</div></div>
+        </div>
+      </div>
     </div>
     <div class="snav">
       <button class="snt active" onclick="navTo('visao',null)">📊 Visão Geral</button>
