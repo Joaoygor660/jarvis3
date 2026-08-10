@@ -76,6 +76,47 @@ module.exports = async function handler(req, res) {
   // ?dry=1 → simula: mostra quem receberia o quê, sem enviar e sem gravar nada.
   const dry = req.query && (req.query.dry === "1" || req.query.dry === "true");
 
+  // ?teste=1&para=<email>[&etapa=N] → manda UMA mensagem para o endereço
+  // informado e encerra. Existe porque não há outro jeito seguro de provar que
+  // o SMTP funciona: rodar o cron de verdade dispararia dezenas de e-mails para
+  // clientes reais. Aqui nenhuma proposta é lida, alterada ou registrada — o
+  // retorno acontece antes de qualquer consulta ao banco.
+  if (req.query && (req.query.teste === "1" || req.query.teste === "true")) {
+    const para = String((req.query && req.query.para) || "").trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(para)) {
+      return res.status(400).json({ error: 'Informe o destinatário: ?teste=1&para=voce@dominio.com' });
+    }
+    const etapa = Number(req.query.etapa || 2);
+    if (![2, 3, 4, 5].includes(etapa)) {
+      return res.status(400).json({ error: "etapa deve ser 2, 3, 4 ou 5." });
+    }
+    try {
+      const t = mailer();
+      await t.sendMail({
+        from: process.env.MAIL_FROM || `"Grupo Serv Camp" <${process.env.MAIL_USER}>`,
+        to: para,
+        subject: `[TESTE] Cadência comercial — mensagem ${etapa}`,
+        html: '<p style="background:#fffbeb;border-left:4px solid #f59e0b;padding:10px 14px;margin:0 0 16px;'
+            + 'font-family:sans-serif;color:#92400e"><b>Este é um envio de teste do JARVIS.</b><br>'
+            + 'Nenhum cliente recebeu esta mensagem e nenhuma proposta foi alterada.</p>'
+            + corpoEmail(etapa, "Fulano de Tal")
+      });
+      return res.status(200).json({
+        ok: true,
+        modo: "TESTE — 1 e-mail enviado, nenhuma proposta lida ou alterada",
+        para, etapa,
+        remetente: process.env.MAIL_USER
+      });
+    } catch (e) {
+      return res.status(502).json({
+        ok: false,
+        erro: "Falha no envio SMTP.",
+        detalhe: String((e && e.message) || e).slice(0, 300),
+        dica: "Confira MAIL_USER, MAIL_PASS, MAIL_HOST (padrão email-ssl.com.br) e MAIL_PORT (padrão 465)."
+      });
+    }
+  }
+
   const sb = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 
   // candidatas: cadência ativa, sem resposta, status não-final, proposta enviada, com e-mail
