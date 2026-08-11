@@ -70,10 +70,16 @@ function sheetRows(ws){
 }
 function buildDataFromWorkbook(wb){
   const data={};
+  // Linha "vazia" nao e so array sem itens: uma linha do Excel que tem apenas
+  // formatacao vira um array CHEIO DE null, com length > 0. O filtro antigo
+  // (r && r.length) deixava essas passarem, e elas viravam registros com todos
+  // os campos em branco - foi assim que "Sem Alocacao" contou 31 quando havia
+  // 12 pessoas de verdade. Aqui a linha so entra se tiver ALGUM conteudo.
+  const _linhaVazia=r=>!r||!r.length||r.every(c=>c===null||c===undefined||String(c).trim()==="");
   function ext(sheetName,mapFn,key){
     const ws=findSheet(wb,sheetName);
     const{idx,body}=sheetRows(ws);
-    data[key]=(body||[]).filter(r=>r&&r.length).map(r=>mapFn(r,idx)).filter(Boolean);
+    data[key]=(body||[]).filter(r=>!_linhaVazia(r)).map(r=>mapFn(r,idx)).filter(Boolean);
   }
   // Tenta ler da Ficha de Presença unificada (substitui FALTAS + FTS + COBERTURA)
   const wsFicha=findSheet(wb,"FICHA PRESENCA")||findSheet(wb,"FICHA DE PRESENCA")||findSheet(wb,"FICHA");
