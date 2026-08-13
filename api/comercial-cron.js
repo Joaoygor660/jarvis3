@@ -139,6 +139,72 @@ module.exports = async function handler(req, res) {
   // ?dry=1 → simula: mostra quem receberia o quê, sem enviar e sem gravar nada.
   const dry = req.query && (req.query.dry === "1" || req.query.dry === "true");
 
+  // ?arquivar=1 → recupera a caixa de saída.
+  //
+  // Os e-mails de 11/08 saíram antes de existir a gravação via IMAP, então não
+  // há cópia deles na pasta da Gabriela. Aqui as mensagens são RECONSTRUÍDAS a
+  // partir do log (destinatário, etapa e horário estão todos registrados) e
+  // gravadas com a DATA ORIGINAL, para a caixa dela refletir o que de fato
+  // aconteceu naquela manhã — e não uma pilha de mensagens datadas de hoje.
+  //
+  // Este bloco NÃO envia nada. Não chama mailer() e não abre conexão SMTP:
+  // apenas compõe o texto e grava por IMAP. Nenhum cliente recebe nada.
+  //
+  // A coluna arquivado_em torna a operação repetível: quem já tem cópia é
+  // pulado. Duplicar mensagem na caixa de outra pessoa seria pior do que a
+  // ausência que estamos consertando.
+  if (req.query && (req.query.arquivar === "1" || req.query.arquivar === "true")) {
+    const sb2 = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
+    const q = `${SUPABASE_URL}/rest/v1/com_cadencia_log`
+      + `?select=id,etapa,destinatario,enviado_em,proposta_id,com_propostas(nome,contato)`
+      + `&canal=eq.EMAIL&etapa=gt.0&status=eq.enviado&arquivado_em=is.null&order=enviado_em.asc`;
+    const rl = await fetch(q, { headers: sb2 });
+    if (!rl.ok) return res.status(502).json({ error: "Falha ao ler o log.", details: (await rl.text()).slice(0, 300) });
+    const linhas = await rl.json();
+
+    const simular = req.query.dry === "1" || req.query.dry === "true";
+    const out = { pendentes: linhas.length, gravadas: 0, falhas: 0, detalhes: [] };
+    if (simular) {
+      out.modo = "SIMULAÇÃO — nada gravado";
+      out.detalhes = linhas.map(l => ({
+        para: l.destinatario, etapa: l.etapa,
+        cliente: (l.com_propostas && l.com_propostas.nome) || "?",
+        data: l.enviado_em
+      }));
+      return res.status(200).json(out);
+    }
+
+    const MailComposer = require("nodemailer/lib/mail-composer");
+    for (const l of linhas) {
+      const p = l.com_propostas || {};
+      // MESMA regra de saudação do envio original, para o texto bater
+      const nome = ((p.contato || p.nome || "").trim().split(" ")[0]) || "tudo bem";
+      const quando = new Date(l.enviado_em);
+      const raw = await new MailComposer({
+        from: process.env.MAIL_FROM || `"Grupo Serv Camp" <${process.env.MAIL_USER}>`,
+        to: l.destinatario,
+        subject: "Acompanhamento da proposta — Grupo Serv Camp",
+        html: corpoEmail(l.etapa, nome),
+        date: quando
+      }).compile().build();
+
+      const r = await guardarNaCaixaDeSaida(raw, quando);
+      if (r.ok) {
+        out.gravadas++;
+        await fetch(`${SUPABASE_URL}/rest/v1/com_cadencia_log?id=eq.${l.id}`, {
+          method: "PATCH",
+          headers: { ...sb2, Prefer: "return=minimal" },
+          body: JSON.stringify({ arquivado_em: new Date().toISOString() })
+        });
+      } else {
+        out.falhas++;
+        out.detalhes.push({ para: l.destinatario, etapa: l.etapa, erro: r.motivo });
+      }
+    }
+    out.resumo = `${out.gravadas} cópia(s) gravada(s) na caixa de saída, com a data original. Nenhum e-mail foi enviado.`;
+    return res.status(200).json(out);
+  }
+
   // ?teste=1&para=<email>[&etapa=N] → manda UMA mensagem para o endereço
   // informado e encerra. Existe porque não há outro jeito seguro de provar que
   // o SMTP funciona: rodar o cron de verdade dispararia dezenas de e-mails para
