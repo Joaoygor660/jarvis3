@@ -47,14 +47,77 @@ function mailer() {
   });
 }
 
+// ── Cópia na caixa de saída ────────────────────────────────────────────────
+// SMTP só ENTREGA a mensagem; ele não guarda cópia em lugar nenhum. A pasta
+// "Itens Enviados" vive no servidor IMAP e quem grava lá é o programa cliente:
+// o Outlook, depois de mandar pelo SMTP, faz um segundo passo e copia a
+// mensagem para a pasta. São operações distintas.
+//
+// Sem este passo, a Gabriela não tem registro do que foi dito em nome dela, e
+// uma resposta do cliente chega na caixa sem nenhum histórico do lado dela.
+//
+// O nome da pasta muda conforme o servidor ("Sent", "INBOX.Sent", "Itens
+// Enviados"), então procura-se primeiro pela marcação padrão \Sent do IMAP e
+// só depois por nome conhecido.
+async function pastaEnviados(client) {
+  const lista = await client.list();
+  const porFlag = lista.find(m => (m.specialUse || "") === "\\Sent" || (m.flags && m.flags.has && m.flags.has("\\Sent")));
+  if (porFlag) return porFlag.path;
+  const nomes = ["Sent", "INBOX.Sent", "Itens Enviados", "INBOX.Itens Enviados",
+                 "Enviados", "INBOX.Enviados", "Sent Items", "INBOX.Sent Items"];
+  for (const n of nomes) {
+    const m = lista.find(x => x.path.toLowerCase() === n.toLowerCase());
+    if (m) return m.path;
+  }
+  return null;
+}
+
+// Grava a MESMA mensagem que foi enviada. Falha aqui nunca derruba o envio: o
+// e-mail já saiu, e ficar sem cópia é bem menos grave do que registrar como
+// falha algo que o cliente recebeu.
+async function guardarNaCaixaDeSaida(raw, quando) {
+  const { ImapFlow } = require("imapflow");
+  const client = new ImapFlow({
+    host: process.env.IMAP_HOST || process.env.MAIL_HOST || "email-ssl.com.br",
+    port: Number(process.env.IMAP_PORT || 993),
+    secure: true,
+    auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
+    logger: false
+  });
+  try {
+    await client.connect();
+    const pasta = await pastaEnviados(client);
+    if (!pasta) return { ok: false, motivo: "pasta de enviados não encontrada" };
+    await client.append(pasta, raw, ["\\Seen"], quando || new Date());
+    return { ok: true, pasta };
+  } catch (e) {
+    return { ok: false, motivo: String((e && e.message) || e).slice(0, 200) };
+  } finally {
+    try { await client.logout(); } catch (e) { /* conexão já caiu: irrelevante */ }
+  }
+}
+
 async function enviarEmail(tx, para, assunto, html) {
-  const info = await tx.sendMail({
+  const opcoes = {
     from: process.env.MAIL_FROM || `"Grupo Serv Camp" <${process.env.MAIL_USER}>`,
     to: para,
     subject: assunto,
     html
+  };
+  // Compõe uma vez e usa os MESMOS bytes para enviar e para arquivar, senão a
+  // cópia teria outro Message-ID e não seria a mesma mensagem.
+  const MailComposer = require("nodemailer/lib/mail-composer");
+  const raw = await new MailComposer(opcoes).compile().build();
+
+  const info = await tx.sendMail({
+    envelope: { from: process.env.MAIL_USER, to: para },
+    raw
   });
-  return !!(info && info.accepted && info.accepted.length);
+  const enviou = !!(info && info.accepted && info.accepted.length);
+  // Guarda o resultado do arquivamento para quem quiser relatar; o retorno
+  // continua booleano porque é isso que o laço de envio espera.
+  enviarEmail.ultimoArquivo = enviou ? await guardarNaCaixaDeSaida(raw) : null;
+  return enviou;
 }
 
 module.exports = async function handler(req, res) {
@@ -92,20 +155,21 @@ module.exports = async function handler(req, res) {
     }
     try {
       const t = mailer();
-      await t.sendMail({
-        from: process.env.MAIL_FROM || `"Grupo Serv Camp" <${process.env.MAIL_USER}>`,
-        to: para,
-        subject: `[TESTE] Cadência comercial — mensagem ${etapa}`,
-        html: '<p style="background:#fffbeb;border-left:4px solid #f59e0b;padding:10px 14px;margin:0 0 16px;'
-            + 'font-family:sans-serif;color:#92400e"><b>Este é um envio de teste do JARVIS.</b><br>'
-            + 'Nenhum cliente recebeu esta mensagem e nenhuma proposta foi alterada.</p>'
-            + corpoEmail(etapa, "Fulano de Tal")
-      });
+      // Passa pelo MESMO enviarEmail do envio real, para o teste provar também
+      // que a cópia chega na caixa de saída — e não só que o SMTP aceitou.
+      const enviou = await enviarEmail(t, para,
+        `[TESTE] Cadência comercial — mensagem ${etapa}`,
+        '<p style="background:#fffbeb;border-left:4px solid #f59e0b;padding:10px 14px;margin:0 0 16px;'
+        + 'font-family:sans-serif;color:#92400e"><b>Este é um envio de teste do JARVIS.</b><br>'
+        + 'Nenhum cliente recebeu esta mensagem e nenhuma proposta foi alterada.</p>'
+        + corpoEmail(etapa, "Fulano de Tal"));
+      const arquivo = enviarEmail.ultimoArquivo || { ok: false, motivo: "não tentou" };
       return res.status(200).json({
-        ok: true,
+        ok: enviou,
         modo: "TESTE — 1 e-mail enviado, nenhuma proposta lida ou alterada",
         para, etapa,
-        remetente: process.env.MAIL_USER
+        remetente: process.env.MAIL_USER,
+        caixaDeSaida: arquivo.ok ? `cópia gravada em "${arquivo.pasta}"` : `NÃO gravou: ${arquivo.motivo}`
       });
     } catch (e) {
       return res.status(502).json({
