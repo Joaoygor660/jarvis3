@@ -5530,6 +5530,54 @@ function comSerieMensal(arr,getData,getVal,n){
 function comLogEvento(pid,detalhe,canal){
   fetch("/api/comercial?t=cadencia",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({proposta_id:pid,etapa:0,canal:canal||"SISTEMA",status:"evento",detalhe:detalhe,destinatario:sessionStorage.getItem("userNome")||null})}).catch(()=>{});
 }
+/* ═════════ PLANO DE CADÊNCIA — o que a Gabriela vê na proposta ═════════
+   Ela precisa saber, sem abrir o código nem perguntar: o que já saiu, se o
+   cliente respondeu, qual é a próxima mensagem, quando sai e o texto exato que
+   o cliente vai ler — e poder impedir esse envio.
+
+   ATENÇÃO: os textos abaixo são cópia dos de api/comercial-cron.js, que é quem
+   realmente envia. Ao mudar a mensagem, mude NOS DOIS lugares, senão a
+   pré-visualização mente para ela.
+
+   COM_CADENCIA_LIGADA reflete o agendamento em vercel.json. Hoje está em
+   "crons": [] (desligado depois do envio acidental de 11/08). Ao religar o
+   agendamento, trocar esta constante para true — senão a tela promete um envio
+   que não vai acontecer. */
+var COM_CADENCIA_LIGADA=false;
+const COM_CAD_HORA="09:00";
+const COM_CAD_DIAS={2:2,3:5,4:10,5:20};
+const COM_CAD_TXT={
+  2:"Olá, {n}!\n\nTudo bem?\n\nGostaria de saber se vocês já tiveram a oportunidade de analisar a proposta enviada.\n\nCaso faça sentido, podemos agendar uma visita ou uma reunião para apresentar os detalhes e esclarecer qualquer dúvida.\n\nFico à disposição.",
+  3:"Olá, {n}!\n\nPassando para reforçar meu contato.\n\nAcredito que uma conversa rápida pode ajudar a esclarecer os pontos da proposta e entender melhor as necessidades da empresa.\n\nCaso tenham disponibilidade, será um prazer agendarmos uma visita no melhor dia e horário para vocês.",
+  4:"Olá, {n}!\n\nEspero que esteja tudo bem.\n\nGostaria de verificar se já conseguiram tomar uma decisão em relação à proposta encaminhada.\n\nCaso ainda estejam avaliando internamente, permaneço à disposição para qualquer ajuste ou esclarecimento necessário.",
+  5:"Olá, {n}!\n\nComo não obtive retorno até o momento, vou considerar a negociação em pausa.\n\nPermanecemos à disposição sempre que desejarem retomar a conversa ou caso surjam novas necessidades.\n\nSerá um prazer atendê-los."
+};
+/* Mesma regra de saudação do servidor: primeiro nome do contato. */
+function comCadNome(x){
+  return ((x.contato||x.nome||"").trim().split(" ")[0])||"tudo bem";
+}
+/* Por que a cadência não continua, quando não continua. */
+function comCadParada(x){
+  if(x.respondido_em)return"o cliente respondeu";
+  if(["FECHADO","PERDIDO","PAUSADO"].indexOf(x.status)>=0)return"a proposta está "+x.status;
+  if(x.cadencia_ativa===false)return"a cadência foi desligada nesta proposta";
+  if(!x.data_envio_proposta)return"a data de envio da proposta ainda não foi registrada";
+  if((x.cadencia_etapa||0)>=5)return"a régua chegou ao fim (Msg 5 já enviada)";
+  return null;
+}
+/* Próxima etapa devida e a data em que ela sai. */
+function comCadProxima(x){
+  if(comCadParada(x))return null;
+  const atual=x.cadencia_etapa||0;
+  for(const et of [2,3,4,5]){
+    if(et>atual){
+      const base=new Date(String(x.data_envio_proposta).slice(0,10)+"T12:00:00");
+      base.setDate(base.getDate()+COM_CAD_DIAS[et]);
+      return{etapa:et,data:base,atrasada:base<new Date()};
+    }
+  }
+  return null;
+}
 const COM_ETAPA_LBL={1:"Msg 1 · WhatsApp (envio da proposta)",2:"Msg 2 · E-mail (+2 dias)",3:"Msg 3 · E-mail (+5 dias)",4:"Msg 4 · E-mail (+10 dias)",5:"Msg 5 · E-mail (+20 dias — pausa)"};
 /* ══ INTERRUPTOR DE VALORES (R$) DO COMERCIAL ══
    false = fase de adoção: nenhuma tela comercial pede/mostra dinheiro, e o
@@ -6044,6 +6092,71 @@ function comPerdido(id){
   _comPatch(id,{status:"PERDIDO",motivo_perda:(motivo||"").toUpperCase()});
 }
 /* ── Timeline 360º da proposta ── */
+function comCadPainel(x){
+  const parada=comCadParada(x);
+  const prox=comCadProxima(x);
+  const log=COM_LOG.filter(l=>l.proposta_id===x.id&&l.etapa>0);
+  const doEtapa=et=>log.filter(l=>l.etapa===et).sort((a,b)=>new Date(b.enviado_em)-new Date(a.enviado_em))[0];
+
+  // régua das 5 mensagens
+  const linha=[1,2,3,4,5].map(et=>{
+    const l=doEtapa(et);
+    let ic,cor,quando,obs="";
+    if(l&&l.status==="enviado"){ic="✅";cor="#16a34a";quando=new Date(l.enviado_em).toLocaleDateString("pt-BR");obs="para "+_esc(l.destinatario||"—");}
+    else if(l){ic="❌";cor="#dc2626";quando=new Date(l.enviado_em).toLocaleDateString("pt-BR");obs="falhou — não foi entregue";}
+    else if(prox&&prox.etapa===et){ic="⏳";cor="#f59e0b";quando=prox.data.toLocaleDateString("pt-BR")+" · "+COM_CAD_HORA;obs=prox.atrasada?"já venceu":"prevista";}
+    else if(parada&&!l){ic="⛔";cor="#94a3b8";quando="—";obs="não será enviada";}
+    else{ic="◻️";cor="#cbd5e1";quando="—";obs="depois da anterior";}
+    return '<div style="display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-bottom:1px dashed #eef2f7">'
+      +'<span style="font-size:.85rem;line-height:1.2">'+ic+'</span>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:.68rem;font-weight:800;color:'+cor+'">'+_esc(COM_ETAPA_LBL[et]||("Etapa "+et))+'</div>'
+      +'<div style="font-size:.6rem;color:#94a3b8">'+quando+(obs?" · "+obs:"")+'</div></div></div>';
+  }).join("");
+
+  // resposta do cliente
+  const resp=x.respondido_em
+    ? '<span style="color:#16a34a;font-weight:800">✅ Respondeu em '+new Date(x.respondido_em).toLocaleDateString("pt-BR")+'</span>'
+    : '<span style="color:#b45309;font-weight:800">⏳ Sem resposta até agora</span>';
+
+  let bloco='';
+  if(parada){
+    bloco='<div style="background:#f8fafc;border:1px solid #e5e9f0;border-radius:10px;padding:10px 13px;font-size:.68rem;color:#475569">'
+      +'<b>A cadência não continua</b> porque '+_esc(parada)+'. Nenhuma mensagem automática será enviada para este cliente.</div>';
+  }else if(prox){
+    const txt=COM_CAD_TXT[prox.etapa].replace("{n}",comCadNome(x));
+    bloco='<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:11px 14px">'
+      +'<div style="font-size:.68rem;font-weight:800;color:#92400e">Próxima: '+_esc(COM_ETAPA_LBL[prox.etapa])+'</div>'
+      +'<div style="font-size:.64rem;color:#b45309;margin:2px 0 8px">'
+      +(prox.atrasada?"venceu em ":"sai em ")+'<b>'+prox.data.toLocaleDateString("pt-BR")+'</b> às <b>'+COM_CAD_HORA+'</b>'
+      +' · para <b>'+_esc(x.email||"sem e-mail cadastrado")+'</b></div>'
+      +'<div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:.66rem;color:#334155;white-space:pre-wrap;line-height:1.55">'+_esc(txt)+'</div>'
+      +'<div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">'
+      +'<button onclick="comCadPular('+x.id+','+prox.etapa+')" style="border:none;background:#b45309;color:#fff;border-radius:8px;padding:5px 11px;font-size:.63rem;font-weight:800;cursor:pointer">⏭️ Não enviar esta</button>'
+      +'<button onclick="comCadDesligar('+x.id+')" style="border:1px solid #dc2626;background:#fff;color:#dc2626;border-radius:8px;padding:5px 11px;font-size:.63rem;font-weight:800;cursor:pointer">⛔ Encerrar a cadência</button>'
+      +'</div></div>';
+    if(!COM_CADENCIA_LIGADA){
+      bloco+='<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:9px 13px;margin-top:8px;font-size:.63rem;color:#1e40af">'
+        +'ℹ️ <b>O envio automático está desligado no sistema.</b> Esta data é a que valeria se ele fosse religado — por enquanto nada sai sozinho.</div>';
+    }
+  }
+  return '<div style="border:1px solid #e5e9f0;border-radius:12px;padding:13px 16px;margin-bottom:16px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">'
+    +'<span style="font-size:.78rem;font-weight:800;color:#0d1f35">📬 Plano de Cadência</span>'+resp+'</div>'
+    +linha+'<div style="margin-top:10px">'+bloco+'</div></div>';
+}
+/* Pula UMA mensagem: marca a etapa como se ja tivesse saido, entao a regua
+   segue na seguinte. Nao desliga a cadencia inteira. */
+function comCadPular(id,etapa){
+  const x=COM_P.find(p=>p.id===id);if(!x)return;
+  if(!confirm("Não enviar a "+(COM_ETAPA_LBL[etapa]||"mensagem")+" para "+x.nome+"?\n\nA cadência continua nas mensagens seguintes."))return;
+  _comPatch(id,{cadencia_etapa:etapa},function(){comTimeline(id);});
+}
+/* Encerra a regua desta proposta. Nada mais sai automatico para este cliente. */
+function comCadDesligar(id){
+  const x=COM_P.find(p=>p.id===id);if(!x)return;
+  if(!confirm("Encerrar a cadência de "+x.nome+"?\n\nNenhuma mensagem automática será enviada para este cliente."))return;
+  _comPatch(id,{cadencia_ativa:false},function(){comTimeline(id);});
+}
 function comTimeline(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
   const ev=[];
@@ -6073,7 +6186,7 @@ function comTimeline(id){
       <div><div style="font-size:.92rem;font-weight:800;color:#0d1f35">📜 ${x.nome}</div>
       <div style="font-size:.66rem;color:#64748b;margin-top:2px"><span class="rh-badge" style="background:${COM_ST_COLORS[x.status]}18;color:${COM_ST_COLORS[x.status]}">${x.status}</span> ${t?t.ic+" "+t.lbl:""} · Chance ${ch}%${COM_VALORES?" · "+fmtBRL0(x.valor):""}</div></div>
       <span onclick="document.getElementById('rdModal').remove()" style="cursor:pointer;font-size:1rem;color:#64748b;padding:4px 10px;border-radius:8px">✖</span></div>
-    <div style="padding:20px 26px"><div class="cv-tl">
+    <div style="padding:20px 26px">${comCadPainel(x)}<div class="cv-tl">
       ${ev.map(e=>`<div class="cv-tl-item"><div class="cv-tl-dot" style="border-color:${e.cor}">${e.ic}</div>
         <div style="font-size:.62rem;color:#94a3b8;font-weight:700">${e.dt.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
         <div style="font-size:.76rem;font-weight:800;color:#0d1f35">${e.t}</div>
