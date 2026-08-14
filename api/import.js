@@ -212,6 +212,18 @@ module.exports = async function handler(req, res) {
     });
   } catch (e) { /* histórico é acessório: não pode impedir o envio da planilha */ }
 
+  // ── Insumos diários da Saúde do Cliente ───────────────────────────────────
+  // A agregação vive numa função do banco, não aqui: se a mesma regra existisse
+  // em JavaScript e em SQL, um dia as duas divergiriam e o histórico deixaria
+  // de bater com a tela sem ninguém perceber.
+  // Como o histórico, falha aqui nunca derruba o envio — o snapshot já está
+  // salvo, e a próxima importação refaz o cálculo dos mesmos dias.
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/atualizar_hist_cliente`, {
+      method: "POST", headers, body: "{}"
+    });
+  } catch (e) { /* idem */ }
+
   const row = inserted[0] || null;
   if (row) delete row.data; // não devolve o snapshot inteiro de volta
   return res.status(200).json({ ok: true, origem, row_count: rowCount, row });

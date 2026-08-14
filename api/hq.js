@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
       // batimento em vez de virarem chamadas próprias: rh_vagas tem +1200 linhas
       // e baixá-las inteiras a cada carregamento, só para exibir um número,
       // seria desperdício. Aqui volta apenas o essencial.
-      const [pr, mr, sr, vr, lr, hr] = await Promise.all([
+      const [pr, mr, sr, vr, lr, hr, sc] = await Promise.all([
         fetch(`${SUPABASE_URL}/rest/v1/app_users?select=user_key,presence_page,presence_at`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/hq_mensagens?select=id,user_key,nome,texto,para,criado_em&order=criado_em.desc&limit=80${filtro}`, { headers }),
         fetch(`${SUPABASE_URL}/rest/v1/dashboard_snapshots?select=created_at&order=created_at.desc&limit=1`, { headers }),
@@ -43,7 +43,13 @@ module.exports = async function handler(req, res) {
         fetch(`${SUPABASE_URL}/rest/v1/lig_contatos?select=colaborador,data_contato,criado_em,duracao_min&limit=5000`, { headers }),
         // série do quadro de pessoal: 1 linha por dia, ~365/ano — leve o bastante
         // para vir junto em vez de virar uma consulta própria
-        fetch(`${SUPABASE_URL}/rest/v1/hist_efetivo?select=dia,ativos&order=dia.asc&limit=400`, { headers })
+        fetch(`${SUPABASE_URL}/rest/v1/hist_efetivo?select=dia,ativos&order=dia.asc&limit=400`, { headers }),
+        // Saúde do Cliente: ~128 linhas já calculadas no banco. Vem de carona
+        // aqui porque depende de 81 dias de histórico, e o navegador só tem a
+        // planilha atual (~20 dias) — não daria para calcular no front.
+        fetch(`${SUPABASE_URL}/rest/v1/rpc/saude_clientes`, {
+          method: "POST", headers, body: JSON.stringify({ dias: 30 })
+        })
       ]);
       const presenca = pr.ok ? await pr.json() : [];
       const msgs = mr.ok ? await mr.json() : [];
@@ -55,6 +61,8 @@ module.exports = async function handler(req, res) {
       if (lr.ok) { const l = await lr.json().catch(() => []); if (Array.isArray(l)) ligContatos = l; }
       let histEfetivo = [];
       if (hr.ok) { const h = await hr.json().catch(() => []); if (Array.isArray(h)) histEfetivo = h; }
+      let saudeClientes = [];
+      if (sc.ok) { const c = await sc.json().catch(() => []); if (Array.isArray(c)) saudeClientes = c; }
       res.setHeader("Cache-Control", "no-store");
       return res.status(200).json({
         presenca,
@@ -63,7 +71,8 @@ module.exports = async function handler(req, res) {
         planilha,
         vagasAbertas,
         ligContatos,
-        histEfetivo
+        histEfetivo,
+        saudeClientes
       });
     } catch (e) {
       return res.status(500).json({ error: "Erro ao consultar estado da base." });

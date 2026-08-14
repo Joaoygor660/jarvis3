@@ -767,6 +767,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="nav-cat" data-cat="gestao">
     <div class="nav-cat-h" onclick="navCatToggle('gestao')"><span class="nav-cat-t">📊 Gestão</span><span class="nav-cat-ar">▾</span></div>
     <div class="nav-cat-b">
+      <div class="ni" data-pg="saude" onclick="navTo('saude',this)"><span class="ni-ic">🩺</span><span>Sa&uacute;de do Cliente</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="audqual" data-perm="qual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="ligacoes" data-perm="qual" onclick="navTo('ligacoes',this)"><span class="ni-ic">📞</span><span>Ligações &amp; Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
     </div>
@@ -1611,6 +1612,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="sec-hdr"><span class="sec-hdr-ic">✅</span><div><div class="sec-hdr-t">Auditoria de Qualidade</div><div class="sec-hdr-sub">Vistorias de postos: checklist tri-pilar, cobertura e conformidade</div></div></div>
     <div id="aud-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando auditorias…</div></div>
   </div>
+  <div class="page" id="pg-saude">
+    <div class="sec-hd"><div class="sec-ic">🩺</div><div><div class="sec-t">Saúde do Cliente</div><div class="sec-s">Quem está em risco — e por quê. Faltas de contrato, postos descobertos e visita do supervisor nos últimos 30 dias.</div></div></div>
+    <div id="sau-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando…</div></div>
+  </div>
   <div class="page" id="pg-ligacoes">
     <div class="sec-hdr"><span class="sec-hdr-ic">📞</span><div><div class="sec-hdr-t">Ligações &amp; Acompanhamento</div><div class="sec-hdr-sub">Contato preventivo com quem faltou: pendências do dia, registro e painel</div></div></div>
     <div id="lig-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando contatos…</div></div>
@@ -2408,6 +2413,7 @@ function refresh(){
   updVG();updOC();updSN();
   // guias de banco (RH, Comercial, painéis e módulos novos) reagem ao filtro
   const _rer={
+    saude:()=>sauRender(),
     audqual:()=>audRender(), ligacoes:()=>ligRender(),
     rhvagas:()=>{rhRender();rhRenderTbl();},
     rhentrev:()=>{rhEntRender();rhEntRenderTbl();},
@@ -2460,7 +2466,7 @@ function updOC(){
    VG guarda o que vem de carona no batimento de 15s (/api/hq). Os números
    aparecem para todos; o CLIQUE só navega para quem tem a permissão da guia,
    porque as guias seguem restritas. */
-var VG={vagasAbertas:null,ligContatos:[],histEfetivo:[]};
+var VG={vagasAbertas:null,ligContatos:[],histEfetivo:[],saudeClientes:[]};
 /* acima deste número o Sem Alocação passa a pulsar. O card soma os dias que a
    planilha trouxer, então o limiar é aproximado de propósito — mexer aqui é a
    forma de calibrar sem tocar em mais nada. */
@@ -7768,6 +7774,149 @@ function ligAcompanhamento(){
     return{colaborador:c.colaborador,posto:c.posto,supervisor:c.supervisor,telefone:c.telefone,contato:dcStr,dias,quebrou:false};
   }).sort((a,b)=>(a.quebrou-b.quebrou)||(b.dias-a.dias));
 }
+/* ═════════ SAÚDE DO CLIENTE ═════════
+   Responde "qual cliente está em risco", em vez de "quantas faltas tivemos".
+
+   Os números NÃO são calculados aqui: vêm prontos da função saude_clientes()
+   do banco, via batimento. O motivo é que a nota compara 30 dias contra os 30
+   anteriores, e o navegador só tem a planilha atual (~20 dias). Calcular no
+   front daria um número diferente do que a diretoria veria em qualquer outra
+   consulta.
+
+   A nota serve para ORDENAR. Quem comunica são as colunas ao lado — por isso
+   elas ficam visíveis, e não escondidas atrás do número. Se alguém discordar do
+   peso, ele está na função do banco e a tela inteira acompanha.
+
+   Clientes de até 2 postos ficam FORA do bloco de foco: com um posto, uma
+   pessoa faltando vira "cliente crítico". A conta está certa e a conclusão
+   estaria errada. Eles aparecem numa lista à parte. */
+function sauCor(n){ return n<50?"#dc2626" : n<70?"#f59e0b" : "#16a34a"; }
+function sauTend(a,b){
+  if(a===b)return '<span style="color:#94a3b8;font-weight:800">■ '+a+' vs '+b+'</span>';
+  const pior=a>b;
+  return '<span style="color:'+(pior?"#dc2626":"#16a34a")+';font-weight:800">'
+    +(pior?"▲":"▼")+' '+a+' vs '+b+'</span>';
+}
+function sauVisita(d){
+  if(d===null||d===undefined)return '<span class="rh-badge" style="background:#fef2f2;color:#b91c1c">nunca</span>';
+  if(d===0)return "hoje";
+  if(d===1)return "ontem";
+  const cor=d>14?'style="background:#fffbeb;color:#b45309"':'';
+  return d>14?'<span class="rh-badge" '+cor+'>há '+d+' dias</span>':('há '+d+' dias');
+}
+function sauRender(){
+  const el=document.getElementById("sau-content");if(!el)return;
+  const todos=(VG.saudeClientes||[]);
+  if(!todos.length){
+    el.innerHTML='<div style="padding:36px;text-align:center;color:#94a3b8;font-size:.82rem">Sem dados de saúde ainda. Envie uma planilha para o histórico ser montado.</div>';
+    return;
+  }
+  const grandes=todos.filter(c=>!c.amostra_pequena);
+  const pequenos=todos.filter(c=>c.amostra_pequena&&(c.faltas>0||c.descobertos>0));
+  const foco=grandes.slice(0,3);
+  const med=Math.round(grandes.reduce((t,c)=>t+c.saude,0)/(grandes.length||1));
+
+  let h='';
+  /* faixa de resumo */
+  h+='<div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">'
+    +'<div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🩺</span><span class="sk-tag t-bl">Média</span></div><div class="sk-lbl">Saúde da carteira</div><div class="sk-v" style="color:'+sauCor(med)+'">'+med+'</div><div class="sk-sub">'+grandes.length+' clientes avaliados</div></div>'
+    +'<div class="sk sk-rd"><div class="sk-top"><span class="sk-ic">🚨</span><span class="sk-tag t-rd">Crítico</span></div><div class="sk-lbl">Abaixo de 50</div><div class="sk-v">'+grandes.filter(c=>c.saude<50).length+'</div><div class="sk-sub">precisam de ação</div></div>'
+    +'<div class="sk sk-yl"><div class="sk-top"><span class="sk-ic">🕳️</span><span class="sk-tag t-yl">Descoberto</span></div><div class="sk-lbl">Postos descobertos</div><div class="sk-v">'+todos.reduce((t,c)=>t+c.descobertos,0)+'</div><div class="sk-sub">o que o cliente enxerga</div></div>'
+    +'<div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">👣</span><span class="sk-tag t-gr">Visita</span></div><div class="sk-lbl">Sem visita há +14d</div><div class="sk-v">'+todos.filter(c=>c.dias_sem_visita===null||c.dias_sem_visita>14).length+'</div><div class="sk-sub">risco silencioso</div></div>'
+    +'</div>';
+
+  /* bloco de foco — a tela abre pela ação */
+  h+='<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;margin-bottom:12px;overflow:hidden">'
+    +'<div style="padding:13px 18px;border-bottom:1px solid #eef2f7;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">'
+    +'<span style="font-size:.78rem;font-weight:800;color:#0d1f35;text-transform:uppercase;letter-spacing:.06em">Precisam de você esta semana</span>'
+    +'<span style="font-size:.62rem;color:#94a3b8">'+foco.length+' de '+grandes.length+' clientes · últimos 30 dias</span></div>';
+  foco.forEach(c=>{
+    const pq=[];
+    if(c.descobertos>0)pq.push('<b>'+c.descobertos+' posto(s) ficaram descobertos</b>');
+    if(c.dias_sem_visita===null)pq.push('<b>nunca recebeu visita</b> de supervisor');
+    else if(c.dias_sem_visita>14)pq.push('sem visita há <b>'+c.dias_sem_visita+' dias</b>');
+    if(c.faltas>c.faltas_ant&&c.faltas_ant>=0)pq.push('faltas de <b>'+c.faltas_ant+' para '+c.faltas+'</b>');
+    h+='<div style="display:grid;grid-template-columns:46px 1fr;gap:13px;align-items:center;padding:14px 18px;border-bottom:1px solid #eef2f7;cursor:pointer" onclick="sauDetalhe('+"'"+_esc(c.cliente).replace(/'/g,"&#39;")+"'"+')">'
+      +'<div style="width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.05rem;background:'+sauCor(c.saude)+'18;color:'+sauCor(c.saude)+';border:1px solid '+sauCor(c.saude)+'55">'+c.saude+'</div>'
+      +'<div><div style="font-size:.82rem;font-weight:800;color:#0d1f35">'+_esc(c.cliente)+'</div>'
+      +'<div style="font-size:.7rem;color:#64748b;margin-top:2px;line-height:1.5">'+(pq.join(" · ")||"acompanhar")+'</div></div></div>';
+  });
+  h+='</div>';
+
+  /* lista completa */
+  h+='<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;overflow:hidden">'
+    +'<div style="padding:12px 16px;font-size:.78rem;font-weight:800;color:#0d1f35;border-bottom:1px solid #e5e9f0">📋 Todos os clientes <span style="font-size:.62rem;color:#94a3b8;font-weight:700">clique para abrir</span></div>'
+    +'<div style="overflow-x:auto"><table class="rh-tbl" style="min-width:760px"><thead><tr>'
+    +'<th>Cliente</th><th style="text-align:right">Saúde</th><th style="text-align:right">Postos</th>'
+    +'<th style="text-align:right">Faltas/posto</th><th>vs. mês anterior</th>'
+    +'<th style="text-align:right">Descobertos</th><th>Última visita</th></tr></thead><tbody>';
+  grandes.forEach(c=>{
+    h+='<tr style="cursor:pointer" onclick="sauDetalhe('+"'"+_esc(c.cliente).replace(/'/g,"&#39;")+"'"+')">'
+      +'<td style="font-weight:700">'+_esc(c.cliente)+'</td>'
+      +'<td style="text-align:right"><span style="display:inline-flex;align-items:center;gap:7px;font-weight:900;color:'+sauCor(c.saude)+'">'
+        +'<span style="width:46px;height:6px;border-radius:99px;background:#eef2f7;overflow:hidden;display:inline-block"><i style="display:block;height:6px;width:'+c.saude+'%;background:'+sauCor(c.saude)+'"></i></span>'+c.saude+'</span></td>'
+      +'<td style="text-align:right">'+c.postos+'</td>'
+      +'<td style="text-align:right">'+(c.faltas_posto==null?"—":String(c.faltas_posto).replace(".",","))+'</td>'
+      +'<td>'+sauTend(c.faltas,c.faltas_ant)+'</td>'
+      +'<td style="text-align:right">'+(c.descobertos?'<span class="rh-badge" style="background:#fef2f2;color:#b91c1c">'+c.descobertos+'</span>':"0")+'</td>'
+      +'<td>'+sauVisita(c.dias_sem_visita)+'</td></tr>';
+  });
+  h+='</tbody></table></div></div>';
+
+  /* postos individuais — fora da nota, de propósito */
+  if(pequenos.length){
+    h+='<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:14px;padding:14px 18px;margin-top:12px">'
+      +'<div style="font-size:.76rem;font-weight:800;color:#92400e">📌 Postos individuais com falta recorrente</div>'
+      +'<div style="font-size:.64rem;color:#b45309;margin:3px 0 9px">Clientes de 1 ou 2 postos ficam fora do ranking: ali uma pessoa faltando viraria "cliente crítico". Aqui a ação é sobre a pessoa, não sobre o contrato.</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px">';
+    pequenos.forEach(c=>{
+      h+='<div style="background:#fff;border:1px solid #fde68a;border-radius:10px;padding:9px 12px">'
+        +'<div style="font-size:.7rem;font-weight:800;color:#0d1f35">'+_esc(c.cliente)+'</div>'
+        +'<div style="font-size:.62rem;color:#b45309;margin-top:2px">'+c.faltas+' falta(s) · '+c.postos+' posto(s)'
+        +(c.descobertos?' · '+c.descobertos+' descoberto':'')+'</div></div>';
+    });
+    h+='</div></div>';
+  }
+
+  /* como a nota é feita — aberta de propósito */
+  h+='<div style="background:#f8fafc;border:1px solid #e5e9f0;border-radius:12px;padding:12px 16px;margin-top:12px;font-size:.64rem;color:#64748b;line-height:1.8">'
+    +'<b style="color:#0d1f35">Como a nota é calculada:</b> começa em 100 · <b>−12</b> por posto descoberto · <b>−20 ×</b> (faltas ÷ postos), até −40 · <b>−10</b> sem visita há +14 dias · <b>−15</b> se nunca visitado.<br>'
+    +'Só entram faltas de <b>contrato</b> — as de reserva trazem o nome do supervisor no lugar do cliente e não são atribuíveis. Rotatividade e vagas ainda não entram: a base é curta demais para elas.</div>';
+
+  el.innerHTML=h;
+}
+function sauDetalhe(nome){
+  const c=(VG.saudeClientes||[]).find(x=>x.cliente===nome);if(!c)return;
+  const ex=document.getElementById("rdModal");if(ex)ex.remove();
+  const linha=(lbl,det,val,cor)=>'<div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding-bottom:11px;margin-bottom:11px;border-bottom:1px solid #eef2f7">'
+    +'<div><div style="font-size:.74rem;font-weight:800;color:#0d1f35">'+lbl+'</div>'
+    +'<div style="font-size:.64rem;color:#94a3b8;margin-top:2px">'+det+'</div></div>'
+    +'<div style="font-family:ui-monospace,monospace;font-weight:900;font-size:.82rem;color:'+cor+'">'+val+'</div></div>';
+  const pDesc=c.descobertos*12;
+  const pFal=Math.min(40,Math.round(20*(c.faltas/(c.postos||1))));
+  const pVis=c.dias_sem_visita===null?15:(c.dias_sem_visita>14?10:0);
+  const ov=document.createElement("div");
+  ov.id="rdModal";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:30px";
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35)">'
+    +'<div style="background:#122641;color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
+    +'<div><div style="font-size:.92rem;font-weight:800">'+_esc(c.cliente)+'</div>'
+    +'<div style="font-size:.66rem;color:#9fb6ce;margin-top:2px">'+c.postos+' posto(s) · saúde '+c.saude+'</div></div>'
+    +'<span onclick="document.getElementById(\'rdModal\').remove()" style="cursor:pointer;color:#9fb6ce;padding:2px 8px">✖</span></div>'
+    +'<div style="padding:18px 20px">'
+    +linha("Postos descobertos",c.descobertos+" em 30 dias · o cliente vê isso","−"+pDesc,pDesc?"#dc2626":"#16a34a")
+    +linha("Faltas por posto",c.faltas+" faltas ÷ "+c.postos+" postos = "+String(c.faltas_posto||0).replace(".",","),"−"+pFal,pFal>20?"#dc2626":pFal?"#f59e0b":"#16a34a")
+    +linha("Visita do supervisor",c.dias_sem_visita===null?"nenhuma visita registrada":("última há "+c.dias_sem_visita+" dias"),"−"+pVis,pVis?"#dc2626":"#16a34a")
+    +'<div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center">'
+    +'<div style="font-size:.76rem;font-weight:800;color:#0d1f35">Saúde<div style="font-size:.64rem;color:#94a3b8;font-weight:600;margin-top:2px">100 menos os descontos acima</div></div>'
+    +'<div style="font-family:ui-monospace,monospace;font-weight:900;font-size:1.1rem;color:'+sauCor(c.saude)+'">'+c.saude+'</div></div>'
+    +'<div style="display:flex;gap:7px;margin-top:16px;flex-wrap:wrap">'
+    +'<button onclick="ST.area=\'\';navTo(\'faltas\',null);document.getElementById(\'rdModal\').remove()" style="border:none;background:#2e8fef;color:#fff;border-radius:8px;padding:6px 12px;font-size:.66rem;font-weight:800;cursor:pointer">Ver faltas</button>'
+    +'<button onclick="navTo(\'postos\',null);document.getElementById(\'rdModal\').remove()" style="border:1px solid #dc2626;background:#fff;color:#dc2626;border-radius:8px;padding:6px 12px;font-size:.66rem;font-weight:800;cursor:pointer">Ver postos descobertos</button>'
+    +'</div></div></div>';
+  document.body.appendChild(ov);
+}
 function ligRender(){
   const el=document.getElementById("lig-content");if(!el)return;
   // Contatos do PERÍODO e da ÁREA selecionados no filtro do sistema.
@@ -8453,6 +8602,7 @@ function rtPing(){
       if(j.vagasAbertas!==undefined&&j.vagasAbertas!==null)VG.vagasAbertas=j.vagasAbertas;
       if(Array.isArray(j.ligContatos))VG.ligContatos=j.ligContatos;
       if(Array.isArray(j.histEfetivo))VG.histEfetivo=j.histEfetivo;
+      if(Array.isArray(j.saudeClientes)){VG.saudeClientes=j.saudeClientes;if(ST.pg==="saude")sauRender();}
       if(ST.pg==="visao"&&typeof updOC==="function"){try{updOC();}catch(e){}}
     }
     /* 2) presença + chat (o que os dois polls antigos faziam) */
