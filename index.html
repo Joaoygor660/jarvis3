@@ -7804,6 +7804,24 @@ function sauVisita(d){
   const cor=d>14?'style="background:#fffbeb;color:#b45309"':'';
   return d>14?'<span class="rh-badge" '+cor+'>há '+d+' dias</span>':('há '+d+' dias');
 }
+/* Filtro dos cards do topo.
+   Cada card vira um recorte da tabela, e o recorte devolve EXATAMENTE os
+   registros que formaram aquele número — se o card diz 24 e a lista mostra 23,
+   o painel perde a credibilidade que ele existe para construir. Por isso cada
+   filtro abaixo repete a mesma condição usada para contar o card. */
+var SAU_FILTRO="";
+const SAU_FILTROS={
+  ranking:{lbl:"no ranking (3+ efetivos)", fn:c=>!c.amostra_pequena&&!c.sem_efetivo},
+  critico:{lbl:"saúde abaixo de 50",       fn:c=>!c.amostra_pequena&&!c.sem_efetivo&&c.saude<50},
+  descoberto:{lbl:"com posto descoberto",  fn:c=>c.descobertos>0},
+  visita:{lbl:"sem visita há +14 dias",    fn:c=>c.dias_sem_visita===null||c.dias_sem_visita>14}
+};
+function sauFiltrar(tipo){
+  SAU_FILTRO=(SAU_FILTRO===tipo)?"":tipo;   // clicar de novo volta para todos
+  sauRender();
+  const el=document.getElementById("sau-tabela");
+  if(el&&SAU_FILTRO)el.scrollIntoView({behavior:"smooth",block:"start"});
+}
 function sauRender(){
   const el=document.getElementById("sau-content");if(!el)return;
   const todos=(VG.saudeClientes||[]);
@@ -7818,11 +7836,19 @@ function sauRender(){
   const med=Math.round(noRank.reduce((t,c)=>t+c.saude,0)/(noRank.length||1));
 
   let h='';
+  // O card de descobertos conta OCORRÊNCIAS; os outros contam CLIENTES. Por isso
+  // o subtítulo dele diz em quantos clientes, senão o filtro devolveria menos
+  // linhas que o número exibido e pareceria erro.
+  const nDesc=todos.reduce((t,c)=>t+c.descobertos,0);
+  const nDescCli=todos.filter(c=>c.descobertos>0).length;
+  const nVisita=todos.filter(c=>c.dias_sem_visita===null||c.dias_sem_visita>14).length;
+  const nCrit=noRank.filter(c=>c.saude<50).length;
+  const kAtivo=t=>SAU_FILTRO===t?';outline:2px solid #2e8fef;outline-offset:2px':'';
   h+='<div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">'
-    +'<div class="sk sk-bl"><div class="sk-top"><span class="sk-ic">🩺</span><span class="sk-tag t-bl">Média</span></div><div class="sk-lbl">Saúde da carteira</div><div class="sk-v" style="color:'+sauCor(med)+'">'+med+'</div><div class="sk-sub">'+noRank.length+' no ranking · '+todos.length+' no total</div></div>'
-    +'<div class="sk sk-rd"><div class="sk-top"><span class="sk-ic">🚨</span><span class="sk-tag t-rd">Crítico</span></div><div class="sk-lbl">Abaixo de 50</div><div class="sk-v">'+noRank.filter(c=>c.saude<50).length+'</div><div class="sk-sub">precisam de ação</div></div>'
-    +'<div class="sk sk-yl"><div class="sk-top"><span class="sk-ic">🕳️</span><span class="sk-tag t-yl">Descoberto</span></div><div class="sk-lbl">Postos descobertos</div><div class="sk-v">'+todos.reduce((t,c)=>t+c.descobertos,0)+'</div><div class="sk-sub">o que o cliente enxerga</div></div>'
-    +'<div class="sk sk-gr"><div class="sk-top"><span class="sk-ic">👣</span><span class="sk-tag t-gr">Visita</span></div><div class="sk-lbl">Sem visita há +14d</div><div class="sk-v">'+todos.filter(c=>c.dias_sem_visita===null||c.dias_sem_visita>14).length+'</div><div class="sk-sub">risco silencioso</div></div>'
+    +'<div class="sk sk-bl clickable" style="cursor:pointer'+kAtivo("ranking")+'" onclick="sauFiltrar(\'ranking\')" title="Ver os clientes do ranking"><div class="sk-top"><span class="sk-ic">🩺</span><span class="sk-tag t-bl">Média</span></div><div class="sk-lbl">Saúde da carteira</div><div class="sk-v" style="color:'+sauCor(med)+'">'+med+'</div><div class="sk-sub">'+noRank.length+' no ranking · '+todos.length+' no total</div></div>'
+    +'<div class="sk sk-rd clickable" style="cursor:pointer'+kAtivo("critico")+'" onclick="sauFiltrar(\'critico\')" title="Ver quem está abaixo de 50"><div class="sk-top"><span class="sk-ic">🚨</span><span class="sk-tag t-rd">Crítico</span></div><div class="sk-lbl">Abaixo de 50</div><div class="sk-v">'+nCrit+'</div><div class="sk-sub">'+(nCrit?"precisam de ação":"nenhum")+'</div></div>'
+    +'<div class="sk sk-yl clickable" style="cursor:pointer'+kAtivo("descoberto")+'" onclick="sauFiltrar(\'descoberto\')" title="Ver os clientes que tiveram posto descoberto"><div class="sk-top"><span class="sk-ic">🕳️</span><span class="sk-tag t-yl">Descoberto</span></div><div class="sk-lbl">Postos descobertos</div><div class="sk-v">'+nDesc+'</div><div class="sk-sub">em '+nDescCli+' cliente(s) · o que ele enxerga</div></div>'
+    +'<div class="sk sk-gr clickable" style="cursor:pointer'+kAtivo("visita")+'" onclick="sauFiltrar(\'visita\')" title="Ver quem está sem visita"><div class="sk-top"><span class="sk-ic">👣</span><span class="sk-tag t-gr">Visita</span></div><div class="sk-lbl">Sem visita há +14d</div><div class="sk-v">'+nVisita+'</div><div class="sk-sub">risco silencioso</div></div>'
     +'</div>';
 
   h+='<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;margin-bottom:12px;overflow:hidden">'
@@ -7842,15 +7868,18 @@ function sauRender(){
   });
   h+='</div>';
 
-  h+='<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;overflow:hidden">'
+  const f=SAU_FILTRO&&SAU_FILTROS[SAU_FILTRO];
+  const lista=f?todos.filter(f.fn):todos;
+  h+='<div id="sau-tabela" style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;overflow:hidden">'
     +'<div style="padding:12px 16px;border-bottom:1px solid #e5e9f0">'
-    +'<div style="font-size:.78rem;font-weight:800;color:#0d1f35">📋 Todos os clientes <span style="font-size:.62rem;color:#94a3b8;font-weight:700">'+todos.length+' · clique para abrir</span></div>'
+    +'<div style="font-size:.78rem;font-weight:800;color:#0d1f35">📋 '+(f?"Clientes "+f.lbl:"Todos os clientes")+' <span style="font-size:.62rem;color:#94a3b8;font-weight:700">'+lista.length+(f?" de "+todos.length:"")+' · clique para abrir</span>'
+    +(f?' <span onclick="event.stopPropagation();sauFiltrar(\''+SAU_FILTRO+'\')" style="cursor:pointer;font-size:.62rem;font-weight:800;color:#2e8fef;margin-left:6px">✕ limpar filtro</span>':"")+'</div>'
     +'<div style="font-size:.62rem;color:#94a3b8;margin-top:3px">A coluna <b>Faltas / efetivo</b> divide as faltas pela quantidade de <b>pessoas ativas</b> lotadas no cliente — não pelo número de postos do contrato.</div></div>'
     +'<div style="overflow-x:auto"><table class="rh-tbl" style="min-width:820px"><thead><tr>'
     +'<th>Cliente</th><th style="text-align:right">Saúde</th><th style="text-align:right">Efetivos em posto</th>'
     +'<th style="text-align:right">Faltas / efetivo</th><th>vs. mês anterior</th>'
     +'<th style="text-align:right">Descobertos</th><th>Última visita</th></tr></thead><tbody>';
-  todos.forEach(c=>{
+  lista.forEach(c=>{
     let marca="";
     if(c.sem_efetivo)marca=' <span class="rh-badge" style="background:#f1f5f9;color:#64748b" title="Nenhuma pessoa ativa lotada neste cliente na planilha">sem efetivo</span>';
     else if(c.amostra_pequena)marca=' <span class="rh-badge" style="background:#fffbeb;color:#b45309" title="1 ou 2 efetivos: fora do ranking, porque uma pessoa faltando distorceria a nota">amostra pequena</span>';
@@ -7864,7 +7893,9 @@ function sauRender(){
       +'<td style="text-align:right">'+(c.descobertos?'<span class="rh-badge" style="background:#fef2f2;color:#b91c1c">'+c.descobertos+'</span>':"0")+'</td>'
       +'<td>'+sauVisita(c.dias_sem_visita)+'</td></tr>';
   });
-  h+='</tbody></table></div></div>';
+  h+='</tbody></table>'
+    +(lista.length?"":'<div style="padding:26px;text-align:center;color:#94a3b8;font-size:.76rem">Nenhum cliente neste recorte.</div>')
+    +'</div></div>';
 
   h+='<div style="background:#f8fafc;border:1px solid #e5e9f0;border-radius:12px;padding:12px 16px;margin-top:12px;font-size:.64rem;color:#64748b;line-height:1.8">'
     +'<b style="color:#0d1f35">Como a nota é calculada:</b> começa em 100 · <b>−12</b> por posto descoberto · <b>−20 ×</b> (faltas ÷ efetivos), até −40 · <b>−10</b> sem visita há +14 dias · <b>−15</b> se nunca visitado.<br>'
