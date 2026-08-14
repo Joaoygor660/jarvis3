@@ -7857,13 +7857,14 @@ function sauRender(){
     +'<div class="sk sk-gr clickable" style="cursor:pointer'+kAtivo("visita")+'" onclick="sauFiltrar(\'visita\')" title="Ver quem está sem visita"><div class="sk-top"><span class="sk-ic">👣</span><span class="sk-tag t-gr">Visita</span></div><div class="sk-lbl">Sem visita há +14d</div><div class="sk-v">'+nVisita+'</div><div class="sk-sub">risco silencioso</div></div>'
     +'</div>';
 
+  const _lk=(t,txt)=>'<span onclick="sauFiltrar(\''+t+'\')" style="cursor:pointer;color:#2e8fef;font-weight:800;text-decoration:underline">'+txt+'</span>';
   // Por que o ranking não é a carteira toda. Fica à vista, com os números e um
   // caminho para conferir cada grupo — afirmação sobre dado precisa ser
   // verificável, senão vira "confie em mim".
   const nUnico=todos.filter(c=>c.amostra_pequena).length;
   const nSemEf=todos.filter(c=>c.sem_efetivo).length;
   const nUnicoRisco=todos.filter(c=>c.amostra_pequena&&(c.faltas>0||c.descobertos>0)).length;
-  const _lk=(t,txt)=>'<span onclick="sauFiltrar(\''+t+'\')" style="cursor:pointer;color:#2e8fef;font-weight:800;text-decoration:underline">'+txt+'</span>';
+
   h+='<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:.68rem;color:#1e40af;line-height:1.7">'
     +'<b>Por que o ranking tem '+noRank.length+' e não '+todos.length+' clientes.</b> '
     +'A nota divide faltas por efetivos, e essa conta não descreve cliente de posto único: com 1 pessoa, uma falta vira "100% do serviço parado" e o número fica incomparável com um cliente de 24 pessoas.<br>'
@@ -7886,6 +7887,44 @@ function sauRender(){
       +'<div style="font-size:.7rem;color:#64748b;margin-top:2px;line-height:1.5">'+(pq.join(" · ")||"acompanhar")+'</div></div></div>';
   });
   h+='</div>';
+
+  /* ── POSTO ÚNICO EM RISCO ──────────────────────────────────────────────
+     Mesmo peso visual do bloco de foco, e não rodapé.
+
+     Estes clientes ficam fora do ranking porque faltas ÷ efetivos não os
+     descreve — mas isso não os torna menos importantes. É o contrário: com uma
+     pessoa não existe colega para cobrir, então cada falta é o serviço PARANDO
+     por inteiro naquele dia. São os mais frágeis da carteira.
+
+     Por isso aqui a medida é ABSOLUTA — dias sem serviço e postos descobertos —
+     e não a média por pessoa, que para eles não significa nada. */
+  const unicos=todos.filter(c=>c.amostra_pequena&&(c.faltas>0||c.descobertos>0))
+    .sort((a,b)=>(b.descobertos-a.descobertos)||(b.faltas-a.faltas));
+  if(unicos.length){
+    const mostrar=unicos.slice(0,8);
+    h+='<div style="background:#fff;border:1px solid #fcd34d;border-radius:14px;margin-bottom:12px;overflow:hidden">'
+      +'<div style="padding:13px 18px;border-bottom:1px solid #fef3c7;background:#fffbeb">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">'
+      +'<span style="font-size:.78rem;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.06em">📌 Posto único em risco</span>'
+      +'<span style="font-size:.62rem;color:#b45309">'+mostrar.length+' de '+unicos.length+' · '+_lk("unico","ver todos")+'</span></div>'
+      +'<div style="font-size:.64rem;color:#b45309;margin-top:3px;line-height:1.6">Clientes atendidos por 1 ou 2 pessoas. Sem colega para cobrir, <b>cada falta é o serviço parando por completo</b> naquele dia — por isso aqui a conta é absoluta, não média por pessoa.</div></div>';
+    mostrar.forEach(c=>{
+      const partes=[];
+      if(c.descobertos>0)partes.push('<b style="color:#b91c1c">'+c.descobertos+' vez(es) sem ninguém no posto</b>');
+      if(c.faltas>0)partes.push('<b>'+c.faltas+' dia(s) sem serviço</b> em 30');
+      if(c.dias_sem_visita===null)partes.push('nunca visitado');
+      else if(c.dias_sem_visita>14)partes.push('sem visita há '+c.dias_sem_visita+' dias');
+      const grave=c.descobertos>0||c.faltas>=5;
+      h+='<div style="display:grid;grid-template-columns:46px 1fr auto;gap:13px;align-items:center;padding:13px 18px;border-bottom:1px solid #fef3c7;cursor:pointer" onclick="sauDetalhe('+"'"+_esc(c.cliente).replace(/'/g,"&#39;")+"'"+')">'
+        +'<div style="width:46px;height:46px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:'+(grave?"#fef2f2":"#fffbeb")+';border:1px solid '+(grave?"#fca5a5":"#fcd34d")+'">'
+        +'<span style="font-weight:900;font-size:1rem;color:'+(grave?"#b91c1c":"#b45309")+';line-height:1">'+c.faltas+'</span>'
+        +'<span style="font-size:.5rem;color:'+(grave?"#b91c1c":"#b45309")+';font-weight:700">dias</span></div>'
+        +'<div><div style="font-size:.8rem;font-weight:800;color:#0d1f35">'+_esc(c.cliente)+'</div>'
+        +'<div style="font-size:.68rem;color:#78350f;margin-top:2px;line-height:1.5">'+partes.join(" · ")+'</div></div>'
+        +'<div style="font-size:.6rem;color:#94a3b8;white-space:nowrap">'+c.efetivos+' pessoa'+(c.efetivos>1?"s":"")+'</div></div>';
+    });
+    h+='</div>';
+  }
 
   const f=SAU_FILTRO&&SAU_FILTROS[SAU_FILTRO];
   const lista=f?todos.filter(f.fn):todos;
