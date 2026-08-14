@@ -97,6 +97,31 @@ async function guardarNaCaixaDeSaida(raw, quando) {
   }
 }
 
+// Reconhece mensagem que a máquina mandou, não a pessoa.
+//
+// Sem isto, o "Delivery report" do postmaster marcaria a proposta como
+// respondida — foi literalmente o que apareceu quando o n8n rodou pela primeira
+// vez. Aviso de férias é o mesmo caso: o cliente não leu nada, e parar a
+// cadência ali silenciaria o acompanhamento de quem está viajando.
+//
+// Na dúvida o filtro é conservador: prefere deixar passar como resposta humana
+// (que só interrompe a cobrança, algo reversível com um clique) a descartar uma
+// resposta de verdade, que ninguém veria.
+const REMETENTES_ROBO = ["postmaster@", "mailer-daemon@", "mailerdaemon@", "no-reply@",
+                         "noreply@", "nao-responda@", "naoresponda@", "bounce@", "bounces@"];
+const ASSUNTOS_ROBO = ["delivery report", "delivery status", "undelivered", "undeliverable",
+                       "returned mail", "mail delivery failed", "failure notice",
+                       "out of office", "automatic reply", "auto-reply", "resposta automática",
+                       "ausência do escritório", "ausencia do escritorio", "estou de férias",
+                       "estou de ferias", "read receipt", "confirmação de leitura"];
+function ehAutomatico(de, assunto) {
+  const d = String(de || "").toLowerCase();
+  const a = String(assunto || "").toLowerCase();
+  if (REMETENTES_ROBO.some(x => d.includes(x))) return true;
+  if (ASSUNTOS_ROBO.some(x => a.includes(x))) return true;
+  return false;
+}
+
 async function enviarEmail(tx, para, assunto, html) {
   const opcoes = {
     from: process.env.MAIL_FROM || `"Grupo Serv Camp" <${process.env.MAIL_USER}>`,
@@ -138,6 +163,100 @@ module.exports = async function handler(req, res) {
   }
   // ?dry=1 → simula: mostra quem receberia o quê, sem enviar e sem gravar nada.
   const dry = req.query && (req.query.dry === "1" || req.query.dry === "true");
+
+  // ?respostas=1 → lê a caixa de entrada e para a cadência de quem respondeu.
+  //
+  // Faz UMA coisa só: se o cliente respondeu, ele para de receber cobrança
+  // automática. NÃO julga se a resposta é boa ou ruim — isso continua com a
+  // Gabriela, que vê o assunto na timeline e decide.
+  //
+  // Dois cuidados com a caixa dela, que é pessoal de trabalho:
+  //   · a pasta é aberta em MODO LEITURA. Marcar como lida faria ela abrir o
+  //     e-mail e achar que já tinha visto tudo.
+  //   · só olha remetentes que batem com cliente cadastrado; o resto é ignorado
+  //     sem ser registrado em lugar nenhum.
+  //
+  // Mensagem automática NÃO conta como resposta. Sem esse filtro, o "Delivery
+  // report" do postmaster marcaria a proposta como respondida — foi exatamente
+  // o que apareceu no teste do n8n.
+  //
+  // Não guarda "até onde já leu": relê os últimos dias a cada rodada e só age
+  // sobre proposta com respondido_em vazio. Reprocessar o mesmo e-mail não faz
+  // nada, e assim não existe estado para dessincronizar.
+  if (req.query && (req.query.respostas === "1" || req.query.respostas === "true")) {
+    const simular = req.query.dry === "1" || req.query.dry === "true";
+    const dias = Math.min(30, Math.max(1, Number(req.query.dias || 3)));
+    const sb3 = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
+
+    // propostas que ainda podem receber resposta
+    const filtro = "respondido_em=is.null&email=not.is.null&cadencia_ativa=is.true"
+                 + "&status=not.in.(FECHADO,PERDIDO)";
+    const rp = await fetch(`${SUPABASE_URL}/rest/v1/com_propostas?select=id,nome,email&${filtro}`, { headers: sb3 });
+    if (!rp.ok) return res.status(502).json({ error: "Falha ao ler propostas.", details: (await rp.text()).slice(0, 300) });
+    const props = await rp.json();
+    const porEmail = {};
+    props.forEach(p => { const e = String(p.email || "").trim().toLowerCase(); if (e) porEmail[e] = p; });
+
+    const out = { janela_dias: dias, propostas_aguardando: props.length, lidas: 0, automaticas: 0, respostas: [], ignoradas: 0 };
+    if (simular) out.modo = "SIMULAÇÃO — nada gravado";
+
+    const { ImapFlow } = require("imapflow");
+    const client = new ImapFlow({
+      host: process.env.IMAP_HOST || process.env.MAIL_HOST || "email-ssl.com.br",
+      port: Number(process.env.IMAP_PORT || 993),
+      secure: true,
+      auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
+      logger: false
+    });
+
+    try {
+      await client.connect();
+      await client.mailboxOpen("INBOX", { readOnly: true });   // não altera nada na caixa dela
+      const desde = new Date(Date.now() - dias * 86400000);
+
+      for await (const msg of client.fetch({ since: desde }, { envelope: true })) {
+        out.lidas++;
+        const env = msg.envelope || {};
+        const de = ((env.from && env.from[0] && env.from[0].address) || "").trim().toLowerCase();
+        const assunto = String(env.subject || "");
+        if (!de) { out.ignoradas++; continue; }
+
+        if (ehAutomatico(de, assunto)) { out.automaticas++; continue; }
+
+        const p = porEmail[de];
+        if (!p) { out.ignoradas++; continue; }   // não é cliente da base
+
+        const quando = (env.date ? new Date(env.date) : new Date()).toISOString();
+        out.respostas.push({ cliente: p.nome, de, assunto: assunto.slice(0, 120), em: quando });
+        if (simular) continue;
+
+        await fetch(`${SUPABASE_URL}/rest/v1/com_propostas?id=eq.${p.id}`, {
+          method: "PATCH",
+          headers: { ...sb3, Prefer: "return=minimal" },
+          body: JSON.stringify({ respondido_em: quando, atualizado_em: new Date().toISOString() })
+        });
+        await fetch(`${SUPABASE_URL}/rest/v1/com_cadencia_log`, {
+          method: "POST",
+          headers: { ...sb3, Prefer: "return=minimal" },
+          body: JSON.stringify({
+            proposta_id: p.id, etapa: 0, canal: "EMAIL", status: "evento",
+            destinatario: de, enviado_em: quando,
+            detalhe: "Cliente respondeu: " + (assunto.slice(0, 150) || "(sem assunto)")
+          })
+        });
+        delete porEmail[de];   // evita reprocessar o mesmo cliente nesta rodada
+      }
+    } catch (e) {
+      return res.status(502).json({ error: "Falha ao ler a caixa de entrada.", details: String((e && e.message) || e).slice(0, 250) });
+    } finally {
+      try { await client.logout(); } catch (e) { /* conexão já caiu */ }
+    }
+
+    out.resumo = out.respostas.length
+      ? `${out.respostas.length} cliente(s) responderam — cadência interrompida para eles.`
+      : "Nenhuma resposta nova de cliente nesta janela.";
+    return res.status(200).json(out);
+  }
 
   // ?arquivar=1 → recupera a caixa de saída.
   //
