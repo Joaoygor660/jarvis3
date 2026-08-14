@@ -7880,7 +7880,8 @@ function sauRender(){
     if(c.descobertos>0)pq.push('<b>'+c.descobertos+' posto(s) ficaram descobertos</b>');
     if(c.dias_sem_visita===null)pq.push('<b>nunca recebeu visita</b> de supervisor');
     else if(c.dias_sem_visita>14)pq.push('sem visita há <b>'+c.dias_sem_visita+' dias</b>');
-    if(c.faltas>c.faltas_ant)pq.push('faltas de <b>'+c.faltas_ant+' para '+c.faltas+'</b>');
+    if(c.sem_cobertura>0)pq.push('<b>'+c.sem_cobertura+'</b> falta(s) que ninguém cobriu');
+    else if(c.faltas>c.faltas_ant)pq.push('faltas de <b>'+c.faltas_ant+' para '+c.faltas+'</b>');
     h+='<div style="display:grid;grid-template-columns:46px 1fr;gap:13px;align-items:center;padding:14px 18px;border-bottom:1px solid #eef2f7;cursor:pointer" onclick="sauDetalhe('+"'"+_esc(c.cliente).replace(/'/g,"&#39;")+"'"+')">'
       +'<div style="width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.05rem;background:'+sauCor(c.saude)+'18;color:'+sauCor(c.saude)+';border:1px solid '+sauCor(c.saude)+'55">'+c.saude+'</div>'
       +'<div><div style="font-size:.82rem;font-weight:800;color:#0d1f35">'+_esc(c.cliente)+'</div>'
@@ -7889,17 +7890,20 @@ function sauRender(){
   h+='</div>';
 
   /* ── POSTO ÚNICO EM RISCO ──────────────────────────────────────────────
-     Mesmo peso visual do bloco de foco, e não rodapé.
+     Mesmo peso visual do bloco de foco, e não rodapé: são 52 dos 126 clientes,
+     e sem colega para cobrir são os mais frágeis da carteira.
 
-     Estes clientes ficam fora do ranking porque faltas ÷ efetivos não os
-     descreve — mas isso não os torna menos importantes. É o contrário: com uma
-     pessoa não existe colega para cobrir, então cada falta é o serviço PARANDO
-     por inteiro naquele dia. São os mais frágeis da carteira.
+     O número em destaque é FALTA SEM COBERTURA, não falta. A diferença não é
+     detalhe: 79% das faltas da base têm alguém cobrindo, e nesses dias o
+     serviço aconteceu — o cliente não viu nada. Chamar tudo de "dia sem
+     serviço" transformaria um problema de RH em alarme de contrato em risco.
 
-     Por isso aqui a medida é ABSOLUTA — dias sem serviço e postos descobertos —
-     e não a média por pessoa, que para eles não significa nada. */
-  const unicos=todos.filter(c=>c.amostra_pequena&&(c.faltas>0||c.descobertos>0))
-    .sort((a,b)=>(b.descobertos-a.descobertos)||(b.faltas-a.faltas));
+     O Colomarti é o exemplo: 9 faltas, mas 7 cobertas. O posto ficou vazio em
+     2 dias, não em 9. Já o Vita Componentes tem 6 faltas e 5 sem cobertura —
+     menos faltas, muito mais serviço perdido. Ordenar por falta bruta esconderia
+     justamente o pior caso. */
+  const unicos=todos.filter(c=>c.amostra_pequena&&(c.sem_cobertura>0||c.descobertos>0))
+    .sort((a,b)=>(b.descobertos-a.descobertos)||(b.sem_cobertura-a.sem_cobertura)||(b.faltas-a.faltas));
   if(unicos.length){
     const mostrar=unicos.slice(0,8);
     h+='<div style="background:#fff;border:1px solid #fcd34d;border-radius:14px;margin-bottom:12px;overflow:hidden">'
@@ -7907,18 +7911,18 @@ function sauRender(){
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">'
       +'<span style="font-size:.78rem;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.06em">📌 Posto único em risco</span>'
       +'<span style="font-size:.62rem;color:#b45309">'+mostrar.length+' de '+unicos.length+' · '+_lk("unico","ver todos")+'</span></div>'
-      +'<div style="font-size:.64rem;color:#b45309;margin-top:3px;line-height:1.6">Clientes atendidos por 1 ou 2 pessoas. Sem colega para cobrir, <b>cada falta é o serviço parando por completo</b> naquele dia — por isso aqui a conta é absoluta, não média por pessoa.</div></div>';
+      +'<div style="font-size:.64rem;color:#b45309;margin-top:3px;line-height:1.6">Clientes atendidos por 1 ou 2 pessoas. O número em destaque é de <b>faltas que ninguém cobriu</b> — nesses dias o posto ficou vazio. Falta coberta não entra: o serviço aconteceu e o cliente não viu.</div></div>';
     mostrar.forEach(c=>{
       const partes=[];
-      if(c.descobertos>0)partes.push('<b style="color:#b91c1c">'+c.descobertos+' vez(es) sem ninguém no posto</b>');
-      if(c.faltas>0)partes.push('<b>'+c.faltas+' dia(s) sem serviço</b> em 30');
+      if(c.descobertos>0)partes.push('<b style="color:#b91c1c">'+c.descobertos+' posto(s) descoberto(s)</b>');
+      partes.push('<b>'+c.sem_cobertura+' de '+c.faltas+' falta(s) sem cobertura</b>');
       if(c.dias_sem_visita===null)partes.push('nunca visitado');
       else if(c.dias_sem_visita>14)partes.push('sem visita há '+c.dias_sem_visita+' dias');
-      const grave=c.descobertos>0||c.faltas>=5;
+      const grave=c.descobertos>0||c.sem_cobertura>=3;
       h+='<div style="display:grid;grid-template-columns:46px 1fr auto;gap:13px;align-items:center;padding:13px 18px;border-bottom:1px solid #fef3c7;cursor:pointer" onclick="sauDetalhe('+"'"+_esc(c.cliente).replace(/'/g,"&#39;")+"'"+')">'
         +'<div style="width:46px;height:46px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:'+(grave?"#fef2f2":"#fffbeb")+';border:1px solid '+(grave?"#fca5a5":"#fcd34d")+'">'
-        +'<span style="font-weight:900;font-size:1rem;color:'+(grave?"#b91c1c":"#b45309")+';line-height:1">'+c.faltas+'</span>'
-        +'<span style="font-size:.5rem;color:'+(grave?"#b91c1c":"#b45309")+';font-weight:700">dias</span></div>'
+        +'<span style="font-weight:900;font-size:1rem;color:'+(grave?"#b91c1c":"#b45309")+';line-height:1">'+c.sem_cobertura+'</span>'
+        +'<span style="font-size:.46rem;color:'+(grave?"#b91c1c":"#b45309")+';font-weight:700;text-align:center;line-height:1.1">sem<br>cobrir</span></div>'
         +'<div><div style="font-size:.8rem;font-weight:800;color:#0d1f35">'+_esc(c.cliente)+'</div>'
         +'<div style="font-size:.68rem;color:#78350f;margin-top:2px;line-height:1.5">'+partes.join(" · ")+'</div></div>'
         +'<div style="font-size:.6rem;color:#94a3b8;white-space:nowrap">'+c.efetivos+' pessoa'+(c.efetivos>1?"s":"")+'</div></div>';
@@ -7935,10 +7939,10 @@ function sauRender(){
     +(SAU_FILTRO==="unico"?'<div style="font-size:.63rem;color:#b45309;margin-top:4px">Estes ficam fora do ranking porque a conta <b>faltas ÷ efetivos</b> não os descreve. Para eles o que vale é o número absoluto: cada falta é o serviço parando por completo.</div>':"")
     +(SAU_FILTRO==="semef"?'<div style="font-size:.63rem;color:#b45309;margin-top:4px">Clientes na lista oficial sem nenhuma pessoa ativa lotada na planilha. Costuma ser contrato encerrado que não saiu da base, ou posto que ficou vago — vale conferir os dois casos.</div>':"")
     +(SAU_FILTRO==="ranking"?'<div style="font-size:.63rem;color:#64748b;margin-top:4px">Clientes com 3 ou mais efetivos, onde a média por pessoa é comparável entre contratos de tamanhos diferentes.</div>':"")
-    +'<div style="font-size:.62rem;color:#94a3b8;margin-top:3px">A coluna <b>Faltas / efetivo</b> divide as faltas pela quantidade de <b>pessoas ativas</b> lotadas no cliente — não pelo número de postos do contrato.</div></div>'
+    +'<div style="font-size:.62rem;color:#94a3b8;margin-top:3px">A coluna <b>Faltas / efetivo</b> divide as faltas pela quantidade de <b>pessoas ativas</b> lotadas no cliente — não pelo número de postos do contrato. <b>Sem cobertura</b> é quantas dessas faltas ficaram sem ninguém no lugar: são as que o cliente sente.</div></div>'
     +'<div style="overflow-x:auto"><table class="rh-tbl" style="min-width:820px"><thead><tr>'
     +'<th>Cliente</th><th style="text-align:right">Saúde</th><th style="text-align:right">Efetivos em posto</th>'
-    +'<th style="text-align:right">Faltas / efetivo</th><th>vs. mês anterior</th>'
+    +'<th style="text-align:right">Faltas / efetivo</th><th style="text-align:right">Sem cobertura</th><th>vs. mês anterior</th>'
     +'<th style="text-align:right">Descobertos</th><th>Última visita</th></tr></thead><tbody>';
   lista.forEach(c=>{
     let marca="";
@@ -7950,6 +7954,7 @@ function sauRender(){
         +'<span style="width:46px;height:6px;border-radius:99px;background:#eef2f7;overflow:hidden;display:inline-block"><i style="display:block;height:6px;width:'+c.saude+'%;background:'+sauCor(c.saude)+'"></i></span>'+c.saude+'</span></td>'
       +'<td style="text-align:right">'+c.efetivos+'</td>'
       +'<td style="text-align:right">'+(c.faltas_efetivo==null?"—":String(c.faltas_efetivo).replace(".",","))+'</td>'
+      +'<td style="text-align:right">'+(c.sem_cobertura?'<span class="rh-badge" style="background:#fef2f2;color:#b91c1c" title="Faltas em que ninguém cobriu o posto">'+c.sem_cobertura+'</span>':"0")+'</td>'
       +'<td>'+sauTend(c.faltas,c.faltas_ant)+'</td>'
       +'<td style="text-align:right">'+(c.descobertos?'<span class="rh-badge" style="background:#fef2f2;color:#b91c1c">'+c.descobertos+'</span>':"0")+'</td>'
       +'<td>'+sauVisita(c.dias_sem_visita)+'</td></tr>';
@@ -7959,9 +7964,9 @@ function sauRender(){
     +'</div></div>';
 
   h+='<div style="background:#f8fafc;border:1px solid #e5e9f0;border-radius:12px;padding:12px 16px;margin-top:12px;font-size:.64rem;color:#64748b;line-height:1.8">'
-    +'<b style="color:#0d1f35">Como a nota é calculada:</b> começa em 100 · <b>−12</b> por posto descoberto · <b>−20 ×</b> (faltas ÷ efetivos), até −40 · <b>−10</b> sem visita há +14 dias · <b>−15</b> se nunca visitado.<br>'
+    +'<b style="color:#0d1f35">Como a nota é calculada:</b> começa em 100 · <b>−12</b> por posto descoberto · <b>−20 ×</b> ((faltas + faltas sem cobertura) ÷ efetivos), até −40 — falta que ninguém cobriu pesa o dobro · <b>−10</b> sem visita há +14 dias · <b>−15</b> se nunca visitado.<br>'
     +'<b style="color:#0d1f35">Efetivos em posto</b> = pessoas ativas lotadas no cliente na planilha mais recente. É por elas que as faltas são divididas, e não pela quantidade de postos do contrato — um posto de 24h tem mais de um efetivo.<br>'
-    +'Clientes com <b>1 ou 2 efetivos</b> ficam fora do ranking: ali uma pessoa faltando viraria "cliente crítico". Eles continuam na lista, marcados. Só entram faltas de <b>contrato</b> — as de reserva trazem o nome do supervisor no lugar do cliente e não são atribuíveis. Rotatividade e vagas ainda não entram: a base é curta demais.</div>';
+    +'Clientes com <b>1 ou 2 efetivos</b> ficam fora do ranking: ali uma pessoa faltando viraria "cliente crítico". Eles continuam na lista, marcados. Só entram faltas de <b>contrato</b> — as de reserva trazem o nome do supervisor no lugar do cliente e não são atribuíveis. Na base toda, <b>79% das faltas são cobertas</b> — nesses dias o serviço acontece e o cliente não percebe. Rotatividade e vagas ainda não entram: a base é curta demais.<br><span style="color:#b45309">A cobertura é casada por cliente e dia. Num cliente com vários postos no mesmo dia, uma cobertura pode ser creditada à falta errada; em posto único a correspondência é exata.</span></div>';
 
   el.innerHTML=h;
 }
@@ -7986,7 +7991,7 @@ function sauDetalhe(nome){
     +'<span onclick="document.getElementById(\'rdModal\').remove()" style="cursor:pointer;color:#9fb6ce;padding:2px 8px">✖</span></div>'
     +'<div style="padding:18px 20px">'
     +linha("Postos descobertos",c.descobertos+" em 30 dias · o cliente vê isso","−"+pDesc,pDesc?"#dc2626":"#16a34a")
-    +linha("Faltas por efetivo",c.faltas+" faltas ÷ "+c.efetivos+" efetivos = "+String(c.faltas_efetivo||0).replace(".",","),"−"+pFal,pFal>20?"#dc2626":pFal?"#f59e0b":"#16a34a")
+    +linha("Faltas por efetivo",c.faltas+" faltas ("+c.sem_cobertura+" sem cobertura) ÷ "+c.efetivos+" efetivos","−"+pFal,pFal>20?"#dc2626":pFal?"#f59e0b":"#16a34a")
     +linha("Visita do supervisor",c.dias_sem_visita===null?"nenhuma visita registrada":("última há "+c.dias_sem_visita+" dias"),"−"+pVis,pVis?"#dc2626":"#16a34a")
     +'<div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center">'
     +'<div style="font-size:.76rem;font-weight:800;color:#0d1f35">Saúde<div style="font-size:.64rem;color:#94a3b8;font-weight:600;margin-top:2px">100 menos os descontos acima</div></div>'
