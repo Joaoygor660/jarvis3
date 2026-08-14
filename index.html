@@ -1205,7 +1205,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div><label class="rhf-l">Área / Supervisor</label><input class="rhf-i" id="rhf-area" type="text" list="dl-rh-area" placeholder="Ex: FRANK"><datalist id="dl-rh-area"></datalist></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
-          <div><label class="rhf-l">Posto / Cliente</label><input class="rhf-i" id="rhf-posto" type="text" placeholder="Ex: COND MILANO"></div>
+          <div><label class="rhf-l">Posto / Cliente</label><select class="rhf-i" id="rhf-posto"><option value="">— selecione —</option></select></div>
           <div><label class="rhf-l">Motivo de Abertura</label><select class="rhf-i" id="rhf-motivo"><option value="">—</option><option>SUBSTITUIÇÃO</option><option>PEDIDO DE DEMISSÃO</option><option>DEMISSÃO</option><option>COBERTURA DE FÉRIAS</option><option>IMPLANTAÇÃO</option><option>AUMENTO DE QUADRO</option><option>RECOLHIMENTO</option><option>OUTRO</option></select></div>
           <div><label class="rhf-l">Substituição de</label><input class="rhf-i" id="rhf-subst" type="text" placeholder="Quem saiu (se houver)"></div>
           <div><label class="rhf-l">Status</label><select class="rhf-i" id="rhf-status"><option>ABERTA</option><option>EM ENTREVISTA</option><option>EXAME</option><option>INTEGRAÇÃO</option><option>PREENCHIDA</option><option>CANCELADA</option></select></div>
@@ -1323,7 +1323,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
           <div><label class="rhf-l">Área / Supervisor</label><input class="rhf-i" id="rdf-area" type="text" list="dl-rh-area" placeholder="Ex: FRANK"></div>
-          <div><label class="rhf-l">Posto / Cliente</label><input class="rhf-i" id="rdf-posto" type="text" placeholder="Ex: COND MILANO"></div>
+          <div><label class="rhf-l">Posto / Cliente</label><select class="rhf-i" id="rdf-posto"><option value="">— selecione —</option></select></div>
           <div><label class="rhf-l">Tipo *</label><select class="rhf-i" id="rdf-tipo"><option>PEDIDO DE DEMISSÃO</option><option>DEMITIDO</option><option>ABANDONO</option><option>TÉRMINO DE CONTRATO</option></select></div>
           <div><label class="rhf-l">Data de Admissão (opcional)</label><input class="rhf-i" id="rdf-adm" type="date"></div>
         </div>
@@ -1410,7 +1410,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
           <div><label class="rhf-l">Área / Supervisor</label><input class="rhf-i" id="rtf-area" type="text" list="dl-rh-area" placeholder="Ex: FRANK"></div>
-          <div><label class="rhf-l">Posto / Cliente</label><input class="rhf-i" id="rtf-posto" type="text" placeholder="Ex: COND MILANO"></div>
+          <div><label class="rhf-l">Posto / Cliente</label><select class="rhf-i" id="rtf-posto"><option value="">— selecione —</option></select></div>
           <div><label class="rhf-l">Tipo *</label><select class="rhf-i" id="rtf-tipo" onchange="rhTreTipoChg()"><option>VÍDEO</option><option>VISITA AO POSTO</option><option>INTEGRAÇÃO</option><option>RECICLAGEM</option><option>OUTRO</option></select></div>
           <div><label class="rhf-l">Qtd de Vídeos</label><input class="rhf-i" id="rtf-qtd" type="number" min="1" step="1" placeholder="Ex: 3"></div>
         </div>
@@ -4489,6 +4489,7 @@ function rhSalvar(e){
 }
 function rhLimpar(keepMsg){
   document.getElementById("rhForm").reset();
+  rhPostosSyncTodos();
   document.getElementById("rhf-id").value="";
   document.getElementById("rhf-dtabertura").value=ymd(new Date());
   document.getElementById("rh-form-title").textContent="➕ Nova Vaga";
@@ -4501,7 +4502,7 @@ function rhEditar(id){
   document.getElementById("rhf-cargo").value=x.cargo||"";
   document.getElementById("rhf-escala").value=x.escala||"";
   document.getElementById("rhf-area").value=x.area||"";
-  document.getElementById("rhf-posto").value=x.posto||"";
+  rhPostoSet("rhf-posto",x.posto||"");
   document.getElementById("rhf-motivo").value=x.motivo_abertura||"";
   document.getElementById("rhf-subst").value=x.substituicao_de||"";
   document.getElementById("rhf-criterios").value=x.criterios||"";
@@ -4737,7 +4738,7 @@ function rhDesAutoFill(){
   const emp=DASHBOARD_DATA.ativos.find(r=>String(r.NOME||"").trim().toUpperCase()===nome);
   if(!emp)return;
   const set=(id,v)=>{const el=document.getElementById(id);if(el&&!el.value&&v&&v!=="—")el.value=v;};
-  set("rdf-re",emp.RE);set("rdf-cargo",emp.CARGO);set("rdf-area",emp.AREA);set("rdf-posto",emp.LOCAL);
+  set("rdf-re",emp.RE);set("rdf-cargo",emp.CARGO);set("rdf-area",emp.AREA);rhPostoSet("rdf-posto",emp.LOCAL);
 }
 function rhDesRender(){
   const v=rhDesF();
@@ -4852,6 +4853,7 @@ function rhDesAvisoToggle(){
 }
 function rhDesLimpar(keepMsg){
   document.getElementById("rdForm").reset();
+  rhPostosSyncTodos();
   document.getElementById("rdf-id").value="";
   document.getElementById("rdf-data").value=ymd(new Date());
   rhDesAvisoToggle();
@@ -4866,7 +4868,7 @@ function rhDesEditar(id){
   document.getElementById("rdf-re").value=x.re||"";
   document.getElementById("rdf-cargo").value=x.cargo||"";
   document.getElementById("rdf-area").value=x.area||"";
-  document.getElementById("rdf-posto").value=x.posto||"";
+  rhPostoSet("rdf-posto",x.posto||"");
   document.getElementById("rdf-tipo").value=x.tipo||"PEDIDO DE DEMISSÃO";
   document.getElementById("rdf-motivo").value=x.motivo||"";
   document.getElementById("rdf-adm").value=x.data_admissao?String(x.data_admissao).slice(0,10):"";
@@ -5082,7 +5084,7 @@ function rhTreAutoFill(){
   const emp=DASHBOARD_DATA.ativos.find(r=>String(r.NOME||"").trim().toUpperCase()===nome);
   if(!emp)return;
   const set=(id,v)=>{const el=document.getElementById(id);if(el&&!el.value&&v&&v!=="—")el.value=v;};
-  set("rtf-re",emp.RE);set("rtf-cargo",emp.CARGO);set("rtf-area",emp.AREA);set("rtf-posto",emp.LOCAL);
+  set("rtf-re",emp.RE);set("rtf-cargo",emp.CARGO);set("rtf-area",emp.AREA);rhPostoSet("rtf-posto",emp.LOCAL);
 }
 function rhTreTipoChg(){
   const tipo=document.getElementById("rtf-tipo").value;
@@ -5182,6 +5184,7 @@ function rhTreSalvar(e){
 }
 function rhTreLimpar(keepMsg){
   document.getElementById("rtForm").reset();
+  rhPostosSyncTodos();
   document.getElementById("rtf-id").value="";
   document.getElementById("rtf-data").value=ymd(new Date());
   document.getElementById("rtf-qtd").disabled=false;
@@ -5196,7 +5199,7 @@ function rhTreEditar(id){
   document.getElementById("rtf-re").value=x.re||"";
   document.getElementById("rtf-cargo").value=x.cargo||"";
   document.getElementById("rtf-area").value=x.area||"";
-  document.getElementById("rtf-posto").value=x.posto||"";
+  rhPostoSet("rtf-posto",x.posto||"");
   document.getElementById("rtf-tipo").value=x.tipo||"VÍDEO";
   rhTreTipoChg();
   document.getElementById("rtf-qtd").value=x.qtd_videos||"";
@@ -7346,6 +7349,59 @@ function prjResumoIA(){
 const AUD_PILARES=[["limpeza","🧹 Limpeza","#0d9488"],["colab","👥 Colaboradores","#7c3aed"],["cliente","🤝 Cliente","#f97316"]];
 let AUD_CAT={limpeza:[],colab:[],cliente:[]},AUD_A=[],AUD_BUSCA="",AUD_FST="TODOS";
 /* postos ativos: LOCAL distintos da planilha diária, com supervisor (AREA) e turno */
+/* ═════════ POSTO / CLIENTE — seleção em vez de texto livre ═════════
+   A auditoria mostrou por que vaga e desligamento não fecham por cliente: o
+   campo era digitado à mão. "COND REVIVA" e "REVIVA" viraram dois clientes;
+   "COND - POEMA", "COND VILLA FLORA" e "COND VENEZA" usam três prefixos
+   diferentes. Só 51% das vagas e 21% dos desligamentos casavam com a lista
+   oficial — e nenhuma normalização resolveria, porque amanhã alguém digita de
+   um quarto jeito.
+
+   A lista tem duas partes, e as duas são legítimas:
+     · os clientes ativos da planilha
+     · os grupos internos, porque vaga para reserva é vaga de verdade
+
+   Valor antigo que não esteja em nenhuma das duas é PRESERVADO como opção ao
+   abrir o registro. Sem isso, editar um desligamento de 2026 apagaria o posto
+   dele em silêncio — corrigir o cadastro não pode corromper o histórico. */
+const RH_GRUPOS_INTERNOS=["FERISTAS","SOBRA PLANTAO","RESERVA TÉCNICA","SUPERVISÃO",
+  "ADMITIDOS","AGENDA NOVA","MESA OPERACIONAL","DEPARTAMENTO PESSOAL","RH",
+  "FINANCEIRO","OPERACIONAL","DIRETORIA"];
+function rhPostosLista(){
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  const vistos={},out=[];
+  (D.clientes||[]).forEach(r=>{
+    const n=String(r.NOME||"").trim();
+    if(!n||n==="—")return;
+    const k=n.toUpperCase();
+    if(!vistos[k]){vistos[k]=1;out.push(n);}
+  });
+  out.sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  return out;
+}
+/* Monta as opções de um <select> de posto. "atual" entra mesmo se não estiver
+   na lista, para não perder o valor de registros antigos. */
+function rhPostosSync(id,atual){
+  const el=document.getElementById(id);if(!el||el.tagName!=="SELECT")return;
+  const clientes=rhPostosLista();
+  const cur=String(atual==null?el.value:atual).trim();
+  const conhecidos={};
+  clientes.concat(RH_GRUPOS_INTERNOS).forEach(n=>{conhecidos[n.toUpperCase()]=1;});
+  let h='<option value="">— selecione —</option>';
+  h+='<optgroup label="Clientes">'+clientes.map(n=>'<option>'+_esc(n)+'</option>').join("")+'</optgroup>';
+  h+='<optgroup label="Interno / Reserva">'+RH_GRUPOS_INTERNOS.map(n=>'<option>'+_esc(n)+'</option>').join("")+'</optgroup>';
+  if(cur&&!conhecidos[cur.toUpperCase()]){
+    h+='<optgroup label="Cadastro antigo"><option>'+_esc(cur)+'</option></optgroup>';
+  }
+  el.innerHTML=h;
+  el.value=cur;
+}
+/* Usar SEMPRE isto no lugar de .value= nos campos de posto: garante que a opção
+   existe antes de selecionar. Atribuir direto num <select> um valor sem opção
+   deixaria o campo vazio, e o registro salvaria sem posto. */
+function rhPostoSet(id,valor){ rhPostosSync(id,valor||""); }
+/* Chamado ao abrir/limpar os formulários, para a lista existir em cadastro novo. */
+function rhPostosSyncTodos(){ ["rhf-posto","rdf-posto","rtf-posto"].forEach(i=>rhPostosSync(i,null)); }
 function audPostosAtivos(){
   // Cada "posto ativo" = um CLIENTE ativo. Mesma fonte e mesma chave (normTxt do
   // NOME) do KPI "Clientes Ativos" da Visão Geral, para os números baterem.
