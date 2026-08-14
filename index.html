@@ -7814,7 +7814,13 @@ const SAU_FILTROS={
   ranking:{lbl:"no ranking (3+ efetivos)", fn:c=>!c.amostra_pequena&&!c.sem_efetivo},
   critico:{lbl:"saúde abaixo de 50",       fn:c=>!c.amostra_pequena&&!c.sem_efetivo&&c.saude<50},
   descoberto:{lbl:"com posto descoberto",  fn:c=>c.descobertos>0},
-  visita:{lbl:"sem visita há +14 dias",    fn:c=>c.dias_sem_visita===null||c.dias_sem_visita>14}
+  visita:{lbl:"sem visita há +14 dias",    fn:c=>c.dias_sem_visita===null||c.dias_sem_visita>14},
+  // Os dois abaixo existem para o usuário conseguir VER quem ficou fora do
+  // ranking. Sem eles, o card diria "55 de 126" e os outros 71 seriam uma
+  // afirmação sem prova — que é exatamente o que faz alguém desconfiar do
+  // painel inteiro.
+  unico:{lbl:"de posto único (1 ou 2 efetivos)", fn:c=>c.amostra_pequena},
+  semef:{lbl:"sem ninguém alocado",              fn:c=>c.sem_efetivo}
 };
 function sauFiltrar(tipo){
   SAU_FILTRO=(SAU_FILTRO===tipo)?"":tipo;   // clicar de novo volta para todos
@@ -7845,12 +7851,25 @@ function sauRender(){
   const nCrit=noRank.filter(c=>c.saude<50).length;
   const kAtivo=t=>SAU_FILTRO===t?';outline:2px solid #2e8fef;outline-offset:2px':'';
   h+='<div class="sec-kpis" style="grid-template-columns:repeat(4,1fr)">'
-    +'<div class="sk sk-bl clickable" style="cursor:pointer'+kAtivo("ranking")+'" onclick="sauFiltrar(\'ranking\')" title="Ver os clientes do ranking"><div class="sk-top"><span class="sk-ic">🩺</span><span class="sk-tag t-bl">Média</span></div><div class="sk-lbl">Saúde da carteira</div><div class="sk-v" style="color:'+sauCor(med)+'">'+med+'</div><div class="sk-sub">'+noRank.length+' no ranking · '+todos.length+' no total</div></div>'
+    +'<div class="sk sk-bl clickable" style="cursor:pointer'+kAtivo("ranking")+'" onclick="sauFiltrar(\'ranking\')" title="Ver os clientes do ranking"><div class="sk-top"><span class="sk-ic">🩺</span><span class="sk-tag t-bl">Média</span></div><div class="sk-lbl">Saúde da carteira</div><div class="sk-v" style="color:'+sauCor(med)+'">'+med+'</div><div class="sk-sub">'+noRank.length+' de '+todos.length+' no ranking<br><span style="color:#b45309">'+(todos.length-noRank.length)+' fora — veja abaixo</span></div></div>'
     +'<div class="sk sk-rd clickable" style="cursor:pointer'+kAtivo("critico")+'" onclick="sauFiltrar(\'critico\')" title="Ver quem está abaixo de 50"><div class="sk-top"><span class="sk-ic">🚨</span><span class="sk-tag t-rd">Crítico</span></div><div class="sk-lbl">Abaixo de 50</div><div class="sk-v">'+nCrit+'</div><div class="sk-sub">'+(nCrit?"precisam de ação":"nenhum")+'</div></div>'
     +'<div class="sk sk-yl clickable" style="cursor:pointer'+kAtivo("descoberto")+'" onclick="sauFiltrar(\'descoberto\')" title="Ver os clientes que tiveram posto descoberto"><div class="sk-top"><span class="sk-ic">🕳️</span><span class="sk-tag t-yl">Descoberto</span></div><div class="sk-lbl">Postos descobertos</div><div class="sk-v">'+nDesc+'</div><div class="sk-sub">em '+nDescCli+' cliente(s) · o que ele enxerga</div></div>'
     +'<div class="sk sk-gr clickable" style="cursor:pointer'+kAtivo("visita")+'" onclick="sauFiltrar(\'visita\')" title="Ver quem está sem visita"><div class="sk-top"><span class="sk-ic">👣</span><span class="sk-tag t-gr">Visita</span></div><div class="sk-lbl">Sem visita há +14d</div><div class="sk-v">'+nVisita+'</div><div class="sk-sub">risco silencioso</div></div>'
     +'</div>';
 
+  // Por que o ranking não é a carteira toda. Fica à vista, com os números e um
+  // caminho para conferir cada grupo — afirmação sobre dado precisa ser
+  // verificável, senão vira "confie em mim".
+  const nUnico=todos.filter(c=>c.amostra_pequena).length;
+  const nSemEf=todos.filter(c=>c.sem_efetivo).length;
+  const nUnicoRisco=todos.filter(c=>c.amostra_pequena&&(c.faltas>0||c.descobertos>0)).length;
+  const _lk=(t,txt)=>'<span onclick="sauFiltrar(\''+t+'\')" style="cursor:pointer;color:#2e8fef;font-weight:800;text-decoration:underline">'+txt+'</span>';
+  h+='<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:.68rem;color:#1e40af;line-height:1.7">'
+    +'<b>Por que o ranking tem '+noRank.length+' e não '+todos.length+' clientes.</b> '
+    +'A nota divide faltas por efetivos, e essa conta não descreve cliente de posto único: com 1 pessoa, uma falta vira "100% do serviço parado" e o número fica incomparável com um cliente de 24 pessoas.<br>'
+    +'Ficaram fora '+_lk("unico",nUnico+" de posto único (1 ou 2 efetivos)")+' e '+_lk("semef",nSemEf+" sem ninguém alocado")+'. '
+    +(nUnicoRisco?('<b style="color:#b45309">'+nUnicoRisco+' dos de posto único tiveram falta ou posto descoberto</b> — são os mais frágeis da carteira, porque não têm colega para cobrir.'):'Nenhum deles teve falta ou posto descoberto no período.')
+    +'</div>';
   h+='<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;margin-bottom:12px;overflow:hidden">'
     +'<div style="padding:13px 18px;border-bottom:1px solid #eef2f7;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">'
     +'<span style="font-size:.78rem;font-weight:800;color:#0d1f35;text-transform:uppercase;letter-spacing:.06em">Precisam de você esta semana</span>'
@@ -7874,6 +7893,9 @@ function sauRender(){
     +'<div style="padding:12px 16px;border-bottom:1px solid #e5e9f0">'
     +'<div style="font-size:.78rem;font-weight:800;color:#0d1f35">📋 '+(f?"Clientes "+f.lbl:"Todos os clientes")+' <span style="font-size:.62rem;color:#94a3b8;font-weight:700">'+lista.length+(f?" de "+todos.length:"")+' · clique para abrir</span>'
     +(f?' <span onclick="event.stopPropagation();sauFiltrar(\''+SAU_FILTRO+'\')" style="cursor:pointer;font-size:.62rem;font-weight:800;color:#2e8fef;margin-left:6px">✕ limpar filtro</span>':"")+'</div>'
+    +(SAU_FILTRO==="unico"?'<div style="font-size:.63rem;color:#b45309;margin-top:4px">Estes ficam fora do ranking porque a conta <b>faltas ÷ efetivos</b> não os descreve. Para eles o que vale é o número absoluto: cada falta é o serviço parando por completo.</div>':"")
+    +(SAU_FILTRO==="semef"?'<div style="font-size:.63rem;color:#b45309;margin-top:4px">Clientes na lista oficial sem nenhuma pessoa ativa lotada na planilha. Costuma ser contrato encerrado que não saiu da base, ou posto que ficou vago — vale conferir os dois casos.</div>':"")
+    +(SAU_FILTRO==="ranking"?'<div style="font-size:.63rem;color:#64748b;margin-top:4px">Clientes com 3 ou mais efetivos, onde a média por pessoa é comparável entre contratos de tamanhos diferentes.</div>':"")
     +'<div style="font-size:.62rem;color:#94a3b8;margin-top:3px">A coluna <b>Faltas / efetivo</b> divide as faltas pela quantidade de <b>pessoas ativas</b> lotadas no cliente — não pelo número de postos do contrato.</div></div>'
     +'<div style="overflow-x:auto"><table class="rh-tbl" style="min-width:820px"><thead><tr>'
     +'<th>Cliente</th><th style="text-align:right">Saúde</th><th style="text-align:right">Efetivos em posto</th>'
