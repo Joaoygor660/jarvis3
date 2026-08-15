@@ -7836,6 +7836,7 @@ function sauFiltrar(tipo){
 function sauRender(){
   const el=document.getElementById("sau-content");if(!el)return;
   const todos=(VG.saudeClientes||[]);
+  SAU_ASSINATURA=JSON.stringify(todos);
   if(!todos.length){
     el.innerHTML='<div style="padding:36px;text-align:center;color:#94a3b8;font-size:.82rem">Sem dados de saúde ainda. Envie uma planilha para o histórico ser montado.</div>';
     return;
@@ -7983,6 +7984,8 @@ function sauRender(){
     +'Clientes com <b>1 ou 2 efetivos</b> ficam fora do ranking: ali uma pessoa faltando viraria "cliente crítico". Eles continuam na lista, marcados. Só entram faltas de <b>contrato</b> — as de reserva trazem o nome do supervisor no lugar do cliente e não são atribuíveis. Na base toda, <b>79% das faltas são cobertas</b> — nesses dias o serviço acontece e o cliente não percebe. Rotatividade e vagas ainda não entram: a base é curta demais.<br><span style="color:#b45309">A cobertura é casada por cliente e dia. Num cliente com vários postos no mesmo dia, uma cobertura pode ser creditada à falta errada; em posto único a correspondência é exata.</span></div>';
 
   el.innerHTML=h;
+  // o innerHTML acima apagou o mapa junto; se estava aberto, reabre
+  if(SAU_MAPA_ABERTO){ SAU_MAPA=null; sauMapaMostrar(); }
 }
 /* ═════════ MAPA DOS CLIENTES ═════════
    Carregado sob demanda, e não junto da página: são ~130 endereços e a
@@ -7998,13 +8001,34 @@ function sauRender(){
    (o geocodificador não achou a rua) e ficam no centro do município: eles NÃO
    podem se passar por endereço exato. */
 var SAU_MAPA=null, SAU_PINOS=null;
+/* Assinatura dos dados já desenhados, para o batimento não redesenhar à toa. */
+var SAU_ASSINATURA=null;
+/* O mapa estava aberto antes do redesenho? Quando os dados mudam de verdade a
+   tela precisa ser refeita, e aí o mapa é reaberto sozinho — sem buscar os
+   endereços de novo, que já estão em SAU_PINOS. */
+var SAU_MAPA_ABERTO=false;
+/* O BOTAO alterna. Separado de sauMapaMostrar() de proposito: quando o
+   redesenho precisa reabrir o mapa, chamar o alterna seria arriscado - se o
+   elemento nao estiver no estado que eu espero, ele FECHA em vez de abrir. */
 function sauMapaAbrir(){
+  const wrap=document.getElementById("sau-mapa-wrap");
+  if(!wrap)return;
+  if(wrap.style.display!=="none"){
+    wrap.style.display="none";
+    const b=document.getElementById("sau-mapa-btn"); if(b)b.textContent="Carregar mapa";
+    SAU_MAPA_ABERTO=false;
+    return;
+  }
+  sauMapaMostrar();
+}
+/* Sempre abre. Nunca fecha. */
+function sauMapaMostrar(){
   const btn=document.getElementById("sau-mapa-btn");
   const wrap=document.getElementById("sau-mapa-wrap");
   if(!wrap)return;
-  if(wrap.style.display!=="none"){ wrap.style.display="none"; btn.textContent="Carregar mapa"; return; }
   wrap.style.display="";
-  btn.textContent="Ocultar mapa";
+  if(btn)btn.textContent="Ocultar mapa";
+  SAU_MAPA_ABERTO=true;
   if(typeof L==="undefined"){
     document.getElementById("sau-mapa").innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.78rem">A biblioteca do mapa não carregou. Recarregue a página (Ctrl+Shift+R).</div>';
     return;
@@ -8778,7 +8802,16 @@ function rtPing(){
       if(j.vagasAbertas!==undefined&&j.vagasAbertas!==null)VG.vagasAbertas=j.vagasAbertas;
       if(Array.isArray(j.ligContatos))VG.ligContatos=j.ligContatos;
       if(Array.isArray(j.histEfetivo))VG.histEfetivo=j.histEfetivo;
-      if(Array.isArray(j.saudeClientes)){VG.saudeClientes=j.saudeClientes;if(ST.pg==="saude")sauRender();}
+      if(Array.isArray(j.saudeClientes)){
+        // Só redesenha se algo REALMENTE mudou. Antes o batimento reconstruía a
+        // tela a cada 15s mesmo com dados idênticos, e isso destruía o mapa —
+        // o balão de detalhe do cliente fechava sozinho enquanto a pessoa lia.
+        const _novo=JSON.stringify(j.saudeClientes);
+        const _mudou=(_novo!==SAU_ASSINATURA);
+        SAU_ASSINATURA=_novo;
+        VG.saudeClientes=j.saudeClientes;
+        if(ST.pg==="saude"&&_mudou)sauRender();
+      }
       if(ST.pg==="visao"&&typeof updOC==="function"){try{updOC();}catch(e){}}
     }
     /* 2) presença + chat (o que os dois polls antigos faziam) */
