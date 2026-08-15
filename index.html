@@ -12,6 +12,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d1f35">
 <link rel="manifest" href="/site.webmanifest">
+<!-- Leaflet (mapa). Vem do mesmo CDN já liberado para o Chart.js; o CSS e os
+     tiles do OpenStreetMap precisaram entrar na política de segurança em
+     vercel.json, senão o mapa carrega em branco sem erro visível. -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -7930,6 +7935,15 @@ function sauRender(){
     h+='</div>';
   }
 
+  /* mapa: só a moldura aqui; os pinos entram depois, quando o usuário abrir */
+  h+='<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;margin-bottom:12px;overflow:hidden">'
+    +'<div style="padding:12px 16px;border-bottom:1px solid #eef2f7;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">'
+    +'<div><div style="font-size:.78rem;font-weight:800;color:#0d1f35">🗺️ Onde estão os clientes</div>'
+    +'<div style="font-size:.62rem;color:#94a3b8;margin-top:2px">Cor do pino = saúde. Serve para ver se o problema está concentrado numa região.</div></div>'
+    +'<button id="sau-mapa-btn" onclick="sauMapaAbrir()" style="border:none;background:#2e8fef;color:#fff;border-radius:9px;padding:7px 14px;font-size:.68rem;font-weight:800;cursor:pointer">Carregar mapa</button></div>'
+    +'<div id="sau-mapa-wrap" style="display:none"><div id="sau-mapa" style="height:440px;width:100%"></div>'
+    +'<div id="sau-mapa-leg" style="padding:9px 16px;border-top:1px solid #eef2f7;font-size:.62rem;color:#64748b;display:flex;gap:14px;flex-wrap:wrap;align-items:center"></div></div></div>';
+
   const f=SAU_FILTRO&&SAU_FILTROS[SAU_FILTRO];
   const lista=f?todos.filter(f.fn):todos;
   h+='<div id="sau-tabela" style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;overflow:hidden">'
@@ -7969,6 +7983,83 @@ function sauRender(){
     +'Clientes com <b>1 ou 2 efetivos</b> ficam fora do ranking: ali uma pessoa faltando viraria "cliente crítico". Eles continuam na lista, marcados. Só entram faltas de <b>contrato</b> — as de reserva trazem o nome do supervisor no lugar do cliente e não são atribuíveis. Na base toda, <b>79% das faltas são cobertas</b> — nesses dias o serviço acontece e o cliente não percebe. Rotatividade e vagas ainda não entram: a base é curta demais.<br><span style="color:#b45309">A cobertura é casada por cliente e dia. Num cliente com vários postos no mesmo dia, uma cobertura pode ser creditada à falta errada; em posto único a correspondência é exata.</span></div>';
 
   el.innerHTML=h;
+}
+/* ═════════ MAPA DOS CLIENTES ═════════
+   Carregado sob demanda, e não junto da página: são ~130 endereços e a
+   biblioteca do mapa, peso que ninguém deveria pagar só por abrir a Saúde do
+   Cliente. Quem quer o mapa clica.
+
+   Os pinos são circleMarker, não o marcador padrão do Leaflet. O padrão baixa
+   uma imagem PNG do CDN, e circle é desenhado pelo próprio navegador — menos
+   uma coisa para a política de segurança bloquear, e permite pintar a cor pela
+   saúde do cliente, que é o ponto da tela.
+
+   A precisão do endereço aparece no popup. Cinco pinos vieram só com a cidade
+   (o geocodificador não achou a rua) e ficam no centro do município: eles NÃO
+   podem se passar por endereço exato. */
+var SAU_MAPA=null, SAU_PINOS=null;
+function sauMapaAbrir(){
+  const btn=document.getElementById("sau-mapa-btn");
+  const wrap=document.getElementById("sau-mapa-wrap");
+  if(!wrap)return;
+  if(wrap.style.display!=="none"){ wrap.style.display="none"; btn.textContent="Carregar mapa"; return; }
+  wrap.style.display="";
+  btn.textContent="Ocultar mapa";
+  if(typeof L==="undefined"){
+    document.getElementById("sau-mapa").innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.78rem">A biblioteca do mapa não carregou. Recarregue a página (Ctrl+Shift+R).</div>';
+    return;
+  }
+  if(SAU_PINOS){ sauMapaDesenhar(); return; }
+  document.getElementById("sau-mapa").innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.78rem">Carregando endereços…</div>';
+  fetch("/api/hq?mapa=1")
+    .then(r=>r.json())
+    .then(j=>{ SAU_PINOS=(j&&j.pinos)||[]; sauMapaDesenhar(); })
+    .catch(()=>{document.getElementById("sau-mapa").innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.78rem">Erro ao carregar os endereços.</div>';});
+}
+function sauMapaDesenhar(){
+  const el=document.getElementById("sau-mapa");
+  if(!el||!SAU_PINOS)return;
+  if(!SAU_PINOS.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.78rem">Nenhum endereço geocodificado.</div>';return;}
+  el.innerHTML="";
+  if(SAU_MAPA){SAU_MAPA.remove();SAU_MAPA=null;}
+  SAU_MAPA=L.map("sau-mapa",{scrollWheelZoom:false});   // roda do mouse rola a página, não o mapa
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    maxZoom:19, attribution:'&copy; colaboradores do <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(SAU_MAPA);
+
+  const grupo=[];
+  SAU_PINOS.forEach(p=>{
+    const cor=sauCor(p.saude);
+    const raio=p.efetivos>=10?11:p.efetivos>=4?8:6;   // tamanho pelo porte do local
+    const m=L.circleMarker([p.lat,p.lon],{
+      radius:raio, color:"#fff", weight:2, fillColor:cor, fillOpacity:.92
+    }).addTo(SAU_MAPA);
+    const aprox=(p.precisao==="cidade"||p.precisao==="bairro");
+    const linhas=[
+      '<div style="font-weight:800;font-size:.8rem;color:#0d1f35;margin-bottom:3px">'+_esc(p.cliente)+'</div>',
+      '<div style="font-size:.66rem;color:#64748b;margin-bottom:6px">'+_esc([p.logradouro,p.numero].filter(Boolean).join(", "))+'<br>'+_esc([p.bairro,p.cidade].filter(Boolean).join(" · "))+'</div>',
+      '<div style="font-size:.72rem"><b style="color:'+cor+'">Saúde '+p.saude+'</b> · '+p.efetivos+' efetivo(s)</div>',
+      '<div style="font-size:.66rem;color:#475569;margin-top:3px">'
+        +p.faltas+' falta(s)'+(p.sem_cobertura?' · <b style="color:#b91c1c">'+p.sem_cobertura+' sem cobertura</b>':'')
+        +(p.descobertos?' · <b style="color:#b91c1c">'+p.descobertos+' descoberto(s)</b>':'')+'</div>',
+      '<div style="font-size:.66rem;color:#475569">'+(p.dias_sem_visita===null?'<b style="color:#b91c1c">nunca visitado</b>':('visita há '+p.dias_sem_visita+' dia(s)'))
+        +(p.supervisor?' · '+_esc(p.supervisor):'')+'</div>'
+    ];
+    if(aprox)linhas.push('<div style="font-size:.6rem;color:#b45309;margin-top:5px">📍 Local aproximado — o endereço exato não foi encontrado no mapa.</div>');
+    m.bindPopup(linhas.join(""),{maxWidth:280});
+    grupo.push([p.lat,p.lon]);
+  });
+  SAU_MAPA.fitBounds(grupo,{padding:[30,30]});
+  setTimeout(()=>{try{SAU_MAPA.invalidateSize();}catch(e){}},60);
+
+  const nAprox=SAU_PINOS.filter(p=>p.precisao==="cidade"||p.precisao==="bairro").length;
+  const bola=c=>'<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+c+';border:2px solid #fff;box-shadow:0 0 0 1px '+c+';vertical-align:-1px;margin-right:4px"></span>';
+  document.getElementById("sau-mapa-leg").innerHTML=
+    '<span>'+bola("#16a34a")+'saúde 70+</span>'
+    +'<span>'+bola("#f59e0b")+'50 a 69</span>'
+    +'<span>'+bola("#dc2626")+'abaixo de 50</span>'
+    +'<span style="color:#94a3b8">· bola maior = mais efetivos no local</span>'
+    +'<span style="margin-left:auto">'+SAU_PINOS.length+' locais'+(nAprox?' · <span style="color:#b45309">'+nAprox+' aproximados</span>':'')+'</span>';
 }
 function sauDetalhe(nome){
   const c=(VG.saudeClientes||[]).find(x=>x.cliente===nome);if(!c)return;

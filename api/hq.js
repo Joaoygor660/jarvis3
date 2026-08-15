@@ -22,6 +22,25 @@ module.exports = async function handler(req, res) {
   // Os dois últimos moravam num /api/ping separado, mas o plano Hobby da Vercel
   // permite no máximo 12 funções e o ping era o 13º — e era redundante, porque
   // repetia exatamente estas mesmas consultas. Foi dobrado aqui.
+  // GET ?mapa=1 → pinos do mapa da Saúde do Cliente.
+  //
+  // Fica fora do batimento normal de propósito: são ~130 endereços que quase
+  // nunca mudam, e mandá-los a cada 15 segundos junto da presença seria puro
+  // desperdício. O front busca uma vez, quando o usuário abre o mapa.
+  if (req.method === "GET" && req.query && (req.query.mapa === "1" || req.query.mapa === "true")) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/mapa_clientes`, {
+        method: "POST", headers, body: JSON.stringify({ dias: 30 })
+      });
+      if (!r.ok) return res.status(502).json({ error: "Falha ao carregar o mapa." });
+      const pinos = await r.json().catch(() => []);
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).json({ pinos: Array.isArray(pinos) ? pinos : [] });
+    } catch (e) {
+      return res.status(500).json({ error: "Erro ao montar o mapa." });
+    }
+  }
+
   if (req.method === "GET") {
     try {
       const me = String((req.query && req.query.me) || "").slice(0, 60);
