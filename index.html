@@ -8040,35 +8040,6 @@ function sauMapaMostrar(){
     .then(j=>{ SAU_PINOS=(j&&j.pinos)||[]; sauMapaDesenhar(); })
     .catch(()=>{document.getElementById("sau-mapa").innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.78rem">Erro ao carregar os endereços.</div>';});
 }
-/* Camada do mapa conforme o tema.
-   Não é o mapa padrão do OpenStreetMap de propósito: ele é colorido e briga com
-   os pinos, que são justamente o que a tela quer mostrar. Estas duas camadas do
-   CARTO são dessaturadas e feitas para painel — o vermelho e o verde da saúde
-   saltam em vez de competir com a cor das ruas.
-   Gratuitas, construídas sobre dados do OpenStreetMap, e a atribuição dos dois
-   vai no rodapé do mapa, como a licença exige. */
-const SAU_TILES={
-  claro:{url:"https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"},
-  escuro:{url:"https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"}
-};
-var SAU_CAMADA=null;
-function sauTemaEscuro(){
-  return document.documentElement.getAttribute("data-theme")==="dark";
-}
-function sauMapaCamada(){
-  if(!SAU_MAPA)return;
-  const t=sauTemaEscuro()?SAU_TILES.escuro:SAU_TILES.claro;
-  if(SAU_CAMADA){SAU_MAPA.removeLayer(SAU_CAMADA);SAU_CAMADA=null;}
-  SAU_CAMADA=L.tileLayer(t.url,{
-    maxZoom:19, subdomains:"abcd",
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-  }).addTo(SAU_MAPA);
-}
-/* Chamada pelo botão de tema: troca a camada sem recriar o mapa, então a
-   posição, o zoom e o balão aberto continuam como estavam. */
-function sauMapaTema(){
-  if(SAU_MAPA)sauMapaCamada();
-}
 function sauMapaDesenhar(){
   const el=document.getElementById("sau-mapa");
   if(!el||!SAU_PINOS)return;
@@ -8076,7 +8047,9 @@ function sauMapaDesenhar(){
   el.innerHTML="";
   if(SAU_MAPA){SAU_MAPA.remove();SAU_MAPA=null;}
   SAU_MAPA=L.map("sau-mapa",{scrollWheelZoom:false});   // roda do mouse rola a página, não o mapa
-  sauMapaCamada();
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    maxZoom:19, attribution:'&copy; colaboradores do <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(SAU_MAPA);
 
   const grupo=[];
   SAU_PINOS.forEach(p=>{
@@ -8738,8 +8711,6 @@ function applyTheme(t){
   const lbl=document.getElementById("themeToggleLbl"),btn=document.getElementById("themeToggle");
   if(btn){btn.firstChild.textContent=t==="dark"?"☀️ ":"🌙 ";}
   if(lbl)lbl.textContent=t==="dark"?"Claro":"Escuro";
-  // o mapa troca de camada sem ser recriado: mantém zoom, posição e balão aberto
-  if(typeof sauMapaTema==="function")sauMapaTema();
   // Chart.js: recolore eixos/legendas conforme o tema, se já houver gráficos
   if(window.Chart){
     const c=t==="dark"?"#c2ccdb":"#334155",g=t==="dark"?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)";
