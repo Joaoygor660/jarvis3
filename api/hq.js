@@ -44,6 +44,29 @@ module.exports = async function handler(req, res) {
   // GET ?supervisor=1 → desempenho por supervisor.
   // Fora do batimento pela mesma razão do mapa: são ~7 linhas que mudam uma vez
   // por dia, quando a planilha sobe. O front busca ao abrir a guia.
+  // GET ?supdet=1&sup=NOME&tipo=faltas|visitas|esquecidos|chegadas
+  // → as linhas que formaram o indicador. Existe para o número ser auditável:
+  // quem discorda de "84% de cobertura" precisa ver QUAIS faltas ficaram sem
+  // cobrir, com nome e data.
+  if (req.method === "GET" && req.query && (req.query.supdet === "1" || req.query.supdet === "true")) {
+    try {
+      const sup = String(req.query.sup || "").slice(0, 80);
+      const tipo = String(req.query.tipo || "");
+      if (!sup || !["faltas", "visitas", "esquecidos", "chegadas"].includes(tipo)) {
+        return res.status(400).json({ error: "Informe sup e tipo válido." });
+      }
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/detalhe_supervisor`, {
+        method: "POST", headers, body: JSON.stringify({ p_sup: sup, p_tipo: tipo, dias: 30 })
+      });
+      if (!r.ok) return res.status(502).json({ error: "Falha ao carregar o detalhe." });
+      const linhas = await r.json().catch(() => []);
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).json({ linhas: Array.isArray(linhas) ? linhas : [] });
+    } catch (e) {
+      return res.status(500).json({ error: "Erro ao montar o detalhe." });
+    }
+  }
+
   if (req.method === "GET" && req.query && (req.query.supervisor === "1" || req.query.supervisor === "true")) {
     try {
       const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/desempenho_supervisor`, {
