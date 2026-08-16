@@ -41,6 +41,23 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  // GET ?supervisor=1 → desempenho por supervisor.
+  // Fora do batimento pela mesma razão do mapa: são ~7 linhas que mudam uma vez
+  // por dia, quando a planilha sobe. O front busca ao abrir a guia.
+  if (req.method === "GET" && req.query && (req.query.supervisor === "1" || req.query.supervisor === "true")) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/desempenho_supervisor`, {
+        method: "POST", headers, body: JSON.stringify({ dias: 30 })
+      });
+      if (!r.ok) return res.status(502).json({ error: "Falha ao carregar o desempenho." });
+      const linhas = await r.json().catch(() => []);
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).json({ supervisores: Array.isArray(linhas) ? linhas : [] });
+    } catch (e) {
+      return res.status(500).json({ error: "Erro ao montar o desempenho." });
+    }
+  }
+
   if (req.method === "GET") {
     try {
       const me = String((req.query && req.query.me) || "").slice(0, 60);

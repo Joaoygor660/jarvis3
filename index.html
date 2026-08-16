@@ -772,6 +772,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="nav-cat" data-cat="gestao">
     <div class="nav-cat-h" onclick="navCatToggle('gestao')"><span class="nav-cat-t">📊 Gestão</span><span class="nav-cat-ar">▾</span></div>
     <div class="nav-cat-b">
+      <div class="ni" data-pg="supdesemp" onclick="navTo('supdesemp',this)"><span class="ni-ic">🧭</span><span>Desempenho do Supervisor</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="saude" onclick="navTo('saude',this)"><span class="ni-ic">🩺</span><span>Sa&uacute;de do Cliente</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="audqual" data-perm="qual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="ligacoes" data-perm="qual" onclick="navTo('ligacoes',this)"><span class="ni-ic">📞</span><span>Ligações &amp; Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
@@ -1617,6 +1618,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="sec-hdr"><span class="sec-hdr-ic">✅</span><div><div class="sec-hdr-t">Auditoria de Qualidade</div><div class="sec-hdr-sub">Vistorias de postos: checklist tri-pilar, cobertura e conformidade</div></div></div>
     <div id="aud-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando auditorias…</div></div>
   </div>
+  <div class="page" id="pg-supdesemp">
+    <div class="sec-hd"><div class="sec-ic">🧭</div><div><div class="sec-t">Desempenho do Supervisor</div><div class="sec-s">Cada supervisor comparado com o próprio período anterior — nunca com os colegas.</div></div></div>
+    <div id="sup-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando…</div></div>
+  </div>
   <div class="page" id="pg-saude">
     <div class="sec-hd"><div class="sec-ic">🩺</div><div><div class="sec-t">Saúde do Cliente</div><div class="sec-s">Quem está em risco — e por quê. Faltas de contrato, postos descobertos e visita do supervisor nos últimos 30 dias.</div></div></div>
     <div id="sau-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando…</div></div>
@@ -2418,7 +2423,7 @@ function refresh(){
   updVG();updOC();updSN();
   // guias de banco (RH, Comercial, painéis e módulos novos) reagem ao filtro
   const _rer={
-    saude:()=>sauRender(),
+    saude:()=>sauRender(), supdesemp:()=>supLoad(),
     audqual:()=>audRender(), ligacoes:()=>ligRender(),
     rhvagas:()=>{rhRender();rhRenderTbl();},
     rhentrev:()=>{rhEntRender();rhEntRenderTbl();},
@@ -7795,6 +7800,98 @@ function ligAcompanhamento(){
    Clientes de até 2 postos ficam FORA do bloco de foco: com um posto, uma
    pessoa faltando vira "cliente crítico". A conta está certa e a conclusão
    estaria errada. Eles aparecem numa lista à parte. */
+/* ═════════ DESEMPENHO DO SUPERVISOR ═════════
+   Cada um contra o PRÓPRIO período anterior. Sem ranking entre supervisores: as
+   áreas têm mistura de clientes, tamanhos e turnos diferentes, e comparar
+   produz discussão sobre metodologia em vez de ação.
+
+   Sem nota de 0 a 100, diferente da Saúde do Cliente. Quatro indicadores
+   separados dizem mais do que uma média — que esconderia justamente qual deles
+   caiu, e é sobre isso que a conversa com o supervisor acontece.
+
+   FALTA NÃO ENTRA NA AVALIAÇÃO. Ele não decide quem adoece; medir por isso
+   produz a defesa "minha área é mais difícil", que é legítima. Falta aparece
+   como contexto da área, em cinza, com o rótulo dizendo isso. O que ele controla
+   é o que acontece DEPOIS: cobrir, visitar, não esquecer ninguém, chegar rápido. */
+var SUP_DADOS=null;
+function supHM(min){
+  if(min==null)return "—";
+  const h=Math.floor(min/60), m=Math.round(min%60);
+  return h?(h+"h"+String(m).padStart(2,"0")):(m+"min");
+}
+function supPct(a,b){ return b>0?Math.round(100*a/b):null; }
+function supDelta(agora,antes,maiorEhMelhor){
+  if(agora==null||antes==null)return {txt:"sem base anterior",cls:"est"};
+  const d=agora-antes;
+  if(Math.abs(d)<1)return {txt:"■ estável",cls:"est"};
+  const bom=maiorEhMelhor?d>0:d<0;
+  return {txt:(d>0?"▲ +":"▼ ")+Math.abs(Math.round(d))+(maiorEhMelhor?" pontos":"min"),cls:bom?"sobe":"cai"};
+}
+function supLoad(){
+  const el=document.getElementById("sup-content");if(!el)return;
+  if(SUP_DADOS){supRender();return;}
+  fetch("/api/hq?supervisor=1").then(r=>r.json())
+    .then(j=>{SUP_DADOS=(j&&j.supervisores)||[];supRender();})
+    .catch(()=>{el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.82rem">Erro ao carregar.</div>';});
+}
+function supRender(){
+  const el=document.getElementById("sup-content");if(!el||!SUP_DADOS)return;
+  if(!SUP_DADOS.length){el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.82rem">Sem dados de supervisão ainda.</div>';return;}
+  const cor={sobe:"#16a34a",cai:"#dc2626",est:"#94a3b8"};
+  let h='<div style="display:grid;gap:12px">';
+  SUP_DADOS.forEach(s=>{
+    const cob=supPct(s.cobertas,s.faltas), cobA=supPct(s.cobertas_ant,s.faltas_ant);
+    const dCob=supDelta(cob,cobA,true);
+    const dCheg=supDelta(s.chegada_media,s.chegada_media_ant,false);
+    const iniciais=(s.supervisor||"?").split(/\s+/).slice(0,2).map(x=>x[0]||"").join("");
+    const pctVis=s.clientes?Math.round(100*s.visitados/s.clientes):0;
+    // etiqueta do topo: resume o movimento, sem virar nota
+    let tag={t:"■ estável",b:"#f1f5f9",c:"#64748b"};
+    if(s.amostra_pequena)tag={t:"área pequena",b:"#fffbeb",c:"#b45309"};
+    else if(dCob.cls==="sobe")tag={t:"▲ melhorou a cobertura",b:"#e8f5ec",c:"#15803d"};
+    else if(dCob.cls==="cai")tag={t:"▼ caiu a cobertura",b:"#fdecea",c:"#b3261e"};
+
+    const met=(lbl,val,delta,sub,c)=>'<div style="padding:14px 18px;border-right:1px solid #eef2f7">'
+      +'<div style="font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#94a3b8;margin-bottom:6px">'+lbl+'</div>'
+      +'<div style="font-family:ui-monospace,monospace;font-size:1.5rem;font-weight:900;letter-spacing:-.03em;line-height:1;color:'+(c||"#0d1f35")+'">'+val+'</div>'
+      +(delta?'<div style="font-size:.64rem;font-weight:800;margin-top:4px;color:'+cor[delta.cls]+'">'+delta.txt+'</div>':'')
+      +'<div style="font-size:.62rem;color:#94a3b8;margin-top:3px;line-height:1.45">'+sub+'</div></div>';
+
+    h+='<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;overflow:hidden">'
+      +'<div style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid #eef2f7">'
+      +'<div style="width:40px;height:40px;border-radius:11px;background:#eef2f7;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;color:#1b5fb0;flex:none">'+_esc(iniciais)+'</div>'
+      +'<div><div style="font-size:.9rem;font-weight:800;color:#0d1f35">'+_esc(s.supervisor)+'</div>'
+      +'<div style="font-size:.66rem;color:#94a3b8">'+s.clientes+' cliente(s) na área</div></div>'
+      +'<span style="margin-left:auto;font-size:.62rem;font-weight:800;padding:4px 10px;border-radius:20px;background:'+tag.b+';color:'+tag.c+';white-space:nowrap">'+tag.t+'</span></div>'
+      +'<div style="display:grid;grid-template-columns:repeat(4,1fr)">'
+      + met("Faltas que cobriu", cob==null?"—":(cob+"%"), dCob,
+            s.cobertas+" de "+s.faltas+(cobA!=null?" · antes "+cobA+"%":" · sem base anterior"),
+            cob==null?"#94a3b8":(cob>=85?"#16a34a":cob>=70?"#f59e0b":"#dc2626"))
+      + met("Clientes visitados", s.visitados+'<span style="font-size:.85rem;color:#94a3b8">/'+s.clientes+'</span>', null,
+            pctVis+"% da carteira"+(s.nunca_visitado?" · "+s.nunca_visitado+" nunca visitado":""),
+            pctVis>=95?"#16a34a":pctVis>=85?"#f59e0b":"#dc2626")
+      + met("Esquecidos (+14d)", s.esquecidos, null,
+            s.pior_atraso_visita?("pior atraso: "+s.pior_atraso_visita+" dias"):"nenhum cliente parado",
+            s.esquecidos===0?"#16a34a":s.esquecidos<=3?"#f59e0b":"#dc2626")
+      + met("Chegada ao posto", s.chegada_media==null?"—":supHM(s.chegada_media), dCheg,
+            s.chegada_qtd?(s.chegada_qtd+" visita(s) medida(s)"):"sem registro de horário no BDV",
+            s.chegada_media==null?"#94a3b8":(s.chegada_media<=90?"#16a34a":s.chegada_media<=180?"#f59e0b":"#dc2626"))
+      +'</div>'
+      +'<div style="padding:10px 18px;border-top:1px solid #eef2f7;background:#f8fafc;font-size:.64rem;color:#94a3b8;display:flex;gap:16px;flex-wrap:wrap;align-items:center">'
+      +'<span style="font-size:.56rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em">Contexto da área</span>'
+      +'<span><b style="color:#475569">'+s.faltas+'</b> faltas'+(s.faltas_ant?(' (eram '+s.faltas_ant+')'):'')+'</span>'
+      +'<span><b style="color:'+(s.descobertos?"#b91c1c":"#475569")+'">'+s.descobertos+'</b> posto(s) descoberto(s)</span>'
+      +'<span style="margin-left:auto;font-style:italic">falta não entra na avaliação</span>'
+      +'</div></div>';
+  });
+  h+='</div>';
+
+  h+='<div style="background:#f8fafc;border:1px solid #e5e9f0;border-radius:12px;padding:12px 16px;margin-top:12px;font-size:.64rem;color:#64748b;line-height:1.8">'
+    +'<b style="color:#0d1f35">Por que não há nota nem ranking.</b> As áreas têm mistura de clientes, tamanhos e turnos diferentes; comparar supervisores entre si gera discussão sobre metodologia em vez de ação. Cada um é comparado com o próprio período anterior. E quatro indicadores separados dizem mais do que uma média, que esconderia qual deles caiu.<br>'
+    +'<b style="color:#0d1f35">Chegada ao posto</b> = tempo entre a abertura do posto (campo Jornada) e a chegada do supervisor (horário do BDV). Posto com mais de um turno usa o turno que estava rodando na hora da chegada. Chegada antes de o posto abrir fica fora da média.<br>'
+    +'<b style="color:#0d1f35">Faltas que cobriu</b> conta as faltas de contrato da área em que houve cobertura registrada no mesmo cliente e dia — mesma aproximação da Saúde do Cliente.</div>';
+  el.innerHTML=h;
+}
 function sauCor(n){ return n<50?"#dc2626" : n<70?"#f59e0b" : "#16a34a"; }
 function sauTend(a,b){
   if(a===b)return '<span style="color:#94a3b8;font-weight:800">■ '+a+' vs '+b+'</span>';

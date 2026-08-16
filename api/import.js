@@ -222,6 +222,9 @@ module.exports = async function handler(req, res) {
     await fetch(`${SUPABASE_URL}/rest/v1/rpc/atualizar_hist_cliente`, {
       method: "POST", headers, body: "{}"
     });
+    await fetch(`${SUPABASE_URL}/rest/v1/rpc/atualizar_hist_supervisor`, {
+      method: "POST", headers, body: "{}"
+    });
   } catch (e) { /* idem */ }
 
   const row = inserted[0] || null;
