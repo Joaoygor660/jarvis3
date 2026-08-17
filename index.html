@@ -2301,7 +2301,9 @@ function perAplica(p){
   const t=maxReal||max||new Date();
   if(p==="today"){ST.sd=t;ST.ed=t;}
   else if(p==="week"){const x=new Date(t);x.setDate(x.getDate()-6);ST.sd=x;ST.ed=t;}
-  else if(p==="month"){const x=new Date(t);x.setDate(x.getDate()-30);ST.sd=x;ST.ed=t;}
+  // "Mes" = do dia 1 do mes corrente ate a ancora. Era 30 dias corridos, que
+  // em 17/08 comecava em 18/07 e misturava dois meses.
+  else if(p==="month"){ST.sd=new Date(t.getFullYear(),t.getMonth(),1);ST.ed=t;}
   // "custom" preserva o intervalo atual: os campos de data abrem preenchidos
   // com ele e o usuario ajusta antes de aplicar.
   const f=document.getElementById("dtF"),g=document.getElementById("dtT");
@@ -2323,7 +2325,8 @@ function perLabel(){
     const hoje=ymd(e)===ymd(new Date());
     return "Grupo ServCamp · "+(hoje?"Hoje":"Último dia com movimento")+" · "+f(e);
   }
-  const nome={week:"Últimos 7 dias",month:"Últimos 30 dias"}[ST.period]||"Período";
+  const nome={week:"Últimos 7 dias",
+              month:"Mês de "+s.toLocaleDateString("pt-BR",{month:"long"})}[ST.period]||"Período";
   return "Grupo ServCamp · "+nome+" · "+(ymd(s)===ymd(e)?f(e):f(s)+" a "+f(e));
 }
 function setPeriod(p,btn){
