@@ -2254,6 +2254,22 @@ function comPF(){
   return r;
 }
 function comSetTipo(t){COM_FTIPO=t;comRenderAll();}
+/* Janela de "mes" unica do modulo Comercial.
+   Ancora no mes do FIM do periodo filtrado (ou hoje, quando nao ha filtro) e
+   devolve o mes INTEIRO, com o anterior para comparativo.
+   Existe porque card e detalhe divergiam: o card da Diretoria contava so agosto
+   (7 propostas) e o modal aberto por ele seguia o intervalo do filtro inteiro
+   (27), listando propostas de julho sob o titulo "no Mes". Um numero que o
+   proprio detalhe contradiz nao serve para levar a reuniao. */
+function comMesRef(){
+  const r=ST.ed||ST.sd||new Date();
+  return {ini:new Date(r.getFullYear(),r.getMonth(),1),
+          fim:new Date(r.getFullYear(),r.getMonth()+1,0,23,59,59),
+          antIni:new Date(r.getFullYear(),r.getMonth()-1,1),
+          antFim:new Date(r.getFullYear(),r.getMonth(),0,23,59,59)};
+}
+function comNoMes(d,M){if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=M.ini&&x<=M.fim;}
+function comNoMesAnt(d,M){if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=M.antIni&&x<=M.antFim;}
 function rhEntF(){return gFil(RH_ENT,"data_entrevista",{area:false});}
 function rhDesF(){return gFil(RH_DES,"data_desligamento",{});}
 function rhResF(){return gFil(RH_RES,"data_oportunidade",{});}
@@ -5780,8 +5796,9 @@ function comFiltrados(){
 /* ── Modal de detalhe dos cards (clique para ver os dados) ── */
 function comDet(kind){
   const P=comPF();
-  const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1);
-  const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
+  const hoje=new Date(),_M=comMesRef();
+  const noMes=d=>comNoMes(d,_M);
+  const _mes=" · "+_M.ini.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
   const hd=["Cliente","Tipo","Contato","Cidade","Valor","Status","Envio","Parado","Chance","Resp."];
   const det=p=>[p.nome||"—",p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.contato||"—",p.cidade||"—",fmtBRL(p.valor),p.status||"—",p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—",comDiasParado(p)+"d",comChance(p)+"%",(p.responsavel||"—").split(" ")[0]];
   const soma=arr=>COM_VALORES?fmtBRL0(arr.reduce((s,p)=>s+(Number(p.valor)||0),0)):arr.length+" proposta(s)";
@@ -5794,18 +5811,18 @@ function comDet(kind){
     title="💰 Receita em Negociação — "+soma(arr);rows=arr.sort((a,b)=>(Number(b.valor)||0)-(Number(a.valor)||0)).map(det);
   }else if(kind==="fechadaMes"){
     const arr=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em));
-    title="🏆 Fechadas no Mês — "+soma(arr);
+    title="🏆 Fechadas no Mês"+_mes+" — "+soma(arr);
     headers=["Cliente","Tipo","Cidade","Serviço","Valor","Envio","Fechamento","Dias p/ fechar","Resp."];
     rows=arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",p.servico||"—",fmtBRL(p.valor),p.data_envio_proposta?rhFmt(p.data_envio_proposta):"—",rhFmt(p.fechado_em),comDias(p),(p.responsavel||"—").split(" ")[0]]);
   }else if(kind==="perdidaMes"){
     const arr=P.filter(p=>p.status==="PERDIDO"&&noMes(p.atualizado_em||p.criado_em));
-    title="📉 Perdidas no Mês — "+soma(arr);
+    title="📉 Perdidas no Mês"+_mes+" — "+soma(arr);
     headers=["Cliente","Tipo","Cidade","Valor","Origem","Motivo da perda","Resp."];
     rows=arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",fmtBRL(p.valor),p.origem_lead||"—",p.motivo_perda||"—",(p.responsavel||"—").split(" ")[0]]);
   }else if(kind==="conversao"){
     const arr=P.filter(p=>noMes(p.data_envio_proposta));
     const fec=arr.filter(p=>p.status==="FECHADO").length;
-    title=`🎯 Conversão do Mês — ${fec} fechada(s) de ${arr.length} enviada(s)`;
+    title=`🎯 Conversão do Mês${_mes} — ${fec} fechada(s) de ${arr.length} enviada(s)`;
     rows=arr.sort((a,b)=>(a.status==="FECHADO"?-1:1)-(b.status==="FECHADO"?-1:1)).map(det);
   }else if(kind==="ticket"){
     const arr=P.filter(p=>p.status==="FECHADO");
@@ -5829,10 +5846,10 @@ function comDet(kind){
     ];
   }else if(kind==="envMes"){
     const arr=P.filter(p=>noMes(p.data_envio_proposta));
-    title="📨 Propostas Enviadas no Mês — "+soma(arr);rows=arr.map(det);
+    title="📨 Propostas Enviadas no Mês"+_mes+" — "+soma(arr);rows=arr.map(det);
   }else if(kind==="visitasMes"){
     const arr=P.filter(p=>noMes(p.ultima_visita));
-    title="🏠 Clientes Visitados no Mês";
+    title="🏠 Clientes Visitados no Mês"+_mes;
     headers=["Cliente","Tipo","Cidade","Valor","Status","Últ. visita","Total visitas","Resp."];
     rows=arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",fmtBRL(p.valor),p.status,rhFmt(p.ultima_visita),p.visitas||0,(p.responsavel||"—").split(" ")[0]]);
   }else if(kind==="tempo"){
@@ -5851,9 +5868,9 @@ function comDet(kind){
 /* ── Dashboard superior: cards com sparkline + comparativo ── */
 function comRenderCards(){
   const el=document.getElementById("cp-kpis");if(!el)return;
-  const hoje=new Date(),mIni=new Date(hoje.getFullYear(),hoje.getMonth(),1),mAntIni=new Date(hoje.getFullYear(),hoje.getMonth()-1,1),mAntFim=new Date(hoje.getFullYear(),hoje.getMonth(),0,23,59,59);
-  const noMes=d=>{if(!d)return false;if(ST.sd||ST.ed)return inR(String(d).slice(0,10));const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mIni;};
-  const noMesAnt=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T12:00:00");return x>=mAntIni&&x<=mAntFim;};
+  const hoje=new Date(),_M=comMesRef();
+  const noMes=d=>comNoMes(d,_M);
+  const noMesAnt=d=>comNoMesAnt(d,_M);
   const P=comPF();
   // "aberta" = proposta enviada aguardando desfecho · "negociação" = tratativa em curso
   const abertas=P.filter(p=>p.status==="PROPOSTA");
@@ -8632,12 +8649,9 @@ function comDashRender(){
   // desse período, de modo que rótulo, números e meta falem do mesmo mês.
   // Antes o rótulo saía de new Date() enquanto os números seguiam o intervalo do
   // filtro: o painel anunciava "agosto" contando propostas enviadas em julho.
-  const _ref=ST.ed||ST.sd||hoje;
-  const mIni=new Date(_ref.getFullYear(),_ref.getMonth(),1);
-  const mFim=new Date(_ref.getFullYear(),_ref.getMonth()+1,0,23,59,59);
-  const mAntIni=new Date(_ref.getFullYear(),_ref.getMonth()-1,1),mAntFim=new Date(_ref.getFullYear(),_ref.getMonth(),0,23,59,59);
-  const noMes=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mIni&&x<=mFim;};
-  const noMesAnt=d=>{if(!d)return false;const x=new Date(String(d).slice(0,10)+"T00:00:00");return x>=mAntIni&&x<=mAntFim;};
+  const _M=comMesRef(),mIni=_M.ini,mFim=_M.fim;
+  const noMes=d=>comNoMes(d,_M);
+  const noMesAnt=d=>comNoMesAnt(d,_M);
   const P=comPF();
   const envMes=P.filter(p=>noMes(p.data_envio_proposta)),envAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
   const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em)),fecAnt=P.filter(p=>p.status==="FECHADO"&&noMesAnt(p.fechado_em));
