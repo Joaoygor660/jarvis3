@@ -832,11 +832,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="fb">
     <div class="fg"><span class="fl">Período</span>
       <div class="pg">
-        <button class="pi active" onclick="setPeriod('all',this)">Todos</button>
-        <button class="pi" onclick="setPeriod('today',this)">Hoje</button>
-        <button class="pi" onclick="setPeriod('week',this)">Semana</button>
-        <button class="pi" onclick="setPeriod('month',this)">Mês</button>
-        <button class="pi" onclick="setPeriod('custom',this)">Personalizado</button>
+        <button class="pi active" data-per="today" onclick="setPeriod('today',this)">Hoje</button>
+        <button class="pi" data-per="week" onclick="setPeriod('week',this)">Semana</button>
+        <button class="pi" data-per="month" onclick="setPeriod('month',this)">Mês</button>
+        <button class="pi" data-per="custom" onclick="setPeriod('custom',this)">Período</button>
       </div>
       <div class="dc" id="dCust">
         <input type="date" class="di" id="dtF" onchange="applyD()">
@@ -2194,7 +2193,7 @@ function toggleSb(){const sb=document.getElementById("sidebar"),ov=document.getE
 const _origNavTo=typeof navTo==="function"?navTo:null;
 document.querySelectorAll(".ni").forEach(el=>{const orig=el.getAttribute("onclick");el.addEventListener("click",()=>{if(window.innerWidth<=768){document.getElementById("sidebar").classList.remove("open");document.getElementById("mobOverlay").classList.remove("show");}});});
 </script><script>
-const ST={period:"all",turno:"TODOS",area:"",pg:"visao",tpg:{faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1},ps:15,sd:null,ed:null};
+const ST={period:"today",turno:"TODOS",area:"",pg:"visao",tpg:{faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1},ps:15,sd:null,ed:null};
 let CH={},F={},_detAct={},_detRows={},_detSubAct={};
 const pd=s=>s?new Date(s+"T00:00:00"):null;
 const ymd=d=>d?d.toISOString().split("T")[0]:"";
@@ -2291,24 +2290,49 @@ function filterAll(){
   };
 }
 
-function setPeriod(p,btn){
-  document.querySelectorAll(".fb .pg:first-of-type .pi").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
-  document.getElementById("dCust").classList.toggle("show",p==="custom");
-  const{min,max,maxReal}=getRange();
-  // Âncora de "hoje": o dia mais recente que JÁ OCORREU e tem movimento.
-  // Não serve usar a data de hoje pura: a planilha costuma subir com atraso
-  // (hoje pode não ter nada) e ainda traz OS agendadas para os próximos dias.
+/* Define o intervalo do periodo escolhido SEM redesenhar. Existe separado do
+   setPeriod porque a carga da planilha precisa aplicar o periodo padrao antes de
+   montar a tela, e nao depois. */
+function perAplica(p){
+  ST.period=p;
+  const{max,maxReal}=getRange();
+  // Ancora de "hoje": o dia mais recente que JA OCORREU e tem movimento.
+  // Nao serve a data de hoje pura: a planilha costuma subir com atraso (hoje
+  // pode nao ter nada) e ainda traz OS agendadas para os proximos dias.
   // Qualquer um dos dois casos aterrissava num dia vazio, com tudo zerado.
   const t=maxReal||max||new Date();
   if(p==="today"){ST.sd=t;ST.ed=t;}
-  else if(p==="week"){const s=new Date(t);s.setDate(s.getDate()-6);ST.sd=s;ST.ed=t;}
-  else if(p==="month"){const s=new Date(t);s.setDate(s.getDate()-30);ST.sd=s;ST.ed=t;}
-  else{ST.sd=min;ST.ed=max;}
-  if(p!=="custom"){document.getElementById("dtF").value=ymd(ST.sd);document.getElementById("dtT").value=ymd(ST.ed);}
+  else if(p==="week"){const x=new Date(t);x.setDate(x.getDate()-6);ST.sd=x;ST.ed=t;}
+  else if(p==="month"){const x=new Date(t);x.setDate(x.getDate()-30);ST.sd=x;ST.ed=t;}
+  // "custom" preserva o intervalo atual: os campos de data abrem preenchidos
+  // com ele e o usuario ajusta antes de aplicar.
+  const f=document.getElementById("dtF"),g=document.getElementById("dtT");
+  if(f&&ST.sd)f.value=ymd(ST.sd);
+  if(g&&ST.ed)g.value=ymd(ST.ed);
+  document.querySelectorAll(".fb .pg:first-of-type .pi").forEach(b=>b.classList.toggle("active",b.dataset.per===p));
+  const d=document.getElementById("dCust");if(d)d.classList.toggle("show",p==="custom");
+}
+/* Rotulo do periodo: diz a data que a tela esta REALMENTE mostrando.
+   Antes saia sempre o intervalo inteiro da base, entao a tela anunciava
+   "18/07 a 17/08" com o filtro em Mes e nao havia como saber o que estava no ar. */
+function perLabel(){
+  const s=ST.sd,e=ST.ed;
+  if(!s||!e)return "Grupo ServCamp";
+  const f=d=>d.toLocaleDateString("pt-BR");
+  if(ST.period==="today"){
+    // A ancora e o ultimo dia com movimento. Quando a planilha esta atrasada
+    // esse dia NAO e hoje, e chamar de "Hoje" seria mentira.
+    const hoje=ymd(e)===ymd(new Date());
+    return "Grupo ServCamp · "+(hoje?"Hoje":"Último dia com movimento")+" · "+f(e);
+  }
+  const nome={week:"Últimos 7 dias",month:"Últimos 30 dias"}[ST.period]||"Período";
+  return "Grupo ServCamp · "+nome+" · "+(ymd(s)===ymd(e)?f(e):f(s)+" a "+f(e));
+}
+function setPeriod(p,btn){
+  perAplica(p);
   rpg();refresh();
 }
-function applyD(){ST.sd=pd(document.getElementById("dtF").value);ST.ed=pd(document.getElementById("dtT").value);rpg();refresh();}
+function applyD(){ST.period="custom";ST.sd=pd(document.getElementById("dtF").value);ST.ed=pd(document.getElementById("dtT").value);rpg();refresh();}
 function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.classList.remove("active"));btn.classList.add("active");ST.turno=t;rpg();refresh();}
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
@@ -2433,8 +2457,7 @@ function navTo(p,btn){
   document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
   document.getElementById("pg-"+p)?.classList.add("active");
   document.getElementById("pgTitle").textContent=PTITLES[p]||p;
-  const s=ST.sd,e=ST.ed;
-  if(s&&e)document.getElementById("pgSub").textContent=`Grupo ServCamp · ${s.toLocaleDateString("pt-BR")} – ${e.toLocaleDateString("pt-BR")}`;
+  document.getElementById("pgSub").textContent=perLabel();
   if(["faltas","coberturas","postos","os","fts","dispo","restec","hrextra","checklist"].includes(p)){rTbl(p);updSecCharts(p);}
   else if(p==="ativos"){renderAtivos();}
   else if(p==="clientes"){renderClientes();}
@@ -2458,8 +2481,7 @@ function navTo(p,btn){
 
 function refresh(){
   filterAll();
-  const s=ST.sd,e=ST.ed;
-  if(s&&e)document.getElementById("pgSub").textContent=`Grupo ServCamp · ${s.toLocaleDateString("pt-BR")} – ${e.toLocaleDateString("pt-BR")}`;
+  document.getElementById("pgSub").textContent=perLabel();
   updVG();updOC();
   // guias de banco (RH, Comercial, painéis e módulos novos) reagem ao filtro
   const _rer={
@@ -4380,10 +4402,7 @@ function _checkDataFreshness(){
 }
 function refreshAll(){
   populateAreas();
-  const{min,max}=getRange();
-  ST.sd=min;ST.ed=max;
-  if(min&&document.getElementById("dtF"))document.getElementById("dtF").value=ymd(min);
-  if(max&&document.getElementById("dtT"))document.getElementById("dtT").value=ymd(max);
+  perAplica(ST.period||"today"); // abre sempre no dia de hoje
   ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
   refresh();
   updVGCharts();
@@ -4429,10 +4448,7 @@ function handleUp(evt){
 }
 function renderAfterLoad(){
   populateAreas();
-  const{min,max}=getRange();
-  ST.sd=min;ST.ed=max;
-  if(min&&document.getElementById("dtF"))document.getElementById("dtF").value=ymd(min);
-  if(max&&document.getElementById("dtT"))document.getElementById("dtT").value=ymd(max);
+  perAplica(ST.period||"today"); // abre sempre no dia de hoje
   refresh();
   updVGCharts();
   updateStatusLabel();
