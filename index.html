@@ -871,12 +871,11 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     </div>
     <div class="det-panel" id="det-vg"><div class="det-hdr" id="det-vg-hdr"><span class="det-title" id="det-vg-title"></span><button class="det-close" onclick="closeDet('vg')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-vg-body"></div><div class="det-sub" id="det-vg-sub"></div></div></div>
     <!-- OPERACIONAL: o dia a dia da operação, na ordem que o João definiu em
-         17/08 — duas fileiras de quatro, e Suspensão / Abandono fechando.
-         Ele não citou Suspensão na ordem nem pediu para removê-la, então ficou
-         por último.
+         17/08 — duas fileiras de quatro.
          Saíram daqui: Coberturas, OS Avulsos e (em 17/08) Faltas Contrato,
-         Faltas Reserva e Faltas Departamento. O card Faltas já traz o total, e
-         a quebra por tipo continua na guia Faltas. -->
+         Faltas Reserva, Faltas Departamento e Suspensão / Abandono. O card
+         Faltas já traz o total, e a quebra por tipo continua na guia Faltas;
+         suspensão e abandono seguem em Funcionários Ativos e Reservas Técnicas. -->
     <div class="vg-sec">
       <div class="vg-sec-lbl vg-s-op"><span class="i">🔧</span>Operacional</div>
       <div class="oc-row oc-row-op">
@@ -888,7 +887,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div class="oc c2" id="ocTMR" onclick="navTo('coberturas',null)"><div class="oc-ic">⏱️</div><div class="oc-lb">Resposta na Cobertura</div><div class="oc-v" id="ocTMRV">—</div><div class="oc-sb" id="ocTMRSub">abertura → chegada</div></div>
         <div class="oc c8 oc-t-warn" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div></div>
         <div class="oc c7" id="ocJust" onclick="navTo('postos',null)"><div class="oc-ic">⚠️</div><div class="oc-lb">Justif. Postos Descobertos</div><div class="oc-duo"><span class="oc-v" id="ocJustV">—</span><span class="d2" id="ocJustS">—</span></div><div class="oc-sb" id="ocJustSub">justificados · sem justificativa</div></div>
-        <div class="oc c8 oc-t-warn" id="ocSusp" onclick="navTo('restec',null)"><div class="oc-ic">⛔</div><div class="oc-lb">Suspensão / Abandono</div><div class="oc-duo"><span class="oc-v" id="ocSuspV">—</span><span class="d2" id="ocSuspA">—</span></div><div class="oc-sb" id="ocSuspSub">suspensos · abandono</div></div>
       </div>
     </div>
 
@@ -2529,7 +2527,6 @@ function updOC(){
   vgEfetivoTendencia();
   vgCardHoraExtra();
   vgFaltasTendencia();
-  vgCardSuspensao();
   vgCardTempoResposta();
   vgCardJustificativa();
   vgCardAcompanhamento();
@@ -2882,25 +2879,6 @@ function vgCardTempoConversa(){
 }
 /* ═════════ CARDS NOVOS DA VISÃO GERAL ═════════ */
 
-/* Suspensão e abandono.
-   ATENÇÃO ao que cada número é, porque não vêm do mesmo lugar:
-     · abandono  → pessoas com LOCAL = ABANDONO em Funcionários Ativos
-     · suspensão → motivo SUSPENSÃO em Reservas Técnicas
-   O João pediu os dois "da guia Funcionários Ativos", mas suspensão não existe
-   lá: o campo SITUACAO só tem EFETIVO, COBERTURA e FT. Fica declarado no
-   subtítulo para ninguém achar que saíram da mesma fonte. */
-function vgCardSuspensao(){
-  const el=document.getElementById("ocSuspV");if(!el)return;
-  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
-  const aband=(D.ativos||[]).filter(r=>String(r.LOCAL||"").toUpperCase().indexOf("ABANDONO")>=0).length;
-  const susp=(D.restec||[]).filter(r=>String(r.MOTIVO||"").toUpperCase().indexOf("SUSPEN")>=0).length;
-  el.textContent=susp;
-  document.getElementById("ocSuspA").textContent=aband;
-  document.getElementById("ocSuspSub").innerHTML=
-    '<b>'+susp+'</b> suspenso(s) · <b>'+aband+'</b> em abandono';
-  const c=document.getElementById("ocSusp");
-  if(c)c.title="Suspensão vem de Reservas Técnicas (motivo SUSPENSÃO). Abandono vem de Funcionários Ativos (posto ABANDONO).";
-}
 
 /* Tempo de resposta na cobertura — o mesmo número da guia Coberturas.
    Reaproveita bdvRespostas(), que já trata o posto com mais de um turno e
