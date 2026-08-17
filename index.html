@@ -386,19 +386,6 @@ html[data-theme="dark"] .oc-forte .oc-sb{color:#fca5a5!important;}
 .oc-sb{font-size:.56rem;color:var(--g400);}
 .oc-alert .oc-lb{color:#ef4444!important;}.oc-alert .oc-v{color:#ef4444!important;}
 .oc-alert::before{background:#ef4444!important;}
-/* SUBNAV */
-.snav{display:flex;background:var(--wh);border-radius:var(--r);border:1px solid var(--g200);padding:3px;margin-bottom:13px;overflow-x:auto;box-shadow:var(--sh);}
-.snav::-webkit-scrollbar{height:0;}
-.snt{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:.71rem;font-weight:500;color:var(--g500);cursor:pointer;transition:all .15s;white-space:nowrap;border:none;background:none;}
-.snt:hover{background:var(--b0);color:var(--b7);}
-.snt.active{background:var(--b7);color:#fff;font-weight:700;}
-.snt-n{padding:1px 5px;border-radius:8px;font-size:.57rem;font-weight:700;}
-.snt:not(.active) .snt-n{background:var(--b7);color:#fff;}
-.snt.active .snt-n{background:rgba(255,255,255,.25);}
-.snt-alert{color:#ef4444!important;}
-.snt-alert:hover{background:#fff5f5!important;color:#dc2626!important;}
-.snt-alert.active{background:#dc2626!important;color:#fff!important;}
-.snt-alert .snt-n{background:#ef4444!important;}
 /* CHARTS */
 .cc{background:var(--wh);border-radius:var(--r);padding:15px;box-shadow:var(--sh);border:1px solid var(--g200);}
 .ch{display:flex;align-items:center;gap:7px;margin-bottom:3px;}
@@ -605,7 +592,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   .vg-kpis{grid-template-columns:1fr!important;}
   .sec-kpis{grid-template-columns:repeat(2,1fr)!important;}
   .oc-row{grid-template-columns:repeat(2,1fr)!important;gap:6px;}
-  .snav{flex-wrap:nowrap;overflow-x:auto;}
   .sk-v{font-size:1.4rem!important;}
   .vg-kpis .sk-v{font-size:1.6rem!important;}
   .det-body{flex-direction:column;}
@@ -960,15 +946,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div class="oc-txt"><div class="oc-lb">Visitas Comerciais</div><div class="oc-v" id="ocVisComV">—</div><div class="oc-sb" id="ocVisComSub">no mês</div></div>
         </div>
       </div>
-    </div>
-    <div class="snav">
-      <button class="snt active" onclick="navTo('visao',null)">📊 Visão Geral</button>
-      <button class="snt" onclick="navTo('faltas',null)">🚫 Faltas <span class="snt-n" id="sn1">0</span></button>
-      <button class="snt" onclick="navTo('coberturas',null)">🛡️ Coberturas <span class="snt-n" id="sn2">0</span></button>
-      <button class="snt" onclick="navTo('postos',null)">⚠️ Postos <span class="snt-n" id="sn3">0</span></button>
-      <button class="snt" onclick="navTo('os',null)">📋 OS <span class="snt-n" id="sn4">0</span></button>
-      <button class="snt" onclick="navTo('fts',null)">🔄 FTS <span class="snt-n" id="sn5">0</span></button>
-      <button class="snt snt-alert" onclick="navTo('dispo',null)">🔴 Sem Alocação <span class="snt-n" id="sn6">0</span></button>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px;flex-wrap:wrap">
       <span style="font-size:.92rem;font-weight:900;color:#0d1f35">📄 Relatório Diário</span>
@@ -2467,7 +2444,7 @@ function refresh(){
   filterAll();
   const s=ST.sd,e=ST.ed;
   if(s&&e)document.getElementById("pgSub").textContent=`Grupo ServCamp · ${s.toLocaleDateString("pt-BR")} – ${e.toLocaleDateString("pt-BR")}`;
-  updVG();updOC();updSN();
+  updVG();updOC();
   // guias de banco (RH, Comercial, painéis e módulos novos) reagem ao filtro
   const _rer={
     saude:()=>sauRender(), supdesemp:()=>supLoad(),
@@ -3114,14 +3091,6 @@ function _postoVagoClick(){
     +'<button onclick="document.getElementById(\'posto-vago-modal\').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem">✕</button></div>'
     +html;
   document.body.appendChild(div);
-}
-function updSN(){
-  document.getElementById("sn1").textContent=F.faltas.length;
-  document.getElementById("sn2").textContent=F.cobertura.length;
-  document.getElementById("sn3").textContent=F.justif.length;
-  document.getElementById("sn4").textContent=F.os.length;
-  document.getElementById("sn5").textContent=F.fts.length;
-  document.getElementById("sn6").textContent=F.dispo.length;
 }
 
 // CHART UTILS
