@@ -1524,7 +1524,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div style="background:linear-gradient(135deg,#eef6ff,#f5f0ff);border:1px solid #dbe7fb;border-radius:12px;padding:12px 18px;margin-bottom:14px;font-size:.72rem;color:#334155">
       <b style="color:#1e4d8c">🤖 Cadência automática:</b> ao registrar o envio da proposta → <b>Msg 1 no WhatsApp</b> (imediata) · <b>Msg 2</b> e-mail +2 dias · <b>Msg 3</b> +5d · <b>Msg 4</b> +10d · <b>Msg 5</b> +20d (pausa a negociação). Para <b>interromper</b>: clique em ✅ quando o cliente responder, ou feche/perca a proposta.
     </div>
-    <div id="cp-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div id="cp-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
     </div>
@@ -5901,9 +5901,6 @@ function comRenderCards(){
   const card=(kind,ic,icBg,lbl,val,cmpHtml,spark,tip)=>`<div class="cvk" style="cursor:pointer" onclick="comDet('${kind}')" title="${tip||""} — clique para ver os registros"><div class="cvk-ic" style="background:${icBg}">${ic}</div><div class="cvk-lb">${lbl}</div><div class="cvk-v">${val}</div><div class="cvk-cmp">${cmpHtml}</div>${spark}</div>`;
   el.innerHTML=
     card("propmes","📝","#f0f9ff","Propostas feitas no mês",propMes.length,cmp(propMes.length,propMesAnt.length)+' <span style="color:#94a3b8">· '+_mesLbl+'</span>',comSpark(sEnv,"#0284c7"),"Propostas com data de envio dentro do mês mostrado")+
-    (COM_VALORES
-      ?card("negociacao","💰","#e6fffb","Receita em negociação",fmtBRL0(negR),`<span style="color:#64748b">${negoc.length} em tratativa</span>`,"","Status NEGOCIAÇÃO ou CONTRATO")
-      :card("negociacao","🤝","#e6fffb","Em negociação",negoc.length,'<span style="color:#64748b">tratativa em curso</span>',"","Status NEGOCIAÇÃO ou CONTRATO"))+
     (COM_VALORES
       ?card("ticket","📈","#fff7ed","Ticket médio",ticket===null?"—":fmtBRL0(ticket),`<span style="color:#64748b">${fechTodas.length} contratos</span>`,"","Média dos contratos fechados")
       :card("visitasMes","🏠","#fff7ed","Visitas no mês",visMes,cmp(visMes,visAnt),"","Clientes visitados no mês"))+
