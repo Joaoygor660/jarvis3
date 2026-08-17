@@ -5865,6 +5865,9 @@ function comRenderCards(){
   const hoje=new Date(),_M=comMesRef();
   const noMes=d=>comNoMes(d,_M);
   const noMesAnt=d=>comNoMesAnt(d,_M);
+  // O card diz a janela que esta contando: ela vem do mes do FIM do periodo
+  // filtrado, entao nem sempre e o mes corrente.
+  const _mesLbl=_M.ini.toLocaleDateString("pt-BR")+" a "+_M.fim.toLocaleDateString("pt-BR");
   const P=comPF();
   // "aberta" = proposta enviada aguardando desfecho · "negociação" = tratativa em curso
   const abertas=P.filter(p=>p.status==="PROPOSTA");
@@ -5897,22 +5900,13 @@ function comRenderCards(){
   };
   const card=(kind,ic,icBg,lbl,val,cmpHtml,spark,tip)=>`<div class="cvk" style="cursor:pointer" onclick="comDet('${kind}')" title="${tip||""} — clique para ver os registros"><div class="cvk-ic" style="background:${icBg}">${ic}</div><div class="cvk-lb">${lbl}</div><div class="cvk-v">${val}</div><div class="cvk-cmp">${cmpHtml}</div>${spark}</div>`;
   el.innerHTML=
-    card("abertas","📂","#eef6ff","Propostas abertas",abertas.length,'<span style="color:#64748b">enviadas, aguardando desfecho</span>',comSpark(sEnv,"#2e8fef"),"Status PROPOSTA — ainda não viraram negociação")+
-    card("propmes","📝","#f0f9ff","Propostas no mês",propMes.length,cmp(propMes.length,propMesAnt.length),comSpark(sEnv,"#0284c7"),"Propostas feitas no período")+
+    card("propmes","📝","#f0f9ff","Propostas feitas no mês",propMes.length,cmp(propMes.length,propMesAnt.length)+' <span style="color:#94a3b8">· '+_mesLbl+'</span>',comSpark(sEnv,"#0284c7"),"Propostas com data de envio dentro do mês mostrado")+
     (COM_VALORES
       ?card("negociacao","💰","#e6fffb","Receita em negociação",fmtBRL0(negR),`<span style="color:#64748b">${negoc.length} em tratativa</span>`,"","Status NEGOCIAÇÃO ou CONTRATO")
       :card("negociacao","🤝","#e6fffb","Em negociação",negoc.length,'<span style="color:#64748b">tratativa em curso</span>',"","Status NEGOCIAÇÃO ou CONTRATO"))+
     (COM_VALORES
-      ?card("fechadaMes","🏆","#ecfdf5","Receita fechada (mês)",fmtBRL0(fecMesR),cmp(fecMesR,fecAntR),comSpark(sFec,"#16a34a"),"Contratos fechados no mês")
-      :card("fechadaMes","🏆","#ecfdf5","Fechadas (mês)",fecMes.length,cmp(fecMes.length,fecAnt.length),comSpark(sFec,"#16a34a"),"Contratos fechados no mês"))+
-    (COM_VALORES
-      ?card("perdidaMes","📉","#fef2f2","Receita perdida (mês)",fmtBRL0(perMesR),cmp(perMesR,perMesR&&fecAntR?fecAntR:null,true),comSpark(sPer,"#dc2626"),"Propostas perdidas no mês")
-      :card("perdidaMes","📉","#fef2f2","Perdidas (mês)",perMes.length,'<span style="color:#64748b">no mês atual</span>',comSpark(sPer,"#dc2626"),"Propostas perdidas no mês"))+
-    card("conversao","🎯","#f5f3ff","Taxa de conversão",taxa===null?"—":taxa+"%",taxaAnt===null?'<span style="color:#94a3b8">— vs mês ant.</span>':cmp(taxa,taxaAnt),"","Fechadas ÷ enviadas no mês")+
-    (COM_VALORES
       ?card("ticket","📈","#fff7ed","Ticket médio",ticket===null?"—":fmtBRL0(ticket),`<span style="color:#64748b">${fechTodas.length} contratos</span>`,"","Média dos contratos fechados")
       :card("visitasMes","🏠","#fff7ed","Visitas no mês",visMes,cmp(visMes,visAnt),"","Clientes visitados no mês"))+
-    card("semresp","⏳","#fefce8","Sem resposta",semResp.length,`<span style="color:${semResp.length?"#d97706":"#16a34a"}">${semResp.length?"aguardando retorno":"tudo respondido"}</span>`,"","Propostas enviadas aguardando retorno do cliente")+
     card("criticas","🚨","#fef2f2","Críticas / Ações hoje",`${criticas.length} <span style="font-size:.85rem;color:#64748b">/ ${acoesPend}</span>`,`<span style="color:${criticas.length?"#dc2626":"#16a34a"}">${criticas.length?"exigem contato":"sob controle"} · ${acoesPend} ações pendentes</span>`,comSpark(sVis,"#7c3aed"),"Negociações paradas + próximas ações vencidas");
 }
 function comRenderFiltros(){
