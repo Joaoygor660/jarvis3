@@ -295,18 +295,25 @@ html[data-theme="dark"] .status.stale{background:#3a1414!important;border-color:
 .vg-s-op{background:#dbeafe;color:#1d4ed8;}
 .vg-s-sac{background:#dcfce7;color:#15803d;}
 .vg-s-rh{background:#ede9fe;color:#6d28d9;}
+.vg-s-com{background:#e0f2fe;color:#0369a1;}
+html[data-theme="dark"] .vg-s-com{background:#0c2a3f;color:#7dd3fc;}
 html[data-theme="dark"] .vg-s-op{background:#16304f;color:#93c5fd;}
 html[data-theme="dark"] .vg-s-sac{background:#12281c;color:#86efac;}
 html[data-theme="dark"] .vg-s-rh{background:#241a3d;color:#c4b5fd;}
 /* 9 colunas: é o número exato de cards que a seção operacional tem hoje,
    então tudo cabe numa fileira só. Entrando um nono card, ele desce sozinho
    e vale rever este número. */
-.oc-row.oc-row-op{grid-template-columns:repeat(9,1fr);}
-@media(max-width:1200px){.oc-row.oc-row-op{grid-template-columns:repeat(4,1fr);}}
+.oc-row.oc-row-op{grid-template-columns:repeat(6,1fr);}
+@media(max-width:1400px){.oc-row.oc-row-op{grid-template-columns:repeat(4,1fr);}}
+@media(max-width:900px){.oc-row.oc-row-op{grid-template-columns:repeat(2,1fr);}}
 /* SAC e RH têm um card só: ocupar a largura toda deixaria um retângulo vazio
    gigante, então limita-se a largura e o card vira horizontal. */
 .oc-row.oc-row-1{grid-template-columns:minmax(0,340px);}
 .oc-row.oc-row-2{grid-template-columns:repeat(2,minmax(0,340px));}
+.oc-row.oc-row-3{grid-template-columns:repeat(3,minmax(0,320px));}
+.oc-row.oc-row-4{grid-template-columns:repeat(4,minmax(0,260px));}
+@media(max-width:1100px){.oc-row.oc-row-4{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:1100px){.oc-row.oc-row-3{grid-template-columns:1fr;}}
 @media(max-width:820px){.oc-row.oc-row-2{grid-template-columns:1fr;}}
 .oc-h{display:flex;align-items:center;gap:13px;}
 .oc-h .oc-ic{font-size:1.5rem;margin:0;flex:none;}
@@ -774,7 +781,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-cat-b">
       <div class="ni" data-pg="supdesemp" onclick="navTo('supdesemp',this)"><span class="ni-ic">🧭</span><span>Desempenho do Supervisor</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="saude" onclick="navTo('saude',this)"><span class="ni-ic">🩺</span><span>Sa&uacute;de do Cliente</span><span class="nib nib-novo">NOVO</span></div>
-      <div class="ni" data-pg="audqual" data-perm="qual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span><span class="nib nib-novo">NOVO</span></div>
+      <!-- DESATIVADA 17/08 a pedido do Joao: nao ha responsavel definido pela auditoria.
+           A pagina e o codigo continuam existindo; para religar, descomente esta linha.
+      <div class="ni" data-pg="audqual" data-perm="qual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span></div>
+      -->
       <div class="ni" data-pg="ligacoes" data-perm="qual" onclick="navTo('ligacoes',this)"><span class="ni-ic">📞</span><span>Ligações &amp; Acompanhamento</span><span class="nib nib-novo">NOVO</span></div>
     </div>
   </div>
@@ -785,7 +795,10 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="ni" data-pg="rhentrev" data-perm="rh" onclick="navTo('rhentrev',this)"><span class="ni-ic">🗣️</span><span>Entrevistas &amp; Funil</span></div>
       <div class="ni" data-pg="rhdesl" data-perm="rh" onclick="navTo('rhdesl',this)"><span class="ni-ic">🚪</span><span>Desligamentos</span></div>
       <div class="ni" data-pg="rhres" data-perm="rh" onclick="navTo('rhres',this)"><span class="ni-ic">🔄</span><span>Reservas → Efetivação</span></div>
+      <!-- DESATIVADA 17/08 a pedido do Joao: modulo sem uso no momento.
+           A pagina e o codigo continuam existindo; para religar, descomente esta linha.
       <div class="ni" data-pg="rhtrein" data-perm="rh" onclick="navTo('rhtrein',this)"><span class="ni-ic">🎓</span><span>Treinamentos</span></div>
+      -->
     </div>
   </div>
   <div class="nav-cat" data-cat="com">
@@ -887,13 +900,16 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
         <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
         <div class="oc c8 oc-t-warn" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div></div>
+        <div class="oc c8 oc-t-warn" id="ocSusp" onclick="navTo('restec',null)"><div class="oc-ic">⛔</div><div class="oc-lb">Suspensão / Abandono</div><div class="oc-duo"><span class="oc-v" id="ocSuspV">—</span><span class="d2" id="ocSuspA">—</span></div><div class="oc-sb" id="ocSuspSub">suspensos · abandono</div></div>
+        <div class="oc c2" id="ocTMR" onclick="navTo('coberturas',null)"><div class="oc-ic">⏱️</div><div class="oc-lb">Resposta na Cobertura</div><div class="oc-v" id="ocTMRV">—</div><div class="oc-sb" id="ocTMRSub">abertura → chegada</div></div>
+        <div class="oc c7" id="ocJust" onclick="navTo('postos',null)"><div class="oc-ic">⚠️</div><div class="oc-lb">Postos Descobertos</div><div class="oc-duo"><span class="oc-v" id="ocJustV">—</span><span class="d2" id="ocJustS">—</span></div><div class="oc-sb" id="ocJustSub">justificados · sem justificativa</div></div>
         <div class="oc c6 oc-alert" id="ocDispo" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb" id="oc6s">registros</div><div class="oc-cmp" id="oc6c"></div></div>
       </div>
     </div>
 
     <div class="vg-sec">
       <div class="vg-sec-lbl vg-s-sac"><span class="i">🎧</span>SAC</div>
-      <div class="oc-row oc-row-2">
+      <div class="oc-row oc-row-3">
         <div class="oc c1 oc-h" id="ocLig" onclick="vgAbrir('ligacoes','qual')">
           <div class="oc-ic">📞</div>
           <div class="oc-txt"><div class="oc-lb">Ligações</div><div class="oc-duo"><span class="oc-v" id="ocLigV">—</span><span class="d2" id="ocLigP">—</span></div><div class="oc-sb" id="ocLigSub">feitas · pendentes</div></div>
@@ -902,15 +918,46 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
           <div class="oc-ic">⏱️</div>
           <div class="oc-txt"><div class="oc-lb">Tempo de Conversa</div><div class="oc-v" id="ocTMCV">—</div><div class="oc-sb" id="ocTMCSub">média por ligação</div></div>
         </div>
+        <div class="oc c2 oc-h" id="ocAcomp" onclick="vgAbrir('ligacoes','qual')">
+          <div class="oc-ic">📈</div>
+          <div class="oc-txt"><div class="oc-lb">Acompanhamento pós-contato</div><div class="oc-duo"><span class="oc-v" id="ocAcompF">—</span><span class="d2" id="ocAcompQ">—</span></div><div class="oc-sb" id="ocAcompSub">firmes · quebraram</div></div>
+        </div>
       </div>
     </div>
 
     <div class="vg-sec">
       <div class="vg-sec-lbl vg-s-rh"><span class="i">💼</span>RH</div>
-      <div class="oc-row oc-row-1">
+      <div class="oc-row oc-row-4">
         <div class="oc c2 oc-h" id="ocVagas" onclick="vgAbrir('rhvagas','rh')">
           <div class="oc-ic">💼</div>
           <div class="oc-txt"><div class="oc-lb">Vagas Abertas</div><div class="oc-v" id="ocVagasV">—</div><div class="oc-sb" id="ocVagasSub">total, sem filtro de data</div></div>
+        </div>
+        <div class="oc c3 oc-h" id="ocEntrev" onclick="vgAbrir('rhentrev','rh')">
+          <div class="oc-ic">🗣️</div>
+          <div class="oc-txt"><div class="oc-lb">Entrevistas</div><div class="oc-v" id="ocEntrevV">—</div><div class="oc-sb" id="ocEntrevSub">no mês</div></div>
+        </div>
+        <div class="oc c8 oc-h" id="ocDesl" onclick="vgAbrir('rhdesl','rh')">
+          <div class="oc-ic">🚪</div>
+          <div class="oc-txt"><div class="oc-lb">Desligamentos</div><div class="oc-v" id="ocDeslV">—</div><div class="oc-sb" id="ocDeslSub">no mês</div></div>
+        </div>
+        <div class="oc c4 oc-h" id="ocTurn" onclick="vgAbrir('rhdesl','rh')">
+          <div class="oc-ic">🔁</div>
+          <div class="oc-txt"><div class="oc-lb">Turnover</div><div class="oc-v" id="ocTurnV">—</div><div class="oc-sb" id="ocTurnSub">no mês</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMERCIAL: números do mês corrente, não do filtro de período -->
+    <div class="vg-sec">
+      <div class="vg-sec-lbl vg-s-com"><span class="i">🤝</span>Comercial</div>
+      <div class="oc-row oc-row-2">
+        <div class="oc c1 oc-h" id="ocProp" onclick="vgAbrir('compro','com')">
+          <div class="oc-ic">📨</div>
+          <div class="oc-txt"><div class="oc-lb">Propostas Enviadas</div><div class="oc-v" id="ocPropV">—</div><div class="oc-sb" id="ocPropSub">no mês</div></div>
+        </div>
+        <div class="oc c3 oc-h" id="ocVisCom" onclick="vgAbrir('compro','com')">
+          <div class="oc-ic">🏠</div>
+          <div class="oc-txt"><div class="oc-lb">Visitas Comerciais</div><div class="oc-v" id="ocVisComV">—</div><div class="oc-sb" id="ocVisComSub">no mês</div></div>
         </div>
       </div>
     </div>
@@ -2470,13 +2517,18 @@ function updOC(){
   vgEfetivoTendencia();
   vgCardHoraExtra();
   vgFaltasTendencia();
+  vgCardSuspensao();
+  vgCardTempoResposta();
+  vgCardJustificativa();
+  vgCardAcompanhamento();
+  vgCardsMes();
 }
 
 /* ═════════ CARDS DA VISÃO GERAL — semáforo, comparativo e cards novos ═════════
    VG guarda o que vem de carona no batimento de 15s (/api/hq). Os números
    aparecem para todos; o CLIQUE só navega para quem tem a permissão da guia,
    porque as guias seguem restritas. */
-var VG={vagasAbertas:null,ligContatos:[],histEfetivo:[],saudeClientes:[]};
+var VG={vagasAbertas:null,ligContatos:[],histEfetivo:[],saudeClientes:[],extras:null};
 /* acima deste número o Sem Alocação passa a pulsar. O card soma os dias que a
    planilha trouxer, então o limiar é aproximado de propósito — mexer aqui é a
    forma de calibrar sem tocar em mais nada. */
@@ -2815,6 +2867,120 @@ function vgCardTempoConversa(){
   const semDur=noPeriodo.length-comDur.length;
   if(sub)sub.innerHTML="média de <b>"+comDur.length+"</b> ligação(ões) · "+tot+" min no total"
     +(semDur?'<br><span style="color:#b45309">'+semDur+" sem duração informada</span>":"");
+}
+/* ═════════ CARDS NOVOS DA VISÃO GERAL ═════════ */
+
+/* Suspensão e abandono.
+   ATENÇÃO ao que cada número é, porque não vêm do mesmo lugar:
+     · abandono  → pessoas com LOCAL = ABANDONO em Funcionários Ativos
+     · suspensão → motivo SUSPENSÃO em Reservas Técnicas
+   O João pediu os dois "da guia Funcionários Ativos", mas suspensão não existe
+   lá: o campo SITUACAO só tem EFETIVO, COBERTURA e FT. Fica declarado no
+   subtítulo para ninguém achar que saíram da mesma fonte. */
+function vgCardSuspensao(){
+  const el=document.getElementById("ocSuspV");if(!el)return;
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  const aband=(D.ativos||[]).filter(r=>String(r.LOCAL||"").toUpperCase().indexOf("ABANDONO")>=0).length;
+  const susp=(D.restec||[]).filter(r=>String(r.MOTIVO||"").toUpperCase().indexOf("SUSPEN")>=0).length;
+  el.textContent=susp;
+  document.getElementById("ocSuspA").textContent=aband;
+  document.getElementById("ocSuspSub").innerHTML=
+    '<b>'+susp+'</b> suspenso(s) · <b>'+aband+'</b> em abandono';
+  const c=document.getElementById("ocSusp");
+  if(c)c.title="Suspensão vem de Reservas Técnicas (motivo SUSPENSÃO). Abandono vem de Funcionários Ativos (posto ABANDONO).";
+}
+
+/* Tempo de resposta na cobertura — o mesmo número da guia Coberturas.
+   Reaproveita bdvRespostas(), que já trata o posto com mais de um turno e
+   descarta chegada anterior à abertura. Duplicar a conta aqui abriria espaço
+   para os dois números divergirem. */
+function vgCardTempoResposta(){
+  const el=document.getElementById("ocTMRV");if(!el)return;
+  if(typeof bdvRespostas!=="function"){el.textContent="—";return;}
+  let R;try{R=bdvRespostas();}catch(e){el.textContent="—";return;}
+  const sub=document.getElementById("ocTMRSub");
+  if(!R.itens.length){
+    el.textContent="—";
+    if(sub)sub.innerHTML=R.semJornada?'<span style="color:#b45309">reenvie a planilha</span>':"sem medição no período";
+    return;
+  }
+  const med=R.itens.reduce((t,x)=>t+x.delta,0)/R.itens.length;
+  el.textContent=(typeof _bdvHM==="function")?_bdvHM(med):Math.round(med)+"min";
+  if(sub)sub.innerHTML=R.itens.length+" cobertura(s) medida(s)";
+}
+
+/* Postos descobertos: com justificativa e sem.
+   Metade dos registros vem com o motivo em branco — é essa a divisão que o
+   painel mostra. Sem justificativa não é "menos grave": é o caso em que
+   ninguém registrou o porquê, e é o que o cliente cobra na reunião. */
+function vgCardJustificativa(){
+  const el=document.getElementById("ocJustV");if(!el)return;
+  const lista=(typeof F!=="undefined"&&F&&F.justif)?F.justif:[];
+  const comJ=lista.filter(r=>String(r.MOTIVO||"").trim()!=="").length;
+  const semJ=lista.length-comJ;
+  el.textContent=comJ;
+  document.getElementById("ocJustS").textContent=semJ;
+  document.getElementById("ocJustSub").innerHTML=
+    '<b>'+comJ+'</b> justificado(s) · <b>'+semJ+'</b> sem justificativa';
+  const c=document.getElementById("ocJust");
+  if(c)c.classList.toggle("oc-t-alert", semJ>comJ);
+}
+
+/* Acompanhamento pós-contato: quantos seguem firmes e quantos voltaram a faltar.
+   Por MÊS CORRENTE, não pelo filtro de período — o João pediu assim, e o
+   subtítulo diz o mês para ninguém achar que respeita o filtro do topo. */
+function vgCardAcompanhamento(){
+  const el=document.getElementById("ocAcompF");if(!el)return;
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA)?DASHBOARD_DATA:{};
+  const hoje=new Date();
+  const ini=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  const contatos=(VG.ligContatos||[]);
+  // último contato de cada pessoa dentro do mês
+  const ult={};
+  contatos.forEach(c=>{
+    const n=(c.colaborador||"").trim();if(!n)return;
+    const d=String(c.data_contato||c.criado_em||"").slice(0,10);if(!d)return;
+    const dt=new Date(d+"T12:00:00");
+    if(dt<ini||dt>hoje)return;
+    if(!ult[n]||d>ult[n])ult[n]=d;
+  });
+  const faltas=D.faltas||[];
+  let firme=0,quebrou=0;
+  Object.keys(ult).forEach(n=>{
+    const dc=new Date(ult[n]+"T12:00:00");
+    const voltou=faltas.some(f=>(f.NOME||"").trim()===n&&f.DATA&&new Date(String(f.DATA).slice(0,10)+"T12:00:00")>dc);
+    if(voltou)quebrou++;else firme++;
+  });
+  el.textContent=firme;
+  document.getElementById("ocAcompQ").textContent=quebrou;
+  const mes=ini.toLocaleDateString("pt-BR",{month:"long"});
+  document.getElementById("ocAcompSub").innerHTML=
+    '<b>'+firme+'</b> firme(s) · <b>'+quebrou+'</b> quebrou · '+mes;
+}
+
+/* RH e Comercial: números do mês corrente, vindos prontos do banco.
+   Não respeitam o filtro de período de propósito — contratação e proposta se
+   acompanham por mês fechado. O subtítulo carrega o mês para deixar isso claro. */
+function vgCardsMes(){
+  const x=VG.extras;if(!x)return;
+  // recebe a BASE do id: o valor e <base>V e o subtitulo e <base>Sub. Antes eu
+  // montava o subtitulo como <base>V+"Sub", que nao existe no HTML - os
+  // subtitulos ficariam parados em "no mes" para sempre.
+  const set=(base,val,sub)=>{
+    const e=document.getElementById(base+"V");if(!e)return;
+    e.textContent=val;
+    const t=document.getElementById(base+"Sub");if(t&&sub)t.textContent=sub;
+  };
+  const m=x.mes||"";
+  set("ocEntrev", x.entrevistas!=null?x.entrevistas:"—", "no mês "+m);
+  set("ocDesl",   x.desligamentos!=null?x.desligamentos:"—", "no mês "+m);
+  set("ocTurn",   x.turnover!=null?(String(x.turnover).replace(".",",")+"%"):"—",
+      x.desligamentos+" de "+x.efetivo+" · mês "+m);
+  set("ocProp",   x.propostas!=null?x.propostas:"—", "no mês "+m);
+  set("ocVisCom", x.visitas!=null?x.visitas:"—", "no mês "+m);
+  // turnover alto no mês acende o card
+  const t=document.getElementById("ocTurn");
+  if(t)t.classList.toggle("oc-t-warn", (x.turnover||0) >= 3);
 }
 function vgCardVagas(){
   const v=document.getElementById("ocVagasV");if(!v)return;
@@ -8949,6 +9115,7 @@ function rtPing(){
       if(j.vagasAbertas!==undefined&&j.vagasAbertas!==null)VG.vagasAbertas=j.vagasAbertas;
       if(Array.isArray(j.ligContatos))VG.ligContatos=j.ligContatos;
       if(Array.isArray(j.histEfetivo))VG.histEfetivo=j.histEfetivo;
+      if(j.extras&&typeof j.extras==="object"){VG.extras=j.extras;if(ST.pg==="visao")vgCardsMes();}
       if(Array.isArray(j.saudeClientes)){
         // Só redesenha se algo REALMENTE mudou. Antes o batimento reconstruía a
         // tela a cada 15s mesmo com dados idênticos, e isso destruía o mapa —
