@@ -5838,7 +5838,7 @@ function comDet(kind){
       ...crit.map(p=>["🚨 Crítica: "+comDiasParado(p)+"d parado",p.nome,fmtBRL(p.valor),p.status,(COM_PAC_ICON[p.proxima_acao_tipo]||"")+" "+(p.proxima_acao||"—"),p.proxima_acao_data?rhFmt(p.proxima_acao_data):"—",(p.responsavel||"—").split(" ")[0]]),
       ...acoes.filter(p=>!crit.includes(p)).map(p=>["⏰ Ação vencida",p.nome,fmtBRL(p.valor),p.status,(COM_PAC_ICON[p.proxima_acao_tipo]||"")+" "+(p.proxima_acao||"—"),rhFmt(p.proxima_acao_data),(p.responsavel||"—").split(" ")[0]])
     ];
-  }else if(kind==="envMes"){
+  }else if(kind==="envMes"||kind==="propmes"){
     const arr=P.filter(p=>noMes(p.data_envio_proposta));
     title="📨 Propostas Enviadas no Mês"+_mes+" — "+soma(arr);rows=arr.map(det);
   }else if(kind==="visitasMes"){
@@ -5869,8 +5869,8 @@ function comRenderCards(){
   // "aberta" = proposta enviada aguardando desfecho · "negociação" = tratativa em curso
   const abertas=P.filter(p=>p.status==="PROPOSTA");
   const negoc=P.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status));
-  const propMes=P.filter(p=>noMes(p.data_envio_proposta||p.criado_em));
-  const propMesAnt=P.filter(p=>noMesAnt(p.data_envio_proposta||p.criado_em));
+  const propMes=P.filter(p=>noMes(p.data_envio_proposta));
+  const propMesAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
   const negR=negoc.reduce((s,p)=>s+(Number(p.valor)||0),0);
   const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em)),fecMesR=fecMes.reduce((s,p)=>s+(Number(p.valor)||0),0);
   const fecAnt=P.filter(p=>p.status==="FECHADO"&&noMesAnt(p.fechado_em)),fecAntR=fecAnt.reduce((s,p)=>s+(Number(p.valor)||0),0);
