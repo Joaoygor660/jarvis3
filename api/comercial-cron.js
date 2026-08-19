@@ -14,6 +14,7 @@
 //   MAIL_PASS  — senha da conta de e-mail
 //   MAIL_HOST  — opcional (padrão email-ssl.com.br) | MAIL_PORT — opcional (padrão 465)
 //   MAIL_FROM  — opcional, nome exibido (padrão "Grupo Serv Camp <MAIL_USER>")
+//   MAIL_BCC   — opcional, cópia oculta de toda a cadência (padrão: MAIL_USER)
 //   CRON_SECRET — a Vercel manda como Bearer automaticamente
 
 const nodemailer = require("nodemailer");
@@ -134,8 +135,21 @@ async function enviarEmail(tx, para, assunto, html) {
   const MailComposer = require("nodemailer/lib/mail-composer");
   const raw = await new MailComposer(opcoes).compile().build();
 
+  // Cópia oculta para a caixa do Comercial.
+  //
+  // O Outlook da Gabriela guarda os enviados só na máquina dela (a pasta de
+  // enviados do servidor não recebe nada desde 11/08), então ela não enxerga o
+  // que a cadência manda em nome dela. A cópia cai na caixa de ENTRADA, que o
+  // Outlook mostra normalmente, e resolve isso sem depender do TI.
+  //
+  // Vai no ENVELOPE, não num cabeçalho Bcc: como enviamos os bytes prontos
+  // (raw), um cabeçalho Bcc seria entregue junto e o cliente veria a cópia —
+  // deixaria de ser oculta. No envelope, o destinatário nunca sabe.
+  const bcc = process.env.MAIL_BCC || process.env.MAIL_USER;
+  const destinos = bcc && bcc !== para ? [para, bcc] : [para];
+
   const info = await tx.sendMail({
-    envelope: { from: process.env.MAIL_USER, to: para },
+    envelope: { from: process.env.MAIL_USER, to: destinos },
     raw
   });
   const enviou = !!(info && info.accepted && info.accepted.length);

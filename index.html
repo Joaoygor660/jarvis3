@@ -303,6 +303,36 @@ html[data-theme="dark"] .vg-s-rh{background:#241a3d;color:#c4b5fd;}
 /* 9 colunas: é o número exato de cards que a seção operacional tem hoje,
    então tudo cabe numa fileira só. Entrando um nono card, ele desce sozinho
    e vale rever este número. */
+/* RADAR DA CADENCIA */
+.rdr{background:#0b1a2e;border:1px solid #16304f;border-radius:14px;padding:16px 18px;margin-bottom:14px;color:#dbeafe;}
+.rdr-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.rdr-t{font-size:.82rem;font-weight:900;color:#fff;letter-spacing:.2px;}
+.rdr-sub{font-size:.66rem;color:#7ea6d4;}
+.rdr-kpi{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap;}
+.rdr-k{background:#12263f;border:1px solid #1d3f63;border-radius:8px;padding:5px 11px;text-align:center;min-width:66px;}
+.rdr-k b{display:block;font-size:1rem;font-weight:900;line-height:1.1;}
+.rdr-k span{font-size:.56rem;text-transform:uppercase;letter-spacing:.05em;color:#7ea6d4;}
+.rdr-avis{background:#3a2a08;border:1px solid #7c5e12;color:#fde68a;border-radius:9px;padding:8px 13px;font-size:.68rem;margin-bottom:11px;}
+.rdr-lista{display:flex;flex-direction:column;gap:5px;max-height:330px;overflow-y:auto;}
+.rdr-lista::-webkit-scrollbar{width:7px;}
+.rdr-lista::-webkit-scrollbar-thumb{background:#1d3f63;border-radius:4px;}
+.rdr-l{display:flex;align-items:center;gap:11px;padding:7px 10px;border-radius:9px;background:#0f2036;cursor:pointer;transition:background .15s;}
+.rdr-l:hover{background:#16304f;}
+.rdr-nm{font-size:.71rem;font-weight:700;color:#fff;width:190px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rdr-tr{display:flex;align-items:center;flex-shrink:0;}
+.rdr-n{width:15px;height:15px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:900;}
+.rdr-n-ok{background:#16a34a;color:#052e16;}
+.rdr-n-wa{background:#25d366;color:#052e16;}
+.rdr-n-nx{background:#0b1a2e;border:2px solid #f59e0b;color:#f59e0b;animation:rdrPulse 1.6s ease-in-out infinite;}
+.rdr-n-late{background:#0b1a2e;border:2px solid #ef4444;color:#ef4444;animation:rdrPulse 1s ease-in-out infinite;}
+.rdr-n-off{background:#16304f;color:#3f6796;}
+.rdr-n-dead{background:#16304f;color:#3f6796;opacity:.4;}
+.rdr-bar{width:14px;height:2px;background:#1d3f63;flex-shrink:0;}
+.rdr-bar-on{background:#16a34a;}
+.rdr-st{font-size:.64rem;margin-left:auto;text-align:right;white-space:nowrap;padding-left:10px;}
+@keyframes rdrPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(1.18);}}
+.rdr-leg{display:flex;gap:13px;flex-wrap:wrap;font-size:.6rem;color:#7ea6d4;margin-top:10px;padding-top:9px;border-top:1px solid #16304f;}
+.rdr-leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle;}
 .oc-row.oc-row-op{grid-template-columns:repeat(4,1fr);}
 @media(max-width:1100px){.oc-row.oc-row-op{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:900px){.oc-row.oc-row-op{grid-template-columns:repeat(2,1fr);}}
@@ -1529,6 +1559,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
     </div>
+    <div id="cp-radar"></div>
     <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 24px;margin-bottom:14px">
       <div id="cp-form-title" style="font-size:.85rem;font-weight:800;color:#0d1f35;margin-bottom:14px">➕ Nova Proposta</div>
       <form onsubmit="return comSalvar(event)" id="cpForm">
@@ -5813,7 +5844,81 @@ function comLoad(){
   comWaStatus();
   comFetchAll().then(comRenderAll).catch(err=>{console.error("Erro comercial:",err);if(kb)kb.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar. Verifique a conexão.</div>';});
 }
-function comRenderAll(){comRenderCards();comRenderView();}
+/* A agenda da Vercel esta PAUSADA desde 11/08 (vercel.json com "crons": []).
+   O radar precisa dizer isso, senao exibe datas futuras como se fossem promessas.
+   TROQUE PARA true NO MESMO COMMIT em que a agenda voltar. */
+const COM_CAD_AGENDA_ATIVA=false;
+
+/* Radar da Cadencia — o que ja saiu, o que parou e o que sai a seguir.
+   Reaproveita comCadParada() e comCadProxima(), as MESMAS funcoes que o painel
+   de cadencia de cada proposta usa. Recalcular aqui abriria espaco para os dois
+   discordarem — o erro que ja apareceu tres vezes neste projeto.
+   Cada trilha tem 5 nos: Msg 1 e WhatsApp, Msg 2 a 5 sao e-mail. */
+function comRadar(){
+  const el=document.getElementById("cp-radar");if(!el)return;
+  const P=(COM_P||[]).filter(p=>p.data_envio_proposta);
+  if(!P.length){el.innerHTML="";return;}
+  const linhas=P.map(p=>{
+    const parada=comCadParada(p), prox=comCadProxima(p);
+    return {p:p,parada:parada,prox:prox,etapa:p.cadencia_etapa||0,
+            urg:prox?(prox.atrasada?0:1):(parada?3:2),
+            quando:prox?prox.data.getTime():Infinity};
+  }).sort((a,b)=>a.urg-b.urg||a.quando-b.quando);
+
+  const vencidas=linhas.filter(l=>l.prox&&l.prox.atrasada).length;
+  const agendadas=linhas.filter(l=>l.prox&&!l.prox.atrasada).length;
+  const paradas=linhas.filter(l=>l.parada).length;
+  const fim=linhas.filter(l=>l.etapa>=5).length;
+  const esc=t=>String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+
+  const no=(l,n)=>{
+    let cls="rdr-n-off",tit="Msg "+n+" ainda nao enviada";
+    if(n<=l.etapa){cls=(n===1?"rdr-n-wa":"rdr-n-ok");tit="Msg "+n+" enviada";}
+    else if(l.prox&&l.prox.etapa===n){
+      cls=l.prox.atrasada?"rdr-n-late":"rdr-n-nx";
+      tit="Msg "+n+" prevista para "+l.prox.data.toLocaleDateString("pt-BR")+(l.prox.atrasada?" (vencida)":"");
+    }else if(l.parada){cls="rdr-n-dead";tit="Msg "+n+" nao sai: "+l.parada;}
+    return '<span class="rdr-n '+cls+'" title="'+esc(tit)+'">'+n+'</span>';
+  };
+  const trilha=l=>{let h="";for(let n=1;n<=5;n++){
+    if(n>1)h+='<span class="rdr-bar'+(n<=l.etapa?" rdr-bar-on":"")+'"></span>';
+    h+=no(l,n);}return h;};
+  const situacao=l=>{
+    if(l.parada)return '<span style="color:#64748b">&#9208; '+esc(l.parada)+'</span>';
+    if(!l.prox)return '<span style="color:#64748b">&mdash;</span>';
+    const d=l.prox.data.toLocaleDateString("pt-BR");
+    return l.prox.atrasada
+      ? '<span style="color:#f87171;font-weight:700">Msg '+l.prox.etapa+' vencida &middot; '+d+'</span>'
+      : '<span style="color:#fbbf24">Msg '+l.prox.etapa+' em '+d+'</span>';
+  };
+
+  el.innerHTML='<div class="rdr">'+
+    '<div class="rdr-top"><span style="font-size:1.05rem">&#128225;</span>'+
+    '<div><div class="rdr-t">Radar da Cad&ecirc;ncia</div>'+
+    '<div class="rdr-sub">'+P.length+' proposta(s) na r&eacute;gua &middot; Msg 1 WhatsApp &middot; Msg 2 a 5 e-mail</div></div>'+
+    '<div class="rdr-kpi">'+
+      '<div class="rdr-k"><b style="color:#f87171">'+vencidas+'</b><span>vencidas</span></div>'+
+      '<div class="rdr-k"><b style="color:#fbbf24">'+agendadas+'</b><span>agendadas</span></div>'+
+      '<div class="rdr-k"><b style="color:#94a3b8">'+paradas+'</b><span>paradas</span></div>'+
+      '<div class="rdr-k"><b style="color:#4ade80">'+fim+'</b><span>r&eacute;gua fim</span></div>'+
+    '</div></div>'+
+    (COM_CAD_AGENDA_ATIVA?'':'<div class="rdr-avis"><b>&#9208; Agenda pausada.</b> '+
+      'Nada sai automaticamente. As datas abaixo s&atilde;o o que <i>sairia</i> se a agenda '+
+      'fosse religada &mdash; e as '+vencidas+' vencidas sairiam todas de uma vez.</div>')+
+    '<div class="rdr-lista">'+linhas.map(l=>
+      '<div class="rdr-l" onclick="comTimeline('+l.p.id+')">'+
+      '<span class="rdr-nm" title="'+esc(l.p.nome)+'">'+esc(l.p.nome)+'</span>'+
+      '<span class="rdr-tr">'+trilha(l)+'</span>'+
+      '<span class="rdr-st">'+situacao(l)+'</span></div>').join("")+'</div>'+
+    '<div class="rdr-leg">'+
+      '<span><i style="background:#25d366"></i>WhatsApp enviado</span>'+
+      '<span><i style="background:#16a34a"></i>E-mail enviado</span>'+
+      '<span><i style="background:#0b1a2e;border:2px solid #f59e0b"></i>pr&oacute;xima</span>'+
+      '<span><i style="background:#0b1a2e;border:2px solid #ef4444"></i>vencida</span>'+
+      '<span><i style="background:#16304f"></i>n&atilde;o enviada</span>'+
+    '</div></div>';
+}
+function comRenderAll(){comRenderCards();comRadar();comRenderView();}
 function comSetStatusFiltro(s){COM_TBL_STATUS=s;comRenderView();}
 function comSetView(v){
   COM_VIEW=v;
