@@ -70,8 +70,19 @@ module.exports = async function handler(req, res) {
       const pastas = [];
       for (const m of lista) {
         let qtd = "?";
+        let ultima = null;
         try { const st = await client.status(m.path, { messages: true }); qtd = st.messages; } catch (e) {}
-        pastas.push({ pasta: m.path, especial: m.specialUse || null, assinada: m.subscribed !== false, mensagens: qtd });
+        if (qtd && qtd !== "?") {
+          try {
+            const lock = await client.getMailboxLock(m.path);
+            try {
+              for await (const msg of client.fetch(`${Math.max(1, qtd)}:*`, { envelope: true })) {
+                if (msg.envelope && msg.envelope.date) ultima = msg.envelope.date;
+              }
+            } finally { lock.release(); }
+          } catch (e) {}
+        }
+        pastas.push({ pasta: m.path, especial: m.specialUse || null, assinada: m.subscribed !== false, mensagens: qtd, ultima_mensagem: ultima });
       }
       // Mesma escolha que a cadência faz na hora de gravar o enviado.
       const porFlag = lista.find(m => (m.specialUse || "") === "\Sent");
