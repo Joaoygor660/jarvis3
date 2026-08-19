@@ -39,6 +39,62 @@ module.exports = async function handler(req, res) {
 
   const tKey = (req.query && req.query.t) || "propostas";
 
+  // GET ?imapdiag=1 → onde foram parar os e-mails enviados.
+  //
+  // Os 24 de 11/08 estão todos com arquivado_em preenchido: o APPEND no IMAP
+  // respondeu sucesso. Mesmo assim não aparecem no Outlook da Gabriela. Só há
+  // duas explicações — gravamos numa pasta que o Outlook dela não mostra, ou o
+  // Outlook dela não é IMAP (em POP3 a pasta de enviados é local da máquina e
+  // nada que o servidor grave aparece). Listar as pastas do servidor decide.
+  //
+  // Existe aqui, e não só no cron, porque no cron a chave é o CRON_SECRET e o
+  // João teria de montar um curl à mão. Aqui vale o login normal do sistema.
+  // É só leitura: não envia, não grava, não move nada. A resposta nunca traz a
+  // conta nem a senha.
+  if (req.method === "GET" && req.query && (req.query.imapdiag === "1" || req.query.imapdiag === "true")) {
+    if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
+      return res.status(200).json({ ok: false, motivo: "MAIL_USER/MAIL_PASS não configuradas." });
+    }
+    let client;
+    try {
+      const { ImapFlow } = require("imapflow");
+      client = new ImapFlow({
+        host: process.env.IMAP_HOST || process.env.MAIL_HOST || "email-ssl.com.br",
+        port: Number(process.env.IMAP_PORT || 993),
+        secure: true,
+        auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
+        logger: false
+      });
+      await client.connect();
+      const lista = await client.list();
+      const pastas = [];
+      for (const m of lista) {
+        let qtd = "?";
+        try { const st = await client.status(m.path, { messages: true }); qtd = st.messages; } catch (e) {}
+        pastas.push({ pasta: m.path, especial: m.specialUse || null, assinada: m.subscribed !== false, mensagens: qtd });
+      }
+      // Mesma escolha que a cadência faz na hora de gravar o enviado.
+      const porFlag = lista.find(m => (m.specialUse || "") === "\Sent");
+      const nomes = ["Sent","INBOX.Sent","Itens Enviados","INBOX.Itens Enviados",
+                     "Enviados","INBOX.Enviados","Sent Items","INBOX.Sent Items"];
+      let escolhida = porFlag ? porFlag.path : null;
+      if (!escolhida) for (const n of nomes) {
+        const m = lista.find(x => x.path.toLowerCase() === n.toLowerCase());
+        if (m) { escolhida = m.path; break; }
+      }
+      await client.logout();
+      return res.status(200).json({
+        ok: true,
+        servidor: process.env.IMAP_HOST || process.env.MAIL_HOST || "email-ssl.com.br",
+        pasta_onde_gravamos: escolhida,
+        pastas
+      });
+    } catch (e) {
+      try { if (client) await client.logout(); } catch (x) {}
+      return res.status(200).json({ ok: false, motivo: String((e && e.message) || e).slice(0, 300) });
+    }
+  }
+
   // GET ?wa=1 → a instância do WhatsApp do Comercial está conectada?
   //
   // A Evolution não tem sessão própria: ela é um aparelho pareado, como o
