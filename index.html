@@ -2254,6 +2254,19 @@ function comPF(){
   return r;
 }
 function comSetTipo(t){COM_FTIPO=t;comRenderAll();}
+/* Base para contar VISITA.
+   comPF() nao serve aqui. Ele aplica a regra do filtro global: proposta aberta
+   ignora o periodo, proposta FECHADA ou PERDIDA so entra se foi CRIADA dentro
+   dele. Resultado: a Gabriela visitou a Engenho Velho em 18/08, marcou o
+   contrato como perdido, e a visita sumiu de agosto — porque a proposta tinha
+   nascido em 22/07. Ganhar ou perder o negocio apagava o trabalho feito nele.
+   Visita e esforco: conta pela DATA DA VISITA, com qualquer desfecho.
+   O filtro de tipo (empresa/condominio) continua valendo, esse o usuario pediu. */
+function comVisBase(){
+  let r=COM_P||[];
+  if(COM_FTIPO)r=r.filter(p=>String(p.tipo_cliente||"").toUpperCase()===COM_FTIPO);
+  return r;
+}
 /* Janela de "mes" unica do modulo Comercial.
    Ancora no mes do FIM do periodo filtrado (ou hoje, quando nao ha filtro) e
    devolve o mes INTEIRO, com o anterior para comparativo.
@@ -5878,10 +5891,10 @@ function comDet(kind){
     const arr=P.filter(p=>noMes(p.data_envio_proposta));
     title="📨 Propostas Enviadas no Mês"+_mes+" — "+soma(arr);rows=arr.map(det);
   }else if(kind==="visitasMes"){
-    const arr=P.filter(p=>noMes(p.ultima_visita));
+    const arr=comVisBase().filter(p=>noMes(p.ultima_visita));
     title="🏠 Clientes Visitados no Mês"+_mes;
-    headers=["Cliente","Tipo","Cidade","Valor","Status","Últ. visita","Total visitas","Resp."];
-    rows=arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",fmtBRL(p.valor),p.status,rhFmt(p.ultima_visita),p.visitas||0,(p.responsavel||"—").split(" ")[0]]);
+    headers=["Cliente","Tipo","Cidade","Status","Últ. visita","Quem visitou","Total visitas"];
+    rows=arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"—",p.status,rhFmt(p.ultima_visita),p.visita_por||"— (não registrado)",p.visitas||0]);
   }else if(kind==="tempo"){
     const arr=P.filter(p=>p.status==="FECHADO"&&p.data_envio_proposta&&p.fechado_em);
     title="⏱️ Tempo de Fechamento (proposta → contrato)";
@@ -5921,7 +5934,8 @@ function comRenderCards(){
   const ticket=fechTodas.length?fechTodas.reduce((s,p)=>s+(Number(p.valor)||0),0)/fechTodas.length:null;
   const semResp=P.filter(p=>p.data_envio_proposta&&!p.respondido_em&&COM_ST_ATIVOS.includes(p.status));
   const criticas=P.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status)&&comDiasParado(p)>=5||COM_ST_ATIVOS.includes(p.status)&&comDiasParado(p)>=10&&(Number(p.valor)||0)>0);
-  const visMes=P.filter(p=>noMes(p.ultima_visita)).length,visAnt=P.filter(p=>noMesAnt(p.ultima_visita)).length;
+  const _vb=comVisBase();
+  const visMes=_vb.filter(p=>noMes(p.ultima_visita)).length,visAnt=_vb.filter(p=>noMesAnt(p.ultima_visita)).length;
   const acoesPend=P.filter(p=>p.proxima_acao_data&&COM_ST_ATIVOS.includes(p.status)&&String(p.proxima_acao_data).slice(0,10)<=ymd(hoje)).length;
   const sEnv=comSerieMensal(P,p=>p.data_envio_proposta,()=>1,6);
   const sFec=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
@@ -6256,8 +6270,9 @@ function _comPatch(id,patch,depois){
 function comVisita(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
   if(!confirm("Registrar 1 visita realizada em "+(x.nome||"")+" hoje?"))return;
-  comLogEvento(id,"Visita realizada ("+((x.visitas||0)+1)+"ª)","VISITA");
-  _comPatch(id,{visitas:(x.visitas||0)+1,ultima_visita:ymd(new Date())});
+  const quem=sessionStorage.getItem("userNome")||"";
+  comLogEvento(id,"Visita realizada ("+((x.visitas||0)+1)+"ª)"+(quem?" — por "+quem:""),"VISITA");
+  _comPatch(id,{visitas:(x.visitas||0)+1,ultima_visita:ymd(new Date()),visita_por:quem||null});
 }
 function comRespondeu(id){
   const x=COM_P.find(p=>p.id===id);if(!x)return;
@@ -8676,7 +8691,7 @@ function comDashRender(){
   const P=comPF();
   const envMes=P.filter(p=>noMes(p.data_envio_proposta)),envAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
   const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em)),fecAnt=P.filter(p=>p.status==="FECHADO"&&noMesAnt(p.fechado_em));
-  const visMes=P.filter(p=>noMes(p.ultima_visita));
+  const visMes=comVisBase().filter(p=>noMes(p.ultima_visita));
   const emp=envMes.filter(p=>p.tipo_cliente!=="CONDOMINIO").length,cond=envMes.filter(p=>p.tipo_cliente==="CONDOMINIO").length;
   const taxa=envMes.length?Math.round(fecMes.length/envMes.length*100):null;
   const taxaAnt=envAnt.length?Math.round(fecAnt.length/envAnt.length*100):null;
