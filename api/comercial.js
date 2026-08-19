@@ -85,7 +85,7 @@ module.exports = async function handler(req, res) {
         pastas.push({ pasta: m.path, especial: m.specialUse || null, assinada: m.subscribed !== false, mensagens: qtd, ultima_mensagem: ultima });
       }
       // Mesma escolha que a cadência faz na hora de gravar o enviado.
-      const porFlag = lista.find(m => (m.specialUse || "") === "\Sent");
+      const porFlag = lista.find(m => (m.specialUse || "") === "\\Sent");
       const nomes = ["Sent","INBOX.Sent","Itens Enviados","INBOX.Itens Enviados",
                      "Enviados","INBOX.Enviados","Sent Items","INBOX.Sent Items"];
       let escolhida = porFlag ? porFlag.path : null;
