@@ -8903,12 +8903,16 @@ function comDashRender(){
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📊 Propostas × Fechamentos — últimos 6 meses</div><div style="height:190px"><canvas id="cdEnvFec"></canvas></div></div>`;
   h+=`</div>`;
   /* ── FUNIL com R$ e conversão por etapa ── */
-  const funilAtivo=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO","FECHADO"].map(s=>{const arr=MB.filter(p=>p.status===s);_cdGuarda("funil",s,arr);return[s,arr.length,arr.reduce((t,p)=>t+(Number(p.valor)||0),0)];});
+  // COM_ST_ORDER traz os 8 status. A lista fixa de 6 deixava PERDIDO e PAUSADO
+  // de fora: em julho eram 11 de 29 propostas sumindo do funil sem aviso.
+  const funilAtivo=COM_ST_ORDER.map(s=>{const arr=MB.filter(p=>p.status===s);_cdGuarda("funil",s,arr);return[s,arr.length,arr.reduce((t,p)=>t+(Number(p.valor)||0),0)];});
   h+=`<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">`;
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔻 Funil Comercial <span style="font-size:.6rem;color:#94a3b8;font-weight:700">quantidade${COM_VALORES?" · valor":""} · conversão etapa a etapa</span></div>
     <div style="font-size:.76rem">${funilAtivo.map(([s,v,r],i)=>{
       const prev=i>0?funilAtivo[i-1][1]:null;
-      const convPct=prev?Math.round(v/prev*100):null;
+      // PERDIDO e PAUSADO sao desfecho, nao etapa: calcular "conversao" de
+      // FECHADO para PERDIDO daria um percentual sem significado nenhum.
+      const convPct=(prev&&["PERDIDO","PAUSADO"].indexOf(s)<0)?Math.round(v/prev*100):null;
       const wmax=Math.max(1,...funilAtivo.map(f=>f[1]));
       return`<div style="margin-bottom:9px;cursor:pointer" onclick="comDetMB('funil','${s}')"><div class="rd-bar-row"><span style="font-weight:700;color:${COM_ST_COLORS[s]}">${s} <span style="color:#94a3b8;font-weight:600">${COM_VALORES&&r?"· "+fmtBRL0(r):""}</span></span><b>${v}${convPct!==null&&prev?` <span style="font-size:.62rem;color:${convPct>=50?"#16a34a":"#f97316"}">(${convPct}%)</span>`:""}</b></div><div style="background:#eef2f7;border-radius:6px;height:10px"><div style="width:${Math.max(3,v/wmax*100)}%;height:10px;border-radius:6px;background:${COM_ST_COLORS[s]};transition:width .5s"></div></div></div>`;}).join("")}
     ${perMes.length?`<div style="font-size:.66rem;color:#dc2626;margin-top:6px">❌ ${perMes.length} perdida(s) no mês${COM_VALORES?` (${fmtBRL0(perMesR$)})`:""}</div>`:""}</div></div>`;
