@@ -800,8 +800,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="nav-cat" data-cat="gestao">
     <div class="nav-cat-h" onclick="navCatToggle('gestao')"><span class="nav-cat-t">📊 Gestão</span><span class="nav-cat-ar">▾</span></div>
     <div class="nav-cat-b">
-      <div class="ni" data-pg="supdesemp" onclick="navTo('supdesemp',this)"><span class="ni-ic">🧭</span><span>Desempenho do Supervisor</span><span class="nib nib-novo">NOVO</span></div>
-      <div class="ni" data-pg="saude" onclick="navTo('saude',this)"><span class="ni-ic">🩺</span><span>Sa&uacute;de do Cliente</span><span class="nib nib-novo">NOVO</span></div>
+      <div class="ni" data-pg="supdesemp" data-perm="admin" onclick="navTo('supdesemp',this)"><span class="ni-ic">🧭</span><span>Desempenho do Supervisor</span><span class="nib nib-novo">NOVO</span></div>
+      <div class="ni" data-pg="saude" data-perm="admin" onclick="navTo('saude',this)"><span class="ni-ic">🩺</span><span>Sa&uacute;de do Cliente</span><span class="nib nib-novo">NOVO</span></div>
       <!-- DESATIVADA 17/08 a pedido do Joao: nao ha responsavel definido pela auditoria.
            A pagina e o codigo continuam existindo; para religar, descomente esta linha.
       <div class="ni" data-pg="audqual" data-perm="qual" onclick="navTo('audqual',this)"><span class="ni-ic">✅</span><span>Auditoria de Qualidade</span></div>
