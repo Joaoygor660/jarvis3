@@ -872,6 +872,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <button class="pi" data-per="month" onclick="setPeriod('month',this)">Mês</button>
         <button class="pi" data-per="custom" onclick="setPeriod('custom',this)">Período</button>
       </div>
+      <div class="dc" id="dMes"><select class="di" id="mesSel" onchange="setMes(this.value)"></select></div>
       <div class="dc" id="dCust">
         <input type="date" class="di" id="dtF" onchange="applyD()">
         <span style="color:var(--g400);font-size:.75rem">→</span>
@@ -2227,7 +2228,7 @@ function toggleSb(){const sb=document.getElementById("sidebar"),ov=document.getE
 const _origNavTo=typeof navTo==="function"?navTo:null;
 document.querySelectorAll(".ni").forEach(el=>{const orig=el.getAttribute("onclick");el.addEventListener("click",()=>{if(window.innerWidth<=768){document.getElementById("sidebar").classList.remove("open");document.getElementById("mobOverlay").classList.remove("show");}});});
 </script><script>
-const ST={period:"today",turno:"TODOS",area:"",pg:"visao",tpg:{faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1},ps:15,sd:null,ed:null};
+const ST={period:"today",turno:"TODOS",area:"",pg:"visao",tpg:{faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1},ps:15,sd:null,ed:null,mesEscolhido:null};
 let CH={},F={},_detAct={},_detRows={},_detSubAct={};
 const pd=s=>s?new Date(s+"T00:00:00"):null;
 const ymd=d=>d?d.toISOString().split("T")[0]:"";
@@ -2340,6 +2341,28 @@ function filterAll(){
 /* Define o intervalo do periodo escolhido SEM redesenhar. Existe separado do
    setPeriod porque a carga da planilha precisa aplicar o periodo padrao antes de
    montar a tela, e nao depois. */
+/* Meses disponiveis para escolha.
+   So entram os meses que existem na planilha carregada. Oferecer o ano inteiro
+   deixaria o usuario escolher marco e ver tudo zerado, achando que o sistema
+   quebrou — quando na verdade a base nem cobre aquele periodo. */
+function mesOpcoes(){
+  const sel=document.getElementById("mesSel");if(!sel)return;
+  const{min,max,maxReal}=getRange();
+  if(!min||!max)return;
+  const fim=maxReal||max;
+  const lista=[];
+  let d=new Date(min.getFullYear(),min.getMonth(),1);
+  const ult=new Date(fim.getFullYear(),fim.getMonth(),1);
+  while(d<=ult){lista.push(new Date(d));d.setMonth(d.getMonth()+1);}
+  const atual=ST.mesEscolhido||ymd(new Date(fim.getFullYear(),fim.getMonth(),1)).slice(0,7);
+  sel.innerHTML=lista.reverse().map(x=>{
+    const v=x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0");
+    const nome=x.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+    return '<option value="'+v+'"'+(v===atual?" selected":"")+'>'+nome+'</option>';
+  }).join("");
+}
+/* Troca o mes exibido. */
+function setMes(v){ST.mesEscolhido=v||null;perAplica("month");rpg();refresh();}
 function perAplica(p){
   ST.period=p;
   const{max,maxReal}=getRange();
@@ -2352,7 +2375,17 @@ function perAplica(p){
   else if(p==="week"){const x=new Date(t);x.setDate(x.getDate()-6);ST.sd=x;ST.ed=t;}
   // "Mes" = do dia 1 do mes corrente ate a ancora. Era 30 dias corridos, que
   // em 17/08 comecava em 18/07 e misturava dois meses.
-  else if(p==="month"){ST.sd=new Date(t.getFullYear(),t.getMonth(),1);ST.ed=t;}
+  else if(p==="month"){
+    // Mes corrente vai do dia 1 ate a ancora; mes passado vai inteiro. Sem esse
+    // corte, julho terminaria em 31/07 e agosto tambem iria ate 31/08, exibindo
+    // um mes "cheio" que ainda nao aconteceu.
+    const esc=ST.mesEscolhido;
+    const ref=esc?new Date(Number(esc.slice(0,4)),Number(esc.slice(5,7))-1,1)
+                 :new Date(t.getFullYear(),t.getMonth(),1);
+    const fimMes=new Date(ref.getFullYear(),ref.getMonth()+1,0,23,59,59);
+    ST.sd=ref;ST.ed=fimMes>t?t:fimMes;
+    if(!esc)ST.mesEscolhido=ref.getFullYear()+"-"+String(ref.getMonth()+1).padStart(2,"0");
+  }
   // "custom" preserva o intervalo atual: os campos de data abrem preenchidos
   // com ele e o usuario ajusta antes de aplicar.
   const f=document.getElementById("dtF"),g=document.getElementById("dtT");
@@ -2360,6 +2393,8 @@ function perAplica(p){
   if(g&&ST.ed)g.value=ymd(ST.ed);
   document.querySelectorAll(".fb .pg:first-of-type .pi").forEach(b=>b.classList.toggle("active",b.dataset.per===p));
   const d=document.getElementById("dCust");if(d)d.classList.toggle("show",p==="custom");
+  const m=document.getElementById("dMes");
+  if(m){m.classList.toggle("show",p==="month");if(p==="month")mesOpcoes();}
 }
 /* Rotulo do periodo: diz a data que a tela esta REALMENTE mostrando.
    Antes saia sempre o intervalo inteiro da base, entao a tela anunciava
@@ -4432,6 +4467,7 @@ function _checkDataFreshness(){
 }
 function refreshAll(){
   populateAreas();
+  ST.mesEscolhido=null; // base nova: o mes escolhido antes pode nem existir
   perAplica(ST.period||"today"); // abre sempre no dia de hoje
   ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
   refresh();
@@ -4478,6 +4514,7 @@ function handleUp(evt){
 }
 function renderAfterLoad(){
   populateAreas();
+  ST.mesEscolhido=null; // base nova: o mes escolhido antes pode nem existir
   perAplica(ST.period||"today"); // abre sempre no dia de hoje
   refresh();
   updVGCharts();
