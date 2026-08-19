@@ -38,6 +38,46 @@ module.exports = async function handler(req, res) {
   }
 
   const tKey = (req.query && req.query.t) || "propostas";
+
+  // GET ?wa=1 → a instância do WhatsApp do Comercial está conectada?
+  //
+  // A Evolution não tem sessão própria: ela é um aparelho pareado, como o
+  // WhatsApp Web. Quando o celular fica sem rede ou alguém remove o pareamento,
+  // a instância cai e o envio da Msg 1 falha — e falha CALADO. Entre 22/07 e
+  // 18/08 foram 23 falhas, e 11 propostas nunca receberam a primeira mensagem
+  // sem que ninguém percebesse.
+  //
+  // Fica aqui em vez de virar /api/whatsapp porque o plano Hobby da Vercel
+  // permite no máximo 12 funções e já estamos nas 12.
+  if (req.method === "GET" && req.query && (req.query.wa === "1" || req.query.wa === "true")) {
+    const url = process.env.EVOLUTION_URL || "https://evolution-api-cizp.srv1815873.hstgr.cloud";
+    const inst = process.env.EVOLUTION_INSTANCE_COM || process.env.EVOLUTION_INSTANCE || "servcamp";
+    const apikey = process.env.EVOLUTION_APIKEY_COM || process.env.EVOLUTION_APIKEY;
+    if (!apikey) return res.status(200).json({ configurado: false, instancia: inst });
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 6000); // o painel não pode travar por causa disto
+      const r = await fetch(`${url}/instance/connectionState/${encodeURIComponent(inst)}`, {
+        headers: { apikey }, signal: ctrl.signal
+      });
+      clearTimeout(t);
+      const j = await r.json().catch(() => null);
+      // A Evolution responde { instance: { state: "open" | "close" | "connecting" } }
+      const estado = (j && j.instance && j.instance.state) || (j && j.state) || null;
+      res.setHeader("Cache-Control", "no-store");
+      return res.status(200).json({
+        configurado: true,
+        instancia: inst,
+        estado,
+        conectado: estado === "open"
+      });
+    } catch (e) {
+      // Não saber o estado é diferente de estar desconectado: o painel avisa
+      // "não consegui verificar" em vez de acusar queda que talvez não exista.
+      return res.status(200).json({ configurado: true, instancia: inst, estado: null, conectado: null,
+                                    erro: String((e && e.message) || e).slice(0, 120) });
+    }
+  }
   const cfg = TABLES[tKey];
   if (!cfg) return res.status(400).json({ error: `Tabela desconhecida: ${tKey}` });
 

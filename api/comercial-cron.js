@@ -164,6 +164,45 @@ module.exports = async function handler(req, res) {
   // ?dry=1 → simula: mostra quem receberia o quê, sem enviar e sem gravar nada.
   const dry = req.query && (req.query.dry === "1" || req.query.dry === "true");
 
+  // ?diag=1 → diagnóstico da caixa: lista as pastas e diz em QUAL o sistema
+  // gravou os enviados. Só leitura: não envia, não grava, não move nada.
+  //
+  // Existe porque os 24 e-mails de 11/08 estão marcados como arquivados no
+  // banco — o APPEND respondeu sucesso — e mesmo assim não aparecem no Outlook
+  // da Gabriela. Ou foram para uma pasta que o Outlook não mostra, ou o Outlook
+  // dela não é IMAP. Sem listar as pastas do servidor não dá para saber qual.
+  if (req.query && (req.query.diag === "1" || req.query.diag === "true")) {
+    try {
+      const { ImapFlow } = require("imapflow");
+      const client = new ImapFlow({
+        host: process.env.IMAP_HOST || process.env.MAIL_HOST || "email-ssl.com.br",
+        port: Number(process.env.IMAP_PORT || 993),
+        secure: true,
+        auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS },
+        logger: false
+      });
+      await client.connect();
+      const lista = await client.list();
+      const pastas = [];
+      for (const m of lista) {
+        let qtd = null;
+        try { const st = await client.status(m.path, { messages: true }); qtd = st.messages; } catch (e) { qtd = "?"; }
+        pastas.push({ pasta: m.path, especial: m.specialUse || null, assinada: m.subscribed !== false, mensagens: qtd });
+      }
+      const escolhida = await pastaEnviados(client);
+      await client.logout();
+      // A conta nunca aparece na resposta — só o nome do servidor.
+      return res.status(200).json({
+        ok: true,
+        servidor: process.env.IMAP_HOST || process.env.MAIL_HOST || "email-ssl.com.br",
+        pasta_escolhida_pelo_sistema: escolhida,
+        pastas
+      });
+    } catch (e) {
+      return res.status(200).json({ ok: false, motivo: String((e && e.message) || e).slice(0, 300) });
+    }
+  }
+
   // ?respostas=1 → lê a caixa de entrada e para a cadência de quem respondeu.
   //
   // Faz UMA coisa só: se o cliente respondeu, ele para de receber cobrança

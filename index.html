@@ -1524,6 +1524,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div style="background:linear-gradient(135deg,#eef6ff,#f5f0ff);border:1px solid #dbe7fb;border-radius:12px;padding:12px 18px;margin-bottom:14px;font-size:.72rem;color:#334155">
       <b style="color:#1e4d8c">🤖 Cadência automática:</b> ao registrar o envio da proposta → <b>Msg 1 no WhatsApp</b> (imediata) · <b>Msg 2</b> e-mail +2 dias · <b>Msg 3</b> +5d · <b>Msg 4</b> +10d · <b>Msg 5</b> +20d (pausa a negociação). Para <b>interromper</b>: clique em ✅ quando o cliente responder, ou feche/perca a proposta.
     </div>
+    <div id="cp-wa-aviso"></div>
     <div id="cp-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
@@ -5762,11 +5763,41 @@ function comFetchAll(){
     fetch("/api/comercial?t=metas").then(r=>r.json()).then(j=>{COM_METAS=(j&&j.rows)||[];})
   ]);
 }
+/* Aviso de WhatsApp fora do ar.
+   A Evolution e um aparelho pareado, igual ao WhatsApp Web: quando o celular do
+   comercial fica sem rede ou alguem remove o pareamento, a instancia cai e a
+   Msg 1 falha CALADA. De 22/07 a 18/08 foram 23 falhas e 11 propostas nunca
+   receberam a primeira mensagem sem ninguem perceber.
+   "Nao consegui verificar" e diferente de "esta fora": no primeiro caso o aviso
+   sai amarelo e diz isso, em vez de acusar uma queda que talvez nao exista. */
+function comWaStatus(){
+  const el=document.getElementById("cp-wa-aviso");if(!el)return;
+  fetch("/api/comercial?wa=1").then(r=>r.json()).then(j=>{
+    if(!j||j.configurado===false||j.conectado===true){el.innerHTML="";return;}
+    const dv=j.conectado===null;
+    const cor=dv?"#f59e0b":"#dc2626", fundo=dv?"#fffbeb":"#fef2f2", borda=dv?"#fde68a":"#fecaca";
+    const inst=j.instancia||"?";
+    el.innerHTML='<div style="background:'+fundo+';border:1px solid '+borda+';border-left:4px solid '+cor+
+      ';border-radius:12px;padding:11px 16px;margin-bottom:14px;font-size:.73rem;color:#334155;'+
+      'display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+      '<span style="font-size:1.05rem">'+(dv?"⚠️":"🔴")+'</span>'+
+      '<span style="flex:1;min-width:240px"><b style="color:'+cor+'">'+
+      (dv?"Nao foi possivel verificar o WhatsApp":"WhatsApp do Comercial desconectado")+'</b> - '+
+      (dv?'a instancia <b>'+inst+'</b> nao respondeu. Pode ser rede; vale conferir.'
+         :'a instancia <b>'+inst+'</b> esta fora, entao a <b>Msg 1</b> da cadencia nao vai sair. '+
+          'Reconecte lendo o QR Code no Evolution Manager.')+
+      '</span>'+
+      '<button onclick="comWaStatus()" style="background:#fff;border:1px solid '+borda+';color:'+cor+
+      ';border-radius:7px;padding:5px 12px;font-size:.68rem;font-weight:700;cursor:pointer">Verificar de novo</button>'+
+      '</div>';
+  }).catch(()=>{el.innerHTML="";});
+}
 function comLoad(){
   const kb=document.getElementById("cp-kanban");
   if(kb&&!COM_P.length)kb.innerHTML='<div class="kb-wrap">'+COM_ST_ORDER.slice(0,5).map(()=>'<div class="cv-skel" style="min-width:225px;height:180px"></div>').join("")+'</div>';
   const resp=document.getElementById("cpf-resp");
   if(resp&&!resp.value)resp.value=sessionStorage.getItem("userNome")||"";
+  comWaStatus();
   comFetchAll().then(comRenderAll).catch(err=>{console.error("Erro comercial:",err);if(kb)kb.innerHTML='<div style="padding:30px;text-align:center;color:#dc2626;font-size:.8rem">Erro ao carregar. Verifique a conexão.</div>';});
 }
 function comRenderAll(){comRenderCards();comRenderView();}
