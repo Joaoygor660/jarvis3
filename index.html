@@ -304,6 +304,11 @@ html[data-theme="dark"] .vg-s-rh{background:#241a3d;color:#c4b5fd;}
    então tudo cabe numa fileira só. Entrando um nono card, ele desce sozinho
    e vale rever este número. */
 /* RADAR DA CADENCIA */
+.rdr-bt{display:inline-flex;align-items:center;gap:8px;background:#0b1a2e;color:#dbeafe;border:1px solid #16304f;border-radius:11px;padding:9px 16px;font-size:.74rem;font-weight:800;cursor:pointer;margin-bottom:14px;transition:background .15s;}
+.rdr-bt:hover{background:#12263f;}
+.rdr-bt-on{border-color:#2e8fef;margin-bottom:8px;}
+.rdr-bg{background:#ef4444;color:#fff;border-radius:20px;padding:1px 8px;font-size:.62rem;font-weight:900;}
+.rdr-ch{color:#7ea6d4;font-size:.6rem;}
 .rdr{background:#0b1a2e;border:1px solid #16304f;border-radius:14px;padding:16px 18px;margin-bottom:14px;color:#dbeafe;}
 .rdr-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
 .rdr-t{font-size:.82rem;font-weight:900;color:#fff;letter-spacing:.2px;}
@@ -1551,9 +1556,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   </div>
   <div class="page" id="pg-compro">
     <div class="sec-hdr"><span class="sec-hdr-ic">💼</span><div><div class="sec-hdr-t">Comercial — Propostas &amp; Cadência</div><div class="sec-hdr-sub">CRM do Grupo ServCamp: cadastro de propostas e follow-up automático (WhatsApp + E-mail)</div></div></div>
-    <div style="background:linear-gradient(135deg,#eef6ff,#f5f0ff);border:1px solid #dbe7fb;border-radius:12px;padding:12px 18px;margin-bottom:14px;font-size:.72rem;color:#334155">
-      <b style="color:#1e4d8c">🤖 Cadência automática:</b> ao registrar o envio da proposta → <b>Msg 1 no WhatsApp</b> (imediata) · <b>Msg 2</b> e-mail +2 dias · <b>Msg 3</b> +5d · <b>Msg 4</b> +10d · <b>Msg 5</b> +20d (pausa a negociação). Para <b>interromper</b>: clique em ✅ quando o cliente responder, ou feche/perca a proposta.
-    </div>
     <div id="cp-wa-aviso"></div>
     <div id="cp-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
       <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
@@ -5854,6 +5856,8 @@ const COM_CAD_AGENDA_ATIVA=false;
    de cadencia de cada proposta usa. Recalcular aqui abriria espaco para os dois
    discordarem — o erro que ja apareceu tres vezes neste projeto.
    Cada trilha tem 5 nos: Msg 1 e WhatsApp, Msg 2 a 5 sao e-mail. */
+let COM_RADAR_ABERTO=false;
+function comRadarToggle(){COM_RADAR_ABERTO=!COM_RADAR_ABERTO;comRadar();}
 function comRadar(){
   const el=document.getElementById("cp-radar");if(!el)return;
   const P=(COM_P||[]).filter(p=>p.data_envio_proposta);
@@ -5892,7 +5896,14 @@ function comRadar(){
       : '<span style="color:#fbbf24">Msg '+l.prox.etapa+' em '+d+'</span>';
   };
 
-  el.innerHTML='<div class="rdr">'+
+  // Botao sempre visivel; o painel so abre quando pedido. O contador de
+  // vencidas fica no proprio botao para o alerta nao depender de abrir.
+  const bt='<button type="button" class="rdr-bt'+(COM_RADAR_ABERTO?" rdr-bt-on":"")+
+    '" onclick="comRadarToggle()"><span>&#128225;</span> Radar de Cad&ecirc;ncia'+
+    (vencidas?'<span class="rdr-bg">'+vencidas+'</span>':'')+
+    '<span class="rdr-ch">'+(COM_RADAR_ABERTO?"&#9650;":"&#9660;")+'</span></button>';
+  if(!COM_RADAR_ABERTO){el.innerHTML=bt;return;}
+  el.innerHTML=bt+'<div class="rdr">'+
     '<div class="rdr-top"><span style="font-size:1.05rem">&#128225;</span>'+
     '<div><div class="rdr-t">Radar da Cad&ecirc;ncia</div>'+
     '<div class="rdr-sub">'+P.length+' proposta(s) na r&eacute;gua &middot; Msg 1 WhatsApp &middot; Msg 2 a 5 e-mail</div></div>'+
