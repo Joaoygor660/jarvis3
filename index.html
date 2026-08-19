@@ -6518,8 +6518,8 @@ function _cdAgrupa(arr,fn,grupo,limite){
 }
 function comDetMB(grupo,chave){
   const arr=((COM_DB[grupo]||{})[chave])||[];
-  const rot={funil:"Etapa",origem:"Origem do lead",cidade:"Cidade",servico:"Servi\u00e7o",tipo:"Tipo de cliente"}[grupo]||grupo;
-  _rdModal(rot+": "+chave+" \u2014 "+arr.length+" proposta(s) \u00b7 "+COM_DB._mes,
+  const rot={funil:"Etapa",origem:"Origem do lead",cidade:"Cidade",servico:"Servi\u00e7o",tipo:"Tipo de cliente",quente:"Poss\u00edveis novos clientes"}[grupo]||grupo;
+  _rdModal(rot+": "+chave+" \u2014 "+arr.length+" proposta(s)"+(grupo==="quente"?"":" \u00b7 "+COM_DB._mes),
     ["Cliente","Tipo","Cidade","Servi\u00e7o","Origem","Status","Envio","Resp."],
     arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"\u2014",
       p.servico||"\u2014",p.origem_lead||"\u2014",p.status,
@@ -8896,6 +8896,39 @@ function comDashRender(){
     ?kpi("ticket","📈","Ticket médio",ticket===null?"—":fmtBRL0(ticket),`${fechTodas.length} contratos`,"#0d9488",comSpark(sFecR,"#16a34a"))
     :kpi("fechadaMes","🏆","Fechadas no mês",fecMes.length,`total histórico: ${fechTodas.length}`,"#0d9488",comSpark(sFecN,"#16a34a"));
   h+=`</div>`;
+  /* ── POSSIVEIS NOVOS CLIENTES ── */
+  // Pipeline ATUAL, de proposito fora do filtro de mes: uma proposta de julho
+  // ainda em negociacao continua sendo um cliente possivel hoje. Filtrar por mes
+  // a esconderia justamente quando ela esta mais perto de fechar.
+  //
+  // A "chance" nao e probabilidade estatistica: e a regra de comChance() —
+  // etapa do funil, mais 12 se o cliente respondeu, mais 6 se houve visita,
+  // menos 10 ou 20 conforme os dias parado. O rodape do card diz isso, para
+  // ninguem tratar o numero como previsao.
+  const quentes=(COM_P||[]).filter(x=>COM_ST_ATIVOS.includes(x.status)&&comChance(x)>=70)
+                           .sort((a,b)=>comChance(b)-comChance(a));
+  _cdGuarda("quente","chance 70% ou mais",quentes);
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-left:4px solid #16a34a;border-radius:14px;padding:18px 22px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:${quentes.length?"12px":"0"}">
+      <div style="font-size:.8rem;font-weight:800;color:#0d1f35">🎯 Possíveis Novos Clientes</div>
+      <div style="font-size:.6rem;color:#94a3b8;font-weight:700">chance de 70% ou mais · pipeline atual, não segue o mês</div>
+      <div style="margin-left:auto;display:flex;align-items:baseline;gap:6px;cursor:pointer" onclick="comDetMB('quente','chance 70% ou mais')">
+        <b style="font-size:1.5rem;color:#16a34a;line-height:1">${quentes.length}</b>
+        <span style="font-size:.64rem;color:#64748b">de ${(COM_P||[]).filter(x=>COM_ST_ATIVOS.includes(x.status)).length} em andamento</span>
+      </div>
+    </div>
+    ${quentes.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px">
+      ${quentes.map(x=>{const c=comChance(x),d=comDiasParado(x);
+        return `<div onclick="comTimeline(${x.id})" style="cursor:pointer;border:1px solid #dcfce7;background:#f0fdf4;border-radius:10px;padding:9px 12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <span style="font-weight:800;font-size:.74rem;color:#0d1f35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.nome||"—"}</span>
+            <b style="color:#16a34a;font-size:.82rem">${c}%</b></div>
+          <div style="font-size:.63rem;color:#64748b;margin-top:3px">${x.status} · ${x.cidade||"sem cidade"} · parado ${d}d${x.respondido_em?" · respondeu":""}${(x.visitas||0)?" · "+x.visitas+" visita(s)":""}</div>
+        </div>`;}).join("")}
+    </div>
+    <div style="font-size:.6rem;color:#94a3b8;margin-top:9px">A chance vem da etapa do funil, mais resposta do cliente e visita realizada, menos os dias parado. É um indicador de prioridade, não uma previsão.</div>`
+    :`<div style="font-size:.72rem;color:#64748b;margin-top:8px">Nenhuma proposta atinge 70% agora. A chance sobe quando o cliente responde, quando há visita e quando a negociação avança de etapa.</div>`}
+  </div>`;
   /* ── GRÁFICOS: receita mensal + meta×realizado ── */
   h+=`<div style="display:grid;grid-template-columns:${COM_VALORES?"1fr 1fr":"1fr"};gap:14px;margin-bottom:14px">`;
   if(COM_VALORES)h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📈 Receita Fechada — últimos 6 meses</div><div style="height:190px"><canvas id="cdRev"></canvas></div></div>`;
