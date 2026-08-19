@@ -304,9 +304,9 @@ html[data-theme="dark"] .vg-s-rh{background:#241a3d;color:#c4b5fd;}
    então tudo cabe numa fileira só. Entrando um nono card, ele desce sozinho
    e vale rever este número. */
 /* RADAR DA CADENCIA */
-.rdr-bt{display:inline-flex;align-items:center;gap:8px;background:#0b1a2e;color:#dbeafe;border:1px solid #16304f;border-radius:11px;padding:9px 16px;font-size:.74rem;font-weight:800;cursor:pointer;margin-bottom:14px;transition:background .15s;}
+.rdr-bt{display:inline-flex;align-items:center;gap:8px;background:#0b1a2e;color:#dbeafe;border:1px solid #16304f;border-radius:11px;padding:8px 15px;font-size:.72rem;font-weight:800;cursor:pointer;transition:background .15s;}
 .rdr-bt:hover{background:#12263f;}
-.rdr-bt-on{border-color:#2e8fef;margin-bottom:8px;}
+.rdr-bt-on{border-color:#2e8fef;}
 .rdr-bg{background:#ef4444;color:#fff;border-radius:20px;padding:1px 8px;font-size:.62rem;font-weight:900;}
 .rdr-ch{color:#7ea6d4;font-size:.6rem;}
 .rdr{background:#0b1a2e;border:1px solid #16304f;border-radius:14px;padding:16px 18px;margin-bottom:14px;color:#dbeafe;}
@@ -1558,13 +1558,9 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
   <div class="page" id="pg-compro">
     <div class="sec-hdr"><span class="sec-hdr-ic">💼</span><div><div class="sec-hdr-t">Comercial — Propostas &amp; Cadência</div><div class="sec-hdr-sub">CRM do Grupo ServCamp: cadastro de propostas e follow-up automático (WhatsApp + E-mail)</div></div></div>
     <div id="cp-wa-aviso"></div>
-    <div id="cp-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-      <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
-      <div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div><div class="cv-skel"></div>
     </div>
-    <div id="cp-radar"></div>
     <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 24px;margin-bottom:14px">
-      <div id="cp-form-title" style="font-size:.85rem;font-weight:800;color:#0d1f35;margin-bottom:14px">➕ Nova Proposta</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px"><div id="cp-form-title" style="font-size:.85rem;font-weight:800;color:#0d1f35">➕ Nova Proposta</div><div id="cp-radar" style="margin-left:auto"></div></div>
       <form onsubmit="return comSalvar(event)" id="cpForm">
         <input type="hidden" id="cpf-id">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
@@ -1617,7 +1613,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div id="cp-agenda" style="display:none"></div></div>
   </div>
   <div class="page" id="pg-comdash">
-    <div class="sec-hdr"><span class="sec-hdr-ic">📊</span><div><div class="sec-hdr-t">Painel Comercial — Diretoria</div><div class="sec-hdr-sub">Visão executiva do mês: propostas, conversão, pipeline e metas</div></div></div>
+    <div class="sec-hdr"><span class="sec-hdr-ic">📊</span><div><div class="sec-hdr-t">Painel Comercial</div><div class="sec-hdr-sub">Visão executiva do mês: propostas, conversão, pipeline e metas</div></div></div>
     <div id="cd-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando painel comercial…</div></div>
   </div>
   <div class="page" id="pg-config">
@@ -2422,7 +2418,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial — Diretoria",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade",ligacoes:"Ligações & Acompanhamento"};
+const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade",ligacoes:"Ligações & Acompanhamento"};
 
 /* ── Sidebar 2.0: accordion com estado salvo + busca de módulos ── */
 function navCatToggle(k){
@@ -5966,7 +5962,7 @@ function comRadar(){
       '<span><i style="background:#16304f"></i>n&atilde;o enviada</span>'+
     '</div></div>';
 }
-function comRenderAll(){comRenderCards();comRadar();comRenderView();}
+function comRenderAll(){comRadar();comRenderView();}
 function comSetStatusFiltro(s){COM_TBL_STATUS=s;comRenderView();}
 function comSetView(v){
   COM_VIEW=v;
@@ -6062,53 +6058,6 @@ function comDet(kind){
   _rdModal(title,headers,rows);
 }
 /* ── Dashboard superior: cards com sparkline + comparativo ── */
-function comRenderCards(){
-  const el=document.getElementById("cp-kpis");if(!el)return;
-  const hoje=new Date(),_M=comMesRef();
-  const noMes=d=>comNoMes(d,_M);
-  const noMesAnt=d=>comNoMesAnt(d,_M);
-  // O card diz a janela que esta contando: ela vem do mes do FIM do periodo
-  // filtrado, entao nem sempre e o mes corrente.
-  const _mesLbl=_M.ini.toLocaleDateString("pt-BR")+" a "+_M.fim.toLocaleDateString("pt-BR");
-  const P=comPF();
-  // "aberta" = proposta enviada aguardando desfecho · "negociação" = tratativa em curso
-  const abertas=P.filter(p=>p.status==="PROPOSTA");
-  const negoc=P.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status));
-  const propMes=P.filter(p=>noMes(p.data_envio_proposta));
-  const propMesAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
-  const negR=negoc.reduce((s,p)=>s+(Number(p.valor)||0),0);
-  const fecMes=P.filter(p=>p.status==="FECHADO"&&noMes(p.fechado_em)),fecMesR=fecMes.reduce((s,p)=>s+(Number(p.valor)||0),0);
-  const fecAnt=P.filter(p=>p.status==="FECHADO"&&noMesAnt(p.fechado_em)),fecAntR=fecAnt.reduce((s,p)=>s+(Number(p.valor)||0),0);
-  const perMes=P.filter(p=>p.status==="PERDIDO"&&noMes(p.atualizado_em||p.criado_em)),perMesR=perMes.reduce((s,p)=>s+(Number(p.valor)||0),0);
-  const envMes=P.filter(p=>noMes(p.data_envio_proposta)),envAnt=P.filter(p=>noMesAnt(p.data_envio_proposta));
-  const taxa=envMes.length?Math.round(fecMes.length/envMes.length*100):null;
-  const taxaAnt=envAnt.length?Math.round(fecAnt.length/envAnt.length*100):null;
-  const fechTodas=P.filter(p=>p.status==="FECHADO");
-  const ticket=fechTodas.length?fechTodas.reduce((s,p)=>s+(Number(p.valor)||0),0)/fechTodas.length:null;
-  const semResp=P.filter(p=>p.data_envio_proposta&&!p.respondido_em&&COM_ST_ATIVOS.includes(p.status));
-  const criticas=P.filter(p=>["NEGOCIAÇÃO","CONTRATO"].includes(p.status)&&comDiasParado(p)>=5||COM_ST_ATIVOS.includes(p.status)&&comDiasParado(p)>=10&&(Number(p.valor)||0)>0);
-  const _vb=comVisBase();
-  const visMes=_vb.filter(p=>noMes(p.ultima_visita)).length,visAnt=_vb.filter(p=>noMesAnt(p.ultima_visita)).length;
-  const acoesPend=P.filter(p=>p.proxima_acao_data&&COM_ST_ATIVOS.includes(p.status)&&String(p.proxima_acao_data).slice(0,10)<=ymd(hoje)).length;
-  const sEnv=comSerieMensal(P,p=>p.data_envio_proposta,()=>1,6);
-  const sFec=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
-  const sPer=comSerieMensal(P.filter(p=>p.status==="PERDIDO"),p=>p.atualizado_em||p.criado_em,p=>Number(p.valor)||0,6);
-  const sVis=comSerieMensal(P,p=>p.ultima_visita,()=>1,6);
-  const cmp=(atual,ant,inv)=>{
-    if(ant===null||ant===undefined||(!atual&&!ant))return'<span style="color:#94a3b8">— vs mês ant.</span>';
-    if(!ant)return`<span style="color:#16a34a">▲ novo</span>`;
-    const d=Math.round((atual-ant)/ant*100);
-    const up=d>=0;const bom=inv?!up:up;
-    return`<span style="color:${bom?"#16a34a":"#dc2626"}">${up?"▲":"▼"} ${Math.abs(d)}% vs mês ant.</span>`;
-  };
-  const card=(kind,ic,icBg,lbl,val,cmpHtml,spark,tip)=>`<div class="cvk" style="cursor:pointer" onclick="comDet('${kind}')" title="${tip||""} — clique para ver os registros"><div class="cvk-ic" style="background:${icBg}">${ic}</div><div class="cvk-lb">${lbl}</div><div class="cvk-v">${val}</div><div class="cvk-cmp">${cmpHtml}</div>${spark}</div>`;
-  el.innerHTML=
-    card("propmes","📝","#f0f9ff","Propostas feitas no mês",propMes.length,cmp(propMes.length,propMesAnt.length)+' <span style="color:#94a3b8">· '+_mesLbl+'</span>',comSpark(sEnv,"#0284c7"),"Propostas com data de envio dentro do mês mostrado")+
-    (COM_VALORES
-      ?card("ticket","📈","#fff7ed","Ticket médio",ticket===null?"—":fmtBRL0(ticket),`<span style="color:#64748b">${fechTodas.length} contratos</span>`,"","Média dos contratos fechados")
-      :card("visitasMes","🏠","#fff7ed","Visitas no mês",visMes,cmp(visMes,visAnt),"","Clientes visitados no mês"))+
-    card("criticas","🚨","#fef2f2","Críticas / Ações hoje",`${criticas.length} <span style="font-size:.85rem;color:#64748b">/ ${acoesPend}</span>`,`<span style="color:${criticas.length?"#dc2626":"#16a34a"}">${criticas.length?"exigem contato":"sob controle"} · ${acoesPend} ações pendentes</span>`,comSpark(sVis,"#7c3aed"),"Negociações paradas + próximas ações vencidas");
-}
 function comRenderFiltros(){
   const box=document.getElementById("cp-tbl-filtros");if(!box)return;
   const cont={};COM_P.forEach(x=>{const s=x.status||"—";cont[s]=(cont[s]||0)+1;});
@@ -6189,7 +6138,7 @@ function kbDrop(ev,col){
   const patch={status:st};
   if(st==="FECHADO")patch.fechado_em=ymd(new Date());
   if(st==="PERDIDO"){const m=prompt("Motivo da perda de "+(p.nome||"")+":");if(m===null)return;patch.motivo_perda=(m||"").toUpperCase();}
-  p.status=st;comRenderKanban();comRenderCards();
+  p.status=st;comRenderKanban();comRadar();
   comLogEvento(p.id,`Status: ${antigo} → ${st}`);
   _comPatch(p.id,patch);
 }
@@ -6557,10 +6506,32 @@ function comDashLoad(){
   if(el&&!COM_P.length)el.innerHTML='<div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando painel comercial…</div>';
   comFetchAll().then(comDashRender).catch(()=>{if(el)el.innerHTML='<div style="padding:40px;text-align:center;color:#dc2626;font-size:.85rem">Erro ao carregar.</div>';});
 }
-function _cdBarRows(pairs,corFn){
+/* Cada numero do painel guarda a lista que o formou. O clique abre ESSA lista,
+   nao um recalculo — foi recalculando que card e detalhe ja divergiram tres
+   vezes neste projeto. */
+let COM_DB={};
+function _cdGuarda(grupo,chave,arr){(COM_DB[grupo]=COM_DB[grupo]||{})[chave]=arr;}
+function _cdAgrupa(arr,fn,grupo,limite){
+  const m={};arr.forEach(p=>{const k=fn(p);(m[k]=m[k]||[]).push(p);});
+  Object.keys(m).forEach(k=>_cdGuarda(grupo,k,m[k]));
+  const pares=Object.entries(m).map(([k,v])=>[k,v.length]).sort((a,b)=>b[1]-a[1]);
+  return limite?pares.slice(0,limite):pares;
+}
+function comDetMB(grupo,chave){
+  const arr=((COM_DB[grupo]||{})[chave])||[];
+  const rot={funil:"Etapa",origem:"Origem do lead",cidade:"Cidade",servico:"Servi\u00e7o"}[grupo]||grupo;
+  _rdModal(rot+": "+chave+" \u2014 "+arr.length+" proposta(s) \u00b7 "+COM_DB._mes,
+    ["Cliente","Tipo","Cidade","Servi\u00e7o","Origem","Status","Envio","Resp."],
+    arr.map(p=>[p.nome,p.tipo_cliente==="CONDOMINIO"?"COND":"EMP",p.cidade||"\u2014",
+      p.servico||"\u2014",p.origem_lead||"\u2014",p.status,
+      p.data_envio_proposta?rhFmt(p.data_envio_proposta):"\u2014",
+      (p.responsavel||"\u2014").split(" ")[0]]));
+}
+function _cdBarRows(pairs,corFn,grupo){
   if(!pairs.length)return'<div style="color:#94a3b8">Sem dados ainda.</div>';
   const max=pairs[0][1];
-  return pairs.map(([k,v],i)=>`<div style="margin-bottom:7px"><div class="rd-bar-row"><span style="font-weight:700;color:#334155">${k}</span><b>${v}</b></div><div style="background:#eef2f7;border-radius:6px;height:7px"><div style="width:${Math.max(4,v/max*100)}%;height:7px;border-radius:6px;background:${corFn?corFn(k,i):"#1e4d8c"}"></div></div></div>`).join("");
+  const clique=k=>grupo?' style="cursor:pointer" onclick="comDetMB(\''+grupo+'\',\''+String(k).replace(/'/g,"")+'\')"':'';
+  return pairs.map(([k,v],i)=>`<div${clique(k)} style="margin-bottom:7px"><div class="rd-bar-row"><span style="font-weight:700;color:#334155">${k}</span><b>${v}</b></div><div style="background:#eef2f7;border-radius:6px;height:7px"><div style="width:${Math.max(4,v/max*100)}%;height:7px;border-radius:6px;background:${corFn?corFn(k,i):"#1e4d8c"}"></div></div></div>`).join("");
 }
 /* ═════════ CONFIGURAÇÕES — Acessos & Usuários (Fase 1: só leitura) ═════════ */
 const CFG_PANEIS=[
@@ -8860,10 +8831,20 @@ function comDashRender(){
   const ticket=fechTodas.length?fechTodas.reduce((s,p)=>s+(Number(p.valor)||0),0)/fechTodas.length:null;
   const mesKey=ymd(mIni);
   const meta=COM_METAS.find(m=>String(m.mes).slice(0,10)===mesKey)||{};
+  // Base do MES. Nao usa comPF(), que deixa toda proposta ABERTA passar
+  // ignorando o periodo — era por isso que os numeros mudavam de forma estranha
+  // ao trocar o mes. Aqui entra quem teve envio (ou cadastro) dentro do mes.
+  COM_DB={_mes:mIni.toLocaleDateString("pt-BR",{month:"long",year:"numeric"})};
+  const MB=(COM_P||[]).filter(p=>{
+    if(COM_FTIPO&&String(p.tipo_cliente||"").toUpperCase()!==COM_FTIPO)return false;
+    return noMes(p.data_envio_proposta||p.criado_em);
+  });
   const funil=COM_ST_ORDER.map(s=>[s,P.filter(p=>p.status===s).length,P.filter(p=>p.status===s).reduce((t,p)=>t+(Number(p.valor)||0),0)]).filter(([,v])=>v>0);
   const maxF=Math.max(1,...funil.map(([,v])=>v));
-  const origem=(function(){const m={};(envMes.length?envMes:P).forEach(p=>{m[p.origem_lead||"NÃO INFORMADO"]=(m[p.origem_lead||"NÃO INFORMADO"]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
-  const cidades=(function(){const m={};P.forEach(p=>{if(p.cidade)m[p.cidade]=(m[p.cidade]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
+  // Antes era (envMes.length?envMes:P): trocava de base sozinho quando o mes
+  // nao tinha proposta e passava a mostrar o historico inteiro sem avisar.
+  const origem=_cdAgrupa(MB,p=>(p.origem_lead||"").trim()||"Não informado","origem");
+  const cidades=_cdAgrupa(MB,p=>(p.cidade||"").trim()||"Não informado","cidade");
   const cidadeR$=(function(){const m={};P.filter(p=>p.status==="FECHADO").forEach(p=>{if(p.cidade)m[p.cidade]=(m[p.cidade]||0)+(Number(p.valor)||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})();
   const origemR$=(function(){const m={};P.filter(p=>p.status==="FECHADO").forEach(p=>{m[p.origem_lead||"NÃO INFORMADO"]=(m[p.origem_lead||"NÃO INFORMADO"]||0)+(Number(p.valor)||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1]);})();
   const servicoR$=(function(){const m={};P.filter(p=>p.status==="FECHADO").forEach(p=>{m[p.servico||"NÃO INFORMADO"]=(m[p.servico||"NÃO INFORMADO"]||0)+(Number(p.valor)||0)});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);})();
@@ -8897,9 +8878,13 @@ function comDashRender(){
   parados.slice(0,3).forEach(o=>{if(!criticas.includes(o.p)&&!vips.includes(o.p))alertas.push({cor:"#64748b",bg:"#f8fafc",t:`⏸️ <b>${o.p.nome}</b> — ${o.d}d parado (${o.p.status})`});});
   /* série 6 meses p/ gráficos */
   const mesesLbl=[];for(let i=5;i>=0;i--){const d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1);mesesLbl.push(d.toLocaleDateString("pt-BR",{month:"short"}));}
-  const sFecR=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
-  const sEnvN=comSerieMensal(P,p=>p.data_envio_proposta,()=>1,6);
-  const sFecN=comSerieMensal(P.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,()=>1,6);
+  // Series de 6 meses saem de COM_P (base inteira), NAO de P. Um historico que
+  // muda de forma quando se escolhe outro mes nao e historico. Aqui os ultimos
+  // 6 meses sao sempre os mesmos numeros reais.
+  const _T=COM_P||[];
+  const sFecR=comSerieMensal(_T.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,p=>Number(p.valor)||0,6);
+  const sEnvN=comSerieMensal(_T,p=>p.data_envio_proposta,()=>1,6);
+  const sFecN=comSerieMensal(_T.filter(p=>p.status==="FECHADO"),p=>p.fechado_em,()=>1,6);
   const kpi=(kind,ic,lbl,val,sub,cor,spark)=>`<div class="cvk" style="border-top:3px solid ${cor};cursor:pointer" onclick="comDet('${kind}')" title="Clique para ver os registros"><div style="font-size:1.05rem">${ic}</div><div class="cvk-lb" style="margin-top:5px">${lbl}</div><div class="cvk-v" style="font-size:1.3rem">${val}</div><div style="font-size:.64rem;color:#94a3b8">${sub}</div>${spark||""}</div>`;
   let h='';
   /* ── KPIs ── */
@@ -8912,38 +8897,31 @@ function comDashRender(){
     ?kpi("ticket","📈","Ticket médio",ticket===null?"—":fmtBRL0(ticket),`${fechTodas.length} contratos`,"#0d9488",comSpark(sFecR,"#16a34a"))
     :kpi("fechadaMes","🏆","Fechadas no mês",fecMes.length,`total histórico: ${fechTodas.length}`,"#0d9488",comSpark(sFecN,"#16a34a"));
   h+=`</div>`;
-  /* ── INSIGHTS + ALERTAS ── */
-  h+=`<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">💡 Insights Inteligentes <span style="font-size:.6rem;color:#94a3b8;font-weight:700">gerados automaticamente</span></div>
-    ${insights.map((i,ix)=>`<div class="cv-ins" style="animation-delay:${ix*60}ms"><div style="font-size:1rem">${i.ic}</div><div style="font-size:.74rem;color:#334155;line-height:1.5">${i.t}</div></div>`).join("")}</div>`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔔 Alertas & Ações</div>
-    ${alertas.length?alertas.slice(0,8).map((a,ix)=>`<div class="cv-alert" style="background:${a.bg};color:#334155;animation-delay:${ix*50}ms"><span>${a.t}</span></div>`).join(""):'<div style="color:#16a34a;font-weight:700;font-size:.76rem">✅ Nenhum alerta. Operação comercial sob controle!</div>'}</div>`;
-  h+=`</div>`;
   /* ── GRÁFICOS: receita mensal + meta×realizado ── */
   h+=`<div style="display:grid;grid-template-columns:${COM_VALORES?"1fr 1fr":"1fr"};gap:14px;margin-bottom:14px">`;
   if(COM_VALORES)h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📈 Receita Fechada — últimos 6 meses</div><div style="height:190px"><canvas id="cdRev"></canvas></div></div>`;
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:10px">📊 Propostas × Fechamentos — últimos 6 meses</div><div style="height:190px"><canvas id="cdEnvFec"></canvas></div></div>`;
   h+=`</div>`;
   /* ── FUNIL com R$ e conversão por etapa ── */
-  const funilAtivo=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO","FECHADO"].map(s=>{const arr=P.filter(p=>p.status===s);return[s,arr.length,arr.reduce((t,p)=>t+(Number(p.valor)||0),0)];});
+  const funilAtivo=["LEAD","PROSPECÇÃO","PROPOSTA","NEGOCIAÇÃO","CONTRATO","FECHADO"].map(s=>{const arr=MB.filter(p=>p.status===s);_cdGuarda("funil",s,arr);return[s,arr.length,arr.reduce((t,p)=>t+(Number(p.valor)||0),0)];});
   h+=`<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:14px;margin-bottom:14px">`;
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🔻 Funil Comercial <span style="font-size:.6rem;color:#94a3b8;font-weight:700">quantidade${COM_VALORES?" · valor":""} · conversão etapa a etapa</span></div>
     <div style="font-size:.76rem">${funilAtivo.map(([s,v,r],i)=>{
       const prev=i>0?funilAtivo[i-1][1]:null;
       const convPct=prev?Math.round(v/prev*100):null;
       const wmax=Math.max(1,...funilAtivo.map(f=>f[1]));
-      return`<div style="margin-bottom:9px"><div class="rd-bar-row"><span style="font-weight:700;color:${COM_ST_COLORS[s]}">${s} <span style="color:#94a3b8;font-weight:600">${COM_VALORES&&r?"· "+fmtBRL0(r):""}</span></span><b>${v}${convPct!==null&&prev?` <span style="font-size:.62rem;color:${convPct>=50?"#16a34a":"#f97316"}">(${convPct}%)</span>`:""}</b></div><div style="background:#eef2f7;border-radius:6px;height:10px"><div style="width:${Math.max(3,v/wmax*100)}%;height:10px;border-radius:6px;background:${COM_ST_COLORS[s]};transition:width .5s"></div></div></div>`;}).join("")}
+      return`<div style="margin-bottom:9px;cursor:pointer" onclick="comDetMB('funil','${s}')"><div class="rd-bar-row"><span style="font-weight:700;color:${COM_ST_COLORS[s]}">${s} <span style="color:#94a3b8;font-weight:600">${COM_VALORES&&r?"· "+fmtBRL0(r):""}</span></span><b>${v}${convPct!==null&&prev?` <span style="font-size:.62rem;color:${convPct>=50?"#16a34a":"#f97316"}">(${convPct}%)</span>`:""}</b></div><div style="background:#eef2f7;border-radius:6px;height:10px"><div style="width:${Math.max(3,v/wmax*100)}%;height:10px;border-radius:6px;background:${COM_ST_COLORS[s]};transition:width .5s"></div></div></div>`;}).join("")}
     ${perMes.length?`<div style="font-size:.66rem;color:#dc2626;margin-top:6px">❌ ${perMes.length} perdida(s) no mês${COM_VALORES?` (${fmtBRL0(perMesR$)})`:""}</div>`:""}</div></div>`;
-  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧲 Origem dos Leads</div><div style="font-size:.76rem">${_cdBarRows(origem,()=>"#7c3aed")}</div></div>`;
+  h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧲 Origem dos Leads</div><div style="font-size:.76rem">${_cdBarRows(origem,()=>"#7c3aed","origem")}</div></div>`;
   h+=`</div>`;
   /* ── CIDADES (heat ranking) + SERVIÇOS ── */
   h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">`;
   const cidMax=cidadeR$.length?cidadeR$[0][1]:0;
   h+=`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🗺️ Heatmap de Cidades <span style="font-size:.6rem;color:#94a3b8;font-weight:700">${COM_VALORES?"receita fechada · propostas":"propostas por cidade"}</span></div>
-    <div style="font-size:.74rem">${COM_VALORES&&cidadeR$.length?cidadeR$.slice(0,8).map(([c,r])=>{const q=(cidades.find(x=>x[0]===c)||[,0])[1];const heat=cidMax?r/cidMax:0;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;margin-bottom:5px;background:rgba(13,148,136,${(0.06+heat*0.22).toFixed(2)})"><span style="font-weight:800;color:#0d1f35">${c} <span style="font-weight:600;color:#64748b;font-size:.64rem">· ${q} proposta(s)</span></span><b style="color:#0d9488">${fmtBRL0(r)}</b></div>`;}).join(""):_cdBarRows(cidades,()=>"#0d9488")}</div></div>`;
+    <div style="font-size:.74rem">${COM_VALORES&&cidadeR$.length?cidadeR$.slice(0,8).map(([c,r])=>{const q=(cidades.find(x=>x[0]===c)||[,0])[1];const heat=cidMax?r/cidMax:0;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;margin-bottom:5px;background:rgba(13,148,136,${(0.06+heat*0.22).toFixed(2)})"><span style="font-weight:800;color:#0d1f35">${c} <span style="font-weight:600;color:#64748b;font-size:.64rem">· ${q} proposta(s)</span></span><b style="color:#0d9488">${fmtBRL0(r)}</b></div>`;}).join(""):_cdBarRows(cidades,()=>"#0d9488","cidade")}</div></div>`;
   h+=COM_VALORES
     ?`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Receita por Serviço</div><div style="font-size:.76rem">${servicoR$.length?_cdBarRows(servicoR$.map(([k,v])=>[k+" — "+fmtBRL0(v),v]),()=>"#1e4d8c"):'<div style="color:#94a3b8">Sem contratos fechados ainda.</div>'}</div></div>`
-    :`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Propostas por Serviço</div><div style="font-size:.76rem">${(function(){const m={};P.forEach(p=>{m[p.servico||"NÃO INFORMADO"]=(m[p.servico||"NÃO INFORMADO"]||0)+1});const a=Object.entries(m).sort((x,y)=>y[1]-x[1]).slice(0,8);return a.length?_cdBarRows(a,()=>"#1e4d8c"):'<div style="color:#94a3b8">Sem propostas ainda.</div>';})()}</div></div>`;
+    :`<div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:18px 22px"><div style="font-size:.8rem;font-weight:800;color:#0d1f35;margin-bottom:12px">🧰 Propostas por Serviço</div><div style="font-size:.76rem">${(function(){const a=_cdAgrupa(MB,p=>(p.servico||"").trim()||"Não informado","servico");return a.length?_cdBarRows(a,()=>"#1e4d8c","servico"):'<div style="color:#94a3b8">Sem propostas neste mês.</div>';})()}</div></div>`;
   h+=`</div>`;
   /* ── TIMELINE GERAL ── */
   h+=`<div style="display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px">`;
