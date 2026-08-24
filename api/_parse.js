@@ -338,6 +338,57 @@ function buildDataFromWorkbook(wb){
       };
     }).filter(Boolean);
   }else{data.checklist=[];}
+  // ── DISCIPLINA: advertencias e suspensoes ────────────────────
+  // A aba tem ~195 linhas, mas quase tudo e falta abonada, atestado e INSS.
+  // Disciplinar mesmo sao ~21. Tres armadilhas que a base exige tratar:
+  //
+  //  1. Nenhuma das colunas de tipo esta completa sozinha. Usando so PUNICAO
+  //     perde-se 1 advertencia (registro com a punicao em branco); usando so
+  //     DESCRICAO perdem-se 3, incluindo duas suspensoes escritas como
+  //     "FALTA INJUSTIFICADA". Por isso o teste olha as duas juntas.
+  //  2. A MESMA ocorrencia se repete quando o colaborador ocupa duas vagas.
+  //     HISTDISCIPLINAR e o numero do processo, entao ele deduplica.
+  //  3. TPCOBERTURA nao diz se a pessoa e efetivo ou reserva: descreve a VAGA
+  //     (20 dos 21 saem como EFETIVO). Quem diz e o TIPO em Funcionarios
+  //     Ativos, cruzado pelo RE.
+  //
+  // A origem grava "ADVERTTENCIA", com dois T, em quase todos os registros;
+  // por isso o teste procura apenas "ADVER".
+  const wsDIS=findSheet(wb,"DISCIPLINA")||findSheet(wb,"INDISCIPLINA");
+  data.disciplina=[];
+  if(wsDIS){
+    const dRows=sheetRows(wsDIS);
+    const iD=dRows.idx;
+    const tipoPorRE={};
+    (data.ativos||[]).forEach(a=>{const k=String(a.RE||"").trim();if(k)tipoPorRE[k]=String(a.TIPO||"").toUpperCase();});
+    const jaVi={};
+    (dRows.body||[]).filter(r=>!_linhaVazia(r)).forEach(r=>{
+      const pun=String(r[iD["PUNICAO"]]||"").toUpperCase();
+      const t=String(r[iD["DESCRICAO"]]||"").toUpperCase()+" "+pun;
+      const ehSusp=t.indexOf("SUSPEN")>=0, ehAdv=t.indexOf("ADVER")>=0;
+      if(!ehSusp&&!ehAdv)return;
+      const hid=String(r[iD["HISTDISCIPLINAR"]]||"").trim();
+      if(hid){if(jaVi[hid])return;jaVi[hid]=1;}
+      const m=pun.match(/SUSPENS[\u00c3A]O\s+(\d+)/);
+      const reCol=String(r[iD["RE"]]||"").trim();
+      const tp=tipoPorRE[reCol]||"";
+      data.disciplina.push({
+        TIPO:ehSusp?"SUSPENS\u00c3O":"ADVERT\u00caNCIA",
+        GRAU:ehSusp?"SUSPENS\u00c3O":(pun.indexOf("VERBAL")>=0?"VERBAL":"ESCRITA"),
+        DIAS:m?parseInt(m[1],10):0,
+        NOME:r[iD["NOME"]]||"\u2014",
+        RE:reCol,
+        CLASSE:tp==="PLANTONISTA"?"RESERVA":(tp==="EFETIVO"?"EFETIVO":(tp||"N\u00c3O LOCALIZADO")),
+        DATA:isoDate(r[iD["DTINICIOOCORRENCIA"]]),
+        FIM:isoDate(r[iD["DTFIMAFASTAMENTO"]]),
+        LOCAL:r[iD["CLIENTE"]]||"\u2014",
+        CARGO:r[iD["LOCAL"]]||"",
+        MOTIVO:r[iD["DESCRICAO"]]||"\u2014",
+        OBS:String((r[iD["OBSDOCUMENTO"]]||"")+" "+(r[iD["OBSDOCUMENTO_CONTINUACAO"]]||"")).trim().slice(0,220),
+        FASE:r[iD["FASEATUAL"]]||""
+      });
+    });
+  }
   return data;
 }
 
