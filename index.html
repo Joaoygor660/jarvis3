@@ -4249,6 +4249,9 @@ function buildDataFromWorkbook(wb){
   const wsHE=findSheet(wb,"HR EXTRA")||findSheet(wb,"HORAS EXTRAS")||findSheet(wb,"HREXTRA");
   if(wsHE){
     const heRows=XLSX.utils.sheet_to_json(wsHE,{raw:false,defval:""});
+    // Segunda leitura com raw:true so para as horas: assim os horarios vem
+    // como numero serial do Excel e a subtracao entre eles e exata.
+    const heRaw=XLSX.utils.sheet_to_json(wsHE,{raw:true,defval:""});
     if(heRows.length){
       const keys=Object.keys(heRows[0]);
       const fk=function(names){for(const n of names){const found=keys.find(k=>k.trim().toUpperCase()===n.toUpperCase());if(found)return found;}return null;};
@@ -4261,8 +4264,9 @@ function buildDataFromWorkbook(wb){
       const kCargo=fk(["NOMECARGOFUNCIONARIO"]);
       const kMotivo=fk(["MOTIVO"]);
       const kTipo=fk(["TIPOEXTRA"]);
-      console.log("[HR EXTRA] kMin="+kMin,"sample="+JSON.stringify(heRows[0][kMin]),"tipo="+typeof heRows[0][kMin],"keys="+keys.length);
-      data.hrextra=heRows.map(r=>{
+      const kEnt=fk(["HRENTRADA"]),kMrEnt=fk(["HRMRENTRADA"]);
+      const kSai=fk(["HRSAIDA"]),kMrSai=fk(["HRMRSAIDA"]);
+      data.hrextra=heRows.map((r,_i)=>{
         let seg=0;
         if(kMin){
           const raw=r[kMin];
@@ -4273,6 +4277,27 @@ function buildDataFromWorkbook(wb){
             const p=minStr.match(/(\d+):(\d+):?(\d+)?/);
             if(p)seg=parseInt(p[1])*3600+parseInt(p[2])*60+(parseInt(p[3])||0);
           }
+        }
+        // Sem a coluna MINUTOS, calcula pelo relogio: previsto x marcado.
+        //
+        // A exportacao de 19/08 veio SEM essa coluna e todos os 712 registros
+        // sairiam zerados — o card de Horas Extras cairia de 155h para 0 sem
+        // ninguem perceber que era falha de leitura, e nao queda real.
+        //
+        // TOTHORAS existe, mas NAO serve: e a jornada inteira do turno (12h, 9h)
+        // e nao o excedente; somaria 2.268h. O excedente e a diferenca entre o
+        // horario previsto e a marcacao real.
+        //   entrada: chegou antes  -> HRENTRADA - HRMRENTRADA
+        //   saida  : saiu depois   -> HRMRSAIDA - HRSAIDA
+        // FT e DOBRA ficam de fora: sao turno inteiro, contados em outro card.
+        if(!seg&&heRaw&&heRaw[_i]){
+          const b=heRaw[_i];
+          const n=v=>typeof v==="number"?v:null;
+          const tipoU=String((kTipo?r[kTipo]:"")||"").toUpperCase();
+          let d=null;
+          if(tipoU.indexOf("ENTRADA")>=0){const a=n(b[kEnt]),c=n(b[kMrEnt]);if(a!==null&&c!==null)d=(a-c)*86400;}
+          else if(tipoU.indexOf("SAIDA")>=0){const a=n(b[kSai]),c=n(b[kMrSai]);if(a!==null&&c!==null)d=(c-a)*86400;}
+          if(d!==null&&d>0&&d<12*3600)seg=Math.round(d);
         }
         return{
           NOME:kFunc?r[kFunc]:"—",DATA:isoDate(kData?r[kData]:""),
