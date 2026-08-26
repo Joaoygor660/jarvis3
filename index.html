@@ -834,6 +834,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="nav-cat-h" onclick="navCatToggle('dir')"><span class="nav-cat-t">📈 Diretoria</span><span class="nav-cat-ar">▾</span></div>
     <div class="nav-cat-b">
       <div class="ni" data-pg="rhdash" data-perm="rhdash" onclick="navTo('rhdash',this)"><span class="ni-ic">📈</span><span>Painel RH</span><span class="nib nib-exec">EXEC</span></div>
+      <div class="ni" data-pg="metas" data-perm="metas" onclick="navTo('metas',this)"><span class="ni-ic">🎯</span><span>Metas</span><span class="nib nib-novo">NOVO</span></div>
       <div class="ni" data-pg="comdash" data-perm="comdash" onclick="navTo('comdash',this)"><span class="ni-ic">📊</span><span>Painel Comercial</span><span class="nib nib-exec">EXEC</span></div>
     </div>
   </div>
@@ -923,7 +924,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
         <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
         <div class="oc c2" id="ocTMR" onclick="navTo('coberturas',null)"><div class="oc-ic">⏱️</div><div class="oc-lb">Resposta na Cobertura</div><div class="oc-v" id="ocTMRV">—</div><div class="oc-sb" id="ocTMRSub">abertura → chegada</div></div>
-        <div class="oc c8 oc-t-warn" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div></div>
+        <div class="oc c8 oc-t-warn" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div><div class="oc-cmp" id="ocHEMeta"></div></div>
         <div class="oc c7" id="ocJust" onclick="navTo('postos',null)"><div class="oc-ic">⚠️</div><div class="oc-lb">Justif. Postos Descobertos</div><div class="oc-duo"><span class="oc-v" id="ocJustV">—</span><span class="d2" id="ocJustS">—</span></div><div class="oc-sb" id="ocJustSub">justificados · sem justificativa</div></div>
       </div>
     </div>
@@ -1617,6 +1618,28 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div id="cp-tbl" style="overflow-x:auto;display:none"></div>
       <div id="cp-agenda" style="display:none"></div></div>
   </div>
+  <div class="page" id="pg-metas">
+    <div class="sec-hdr"><span class="sec-hdr-ic">🎯</span><div><div class="sec-hdr-t">Metas da Diretoria</div><div class="sec-hdr-sub">Metas definidas aqui, no sistema — não vêm da planilha</div></div></div>
+    <div style="background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:20px 24px;margin-bottom:14px">
+      <div style="font-size:.85rem;font-weight:800;color:#0d1f35;margin-bottom:14px">➕ Nova Meta</div>
+      <form onsubmit="return mtSalvar(event)" id="mtForm">
+        <input type="hidden" id="mtf-id">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px">
+          <div><label class="rh-lb">Indicador *</label>
+            <select class="rh-in" id="mtf-tipo"><option value="HREXTRA">Horas Extras (teto do mês)</option></select></div>
+          <div><label class="rh-lb">Mês *</label><input type="month" class="rh-in" id="mtf-mes" required></div>
+          <div><label class="rh-lb">Meta (horas) *</label><input type="number" step="0.5" min="0" class="rh-in" id="mtf-valor" placeholder="Ex: 150" required></div>
+          <div><label class="rh-lb">Área</label><select class="rh-in" id="mtf-area"><option value="">Empresa toda</option></select></div>
+        </div>
+        <div style="margin-bottom:14px"><label class="rh-lb">Observação</label><input class="rh-in" id="mtf-obs" placeholder="Por que esta meta?"></div>
+        <button type="submit" class="rh-btn">💾 Salvar Meta</button>
+        <button type="button" class="rh-btn rh-btn-sec" onclick="mtLimpar()">✕ Limpar</button>
+      </form>
+    </div>
+    <div class="ts"><div class="th2"><div style="display:flex;align-items:center;gap:7px"><div class="chb"></div><span class="ct">Metas Cadastradas</span></div></div>
+      <div class="tw"><table class="tb" id="mtTbl"><thead><tr><th>Mês</th><th>Indicador</th><th>Área</th><th>Meta</th><th>Realizado</th><th>Situação</th><th>Definida por</th><th></th></tr></thead><tbody id="mtBody"></tbody></table></div>
+    </div>
+  </div>
   <div class="page" id="pg-comdash">
     <div class="sec-hdr"><span class="sec-hdr-ic">📊</span><div><div class="sec-hdr-t">Painel Comercial</div><div class="sec-hdr-sub">Visão executiva do mês: propostas, conversão, pipeline e metas</div></div></div>
     <div id="cd-content"><div style="padding:40px;text-align:center;color:#94a3b8;font-size:.85rem">Carregando painel comercial…</div></div>
@@ -1796,8 +1819,8 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 </script><script>
 const USERS={
   "joaoygor":{nome:"João Ygor",cargo:"Analista Operacional",senha:"Joaoygor1",admin:true},
-  "paulocampana":{nome:"Paulo Campana",cargo:"Diretor",senha:"servcamp2026",admin:false,rhDash:true,comDash:true},
-  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true,com:true,comDash:true,prj:true,qual:true,lig:true},
+  "paulocampana":{nome:"Paulo Campana",cargo:"Diretor",senha:"servcamp2026",admin:false,rhDash:true,comDash:true,metas:true},
+  "ingridycampana":{nome:"Ingridy Campana",cargo:"Diretora",senha:"servcamp2026",admin:false,rhDash:true,com:true,comDash:true,prj:true,qual:true,lig:true,metas:true},
   "amauriantonio":{nome:"Amauri Antônio",cargo:"Gerente",senha:"servcamp2026",admin:false},
   "eduardocipriano":{nome:"Eduardo Cipriano",cargo:"Diretora RH",senha:"servcamp2026",admin:false},
   "sirleimodesto":{nome:"Sirlei Modesto",cargo:"Diretor RH",senha:"servcamp2026",admin:false},
@@ -1869,6 +1892,7 @@ async function doLogin(e){
   sessionStorage.setItem("userPrj",usr.prj?"1":"0");
   sessionStorage.setItem("userQual",usr.qual?"1":"0");
   sessionStorage.setItem("userLig",usr.lig?"1":"0");
+  sessionStorage.setItem("userMetas",usr.metas?"1":"0");
   // autenticação das APIs: pega um token assinado (só quem já tem senha própria).
   // Sem token (senha padrão) ou AUTH_SECRET ausente = modo graça: nada bloqueia.
   try{
@@ -1933,7 +1957,8 @@ function applyUserUI(){
   const isPrj=sessionStorage.getItem("userPrj")==="1";
     const isQual=sessionStorage.getItem("userQual")==="1";
     const isLig=sessionStorage.getItem("userLig")==="1";
-    const navOk={rh:isAdmin||isRh,rhdash:isAdmin||isRh||isRhDash,com:isAdmin||isCom,comdash:isAdmin||isComDash,prj:isAdmin||isPrj,admin:isAdmin,qual:isAdmin||isQual,lig:isAdmin||isLig};
+    const isMetas=sessionStorage.getItem("userMetas")==="1";
+    const navOk={rh:isAdmin||isRh,rhdash:isAdmin||isRh||isRhDash,com:isAdmin||isCom,comdash:isAdmin||isComDash,prj:isAdmin||isPrj,admin:isAdmin,qual:isAdmin||isQual,lig:isAdmin||isLig,metas:isAdmin||isMetas};
   document.querySelectorAll('#navRoot [data-perm]').forEach(function(el){el.style.display=navOk[el.dataset.perm]?"":"none";});
   if(typeof navCatsAtualiza==="function")navCatsAtualiza(); // categoria sem itens visíveis some
   if(typeof sbPerfilRender==="function")sbPerfilRender();
@@ -2423,7 +2448,7 @@ function setTurno(t,btn){document.querySelectorAll("#trnoPg .pi").forEach(b=>b.c
 function setArea(){ST.area=document.getElementById("areaS").value;rpg();refresh();}
 function rpg(){Object.keys(ST.tpg).forEach(k=>ST.tpg[k]=1);}
 
-const PTITLES={visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade",ligacoes:"Ligações & Acompanhamento"};
+const PTITLES={metas:"Metas da Diretoria",visao:"Visão Geral",ativos:"Funcionários Ativos",clientes:"Clientes",faltas:"Faltas & Top 10",coberturas:"Coberturas",postos:"Justificativa de Postos Descobertos",os:"OS Avulsos",fts:"FTS",dispo:"Sem Alocação",restec:"Reservas Técnicas",hrextra:"Horas Extras",checklist:"Check List",rhvagas:"RH — Controle de Vagas",rhentrev:"RH — Entrevistas & Funil",rhdesl:"RH — Desligamentos",rhres:"RH — Reservas → Efetivação",rhtrein:"RH — Treinamentos",rhdash:"Painel RH — Diretoria",compro:"Comercial — Propostas & Cadência",comdash:"Painel Comercial",config:"Configurações — Acessos & Usuários",sede:"Base Virtual — Equipe",prj:"Projetos — Evolução & Inovação",audqual:"Auditoria de Qualidade",ligacoes:"Ligações & Acompanhamento"};
 
 /* ── Sidebar 2.0: accordion com estado salvo + busca de módulos ── */
 function navCatToggle(k){
@@ -2554,6 +2579,7 @@ function navTo(p,btn){
   else if(p==="rhtrein"){rhTreLoad();}
   else if(p==="rhdash"){rhDashLoad();}
   else if(p==="compro"){comLoad();}
+  else if(p==="metas"){mtLoad();}
   else if(p==="comdash"){comDashLoad();}
   else if(p==="config"){cfgLoad();}
   else if(p==="sede"){hqLoad();chkLoad();}
@@ -2894,6 +2920,102 @@ function vgFaltasTendencia(){
     +"\nMédia dos 7 dias fechados: "+media.toFixed(1)
     +(parcial?"\nHoje ainda em andamento — a planilha sobe durante o dia.":"");
 }
+/* ═════ METAS DA DIRETORIA ═════
+   Guardadas em jv_metas, cadastradas AQUI e nunca na planilha: meta e decisao,
+   nao medicao, e nao faria sentido depender de um export para mudar. */
+let MT_LISTA=[];
+function mtFmtH(h){const n=Number(h)||0;const i=Math.floor(n);const m=Math.round((n-i)*60);return i+"h"+(m?String(m).padStart(2,"0"):"00");}
+/* Horas extras REALIZADAS no mes, na mesma regra do card da Visao Geral:
+   soma entrada + saida e ignora FT. Recalcular diferente aqui faria a guia e o
+   card discordarem sobre o mesmo mes. */
+function mtRealizadoHE(mesISO){
+  const D=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.hrextra)||[];
+  const norm=t=>String(t||"").toUpperCase().replace(/[\u00cd\u00cc\u00ce]/g,"I").replace(/[\u00c1\u00c0\u00c2\u00c3]/g,"A").trim();
+  const out={};
+  D.forEach(r=>{
+    const m=String(r.DATA||"").slice(0,7);if(!m)return;
+    const t=norm(r.TIPO);if(t.indexOf("FT")===0)return;
+    if(t.indexOf("ENTRADA")<0&&t.indexOf("SAIDA")<0)return;
+    const seg=Number(r.MINUTOS)||0;
+    (out[m]=out[m]||{}); const a=r.AREA||"";
+    out[m][""]=(out[m][""]||0)+seg;
+    out[m][a]=(out[m][a]||0)+seg;
+  });
+  return out[mesISO]||{};
+}
+function mtLoad(){
+  const sel=document.getElementById("mtf-area");
+  if(sel&&sel.options.length<2){
+    const areas=[...new Set(((typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA.hrextra)||[]).map(r=>r.AREA).filter(Boolean))].sort();
+    areas.forEach(a=>{const o=document.createElement("option");o.value=a;o.textContent=a;sel.appendChild(o);});
+  }
+  const mes=document.getElementById("mtf-mes");
+  if(mes&&!mes.value)mes.value=new Date().toISOString().slice(0,7);
+  fetch("/api/rh?t=metas&select=*&order=mes.desc").then(r=>r.json()).then(j=>{
+    MT_LISTA=Array.isArray(j)?j:(j.dados||j.rows||[]);
+    mtRender();
+  }).catch(()=>{document.getElementById("mtBody").innerHTML='<tr><td colspan="8" style="text-align:center;color:#dc2626;padding:18px">Erro ao carregar.</td></tr>';});
+}
+function mtRender(){
+  const tb=document.getElementById("mtBody");if(!tb)return;
+  if(!MT_LISTA.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:18px">Nenhuma meta cadastrada ainda.</td></tr>';return;}
+  tb.innerHTML=MT_LISTA.map(m=>{
+    const mes=String(m.mes||"").slice(0,7);
+    const real=(mtRealizadoHE(mes)[m.area||""]||0)/3600;
+    const meta=Number(m.valor)||0;
+    const pct=meta?Math.round(real/meta*100):null;
+    const estourou=pct!==null&&pct>100;
+    const cor=pct===null?"#64748b":(estourou?"#dc2626":(pct>=85?"#f59e0b":"#16a34a"));
+    return '<tr><td>'+(mes?mes.slice(5)+"/"+mes.slice(0,4):"\u2014")+'</td>'
+      +'<td>'+(m.tipo==="HREXTRA"?"Horas Extras":m.tipo)+'</td>'
+      +'<td>'+(m.area||'<span style="color:#94a3b8">Empresa toda</span>')+'</td>'
+      +'<td><b>'+mtFmtH(meta)+'</b></td>'
+      +'<td>'+mtFmtH(real)+'</td>'
+      +'<td style="color:'+cor+';font-weight:800">'+(pct===null?"\u2014":pct+"%"+(estourou?" \u26a0":""))+'</td>'
+      +'<td style="font-size:.68rem;color:#64748b">'+((m.criado_por||"\u2014").split(" ")[0])+'</td>'
+      +'<td><span class="rh-act" onclick="mtEditar('+m.id+')" title="Editar">\u270f\ufe0f</span> '
+      +'<span class="rh-act" onclick="mtExcluir('+m.id+')" title="Excluir">\ud83d\uddd1\ufe0f</span></td></tr>';
+  }).join("");
+}
+function mtLimpar(){["mtf-id","mtf-valor","mtf-obs"].forEach(i=>{const e=document.getElementById(i);if(e)e.value="";});document.getElementById("mtf-area").value="";}
+function mtEditar(id){
+  const m=MT_LISTA.find(x=>x.id===id);if(!m)return;
+  document.getElementById("mtf-id").value=m.id;
+  document.getElementById("mtf-tipo").value=m.tipo||"HREXTRA";
+  document.getElementById("mtf-mes").value=String(m.mes||"").slice(0,7);
+  document.getElementById("mtf-valor").value=m.valor;
+  document.getElementById("mtf-area").value=m.area||"";
+  document.getElementById("mtf-obs").value=m.observacao||"";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function mtSalvar(ev){
+  ev.preventDefault();
+  const id=document.getElementById("mtf-id").value;
+  const corpo={tipo:document.getElementById("mtf-tipo").value,
+    mes:document.getElementById("mtf-mes").value+"-01",
+    valor:Number(document.getElementById("mtf-valor").value),
+    area:document.getElementById("mtf-area").value||null,
+    observacao:document.getElementById("mtf-obs").value||null,
+    criado_por:sessionStorage.getItem("userNome")||""};
+  const url="/api/rh?t=metas"+(id?"&id="+id:"");
+  fetch(url,{method:id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(corpo)})
+    .then(r=>r.json().catch(()=>({}))).then(()=>{mtLimpar();mtLoad();if(typeof updOC==="function")updOC();})
+    .catch(()=>alert("Erro ao salvar a meta."));
+  return false;
+}
+function mtExcluir(id){
+  if(!confirm("Excluir esta meta?"))return;
+  fetch("/api/rh?t=metas&id="+id,{method:"DELETE"}).then(()=>{mtLoad();if(typeof updOC==="function")updOC();});
+}
+/* A meta viaja junto com o resto para o card da Visao Geral nao precisar de
+   uma chamada propria a cada atualizacao. */
+let MT_CACHE=null;
+function mtCarregaFundo(){
+  fetch("/api/rh?t=metas&select=*").then(r=>r.json()).then(j=>{
+    MT_CACHE=Array.isArray(j)?j:(j.dados||j.rows||[]);
+    if(typeof vgCardHoraExtra==="function")vgCardHoraExtra();
+  }).catch(()=>{MT_CACHE=[];});
+}
 function vgCardHoraExtra(){
   const v=document.getElementById("ocHEV");if(!v)return;
   const norm=t=>String(t||"").toUpperCase().replace(/[ÍÌÎ]/g,"I").replace(/[ÁÀÂÃ]/g,"A").replace(/\s+/g," ").trim();
@@ -2912,6 +3034,27 @@ function vgCardHoraExtra(){
     :"";
   const el=document.getElementById("ocHE");
   if(el)el.title="Entrada "+_heMinToStr(ent)+" · Saída "+_heMinToStr(sai)+" · FT não considerado";
+  vgMetaHE();
+}
+/* Meta de hora extra, definida pela diretoria na guia Metas.
+   O numero grande do card continua sendo o do PERIODO filtrado. A linha da meta
+   e sempre do MES INTEIRO e diz isso em texto: comparar "hoje" com um teto
+   mensal daria sempre 2% e nao significaria nada. Sao duas leituras diferentes
+   no mesmo card, entao cada uma vem rotulada. */
+function vgMetaHE(){
+  const alvo=document.getElementById("ocHEMeta");if(!alvo)return;
+  if(!MT_CACHE){alvo.innerHTML="";return;}
+  const M=(typeof comMesRef==="function")?comMesRef():null;
+  if(!M){alvo.innerHTML="";return;}
+  const mesISO=M.ini.getFullYear()+"-"+String(M.ini.getMonth()+1).padStart(2,"0");
+  const meta=MT_CACHE.find(x=>x.tipo==="HREXTRA"&&String(x.mes||"").slice(0,7)===mesISO&&!x.area);
+  if(!meta){alvo.innerHTML='<span style="color:#94a3b8">sem meta definida para o mês</span>';return;}
+  const real=(mtRealizadoHE(mesISO)[""]||0)/3600;
+  const v=Number(meta.valor)||0;
+  const pct=v?Math.round(real/v*100):null;
+  const cor=pct===null?"#64748b":(pct>100?"#dc2626":(pct>=85?"#f59e0b":"#16a34a"));
+  alvo.innerHTML='Meta do mês <b>'+mtFmtH(v)+'</b> · realizado <b>'+mtFmtH(real)+'</b> '
+    +'<b style="color:'+cor+'">('+(pct===null?"—":pct+"%")+')</b>';
 }
 function vgEfetivoTendencia(){
   const el=document.getElementById("vg-fns");if(!el)return;
@@ -4593,6 +4736,7 @@ function _checkDataFreshness(){
 function refreshAll(){
   populateAreas();
   ST.mesEscolhido=null; // base nova: o mes escolhido antes pode nem existir
+  if(typeof mtCarregaFundo==="function"&&MT_CACHE===null)mtCarregaFundo();
   perAplica(ST.period||"today"); // abre sempre no dia de hoje
   ST.tpg={faltas:1,coberturas:1,postos:1,os:1,fts:1,dispo:1,ativos:1,clientes:1,restec:1,hrextra:1,checklist:1,bdvcob:1};
   refresh();
@@ -4640,6 +4784,7 @@ function handleUp(evt){
 function renderAfterLoad(){
   populateAreas();
   ST.mesEscolhido=null; // base nova: o mes escolhido antes pode nem existir
+  if(typeof mtCarregaFundo==="function"&&MT_CACHE===null)mtCarregaFundo();
   perAplica(ST.period||"today"); // abre sempre no dia de hoje
   refresh();
   updVGCharts();

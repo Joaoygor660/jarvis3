@@ -5,6 +5,13 @@
 // qualquer acesso que não venha por aqui.
 
 const TABLES = {
+  // Metas da diretoria. Entram aqui, e nao numa funcao propria, porque o plano
+  // Hobby da Vercel permite 12 funcoes e ja estamos exatamente nas 12.
+  metas: {
+    table: "jv_metas",
+    required: ["tipo", "mes", "valor"],
+    fields: ["tipo","mes","area","valor","observacao","criado_por"]
+  },
   vagas: {
     table: "rh_vagas",
     required: ["numero_vaga", "cargo"],
