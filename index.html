@@ -296,8 +296,6 @@ html[data-theme="dark"] .status.stale{background:#3a1414!important;border-color:
 .vg-s-sac{background:#dcfce7;color:#15803d;}
 .vg-s-rh{background:#ede9fe;color:#6d28d9;}
 .vg-s-com{background:#e0f2fe;color:#0369a1;}
-.vg-s-meta{background:#fef3c7;color:#92400e;}
-html[data-theme="dark"] .vg-s-meta{background:#3a2a08;color:#fcd34d;}
 html[data-theme="dark"] .vg-s-com{background:#0c2a3f;color:#7dd3fc;}
 html[data-theme="dark"] .vg-s-op{background:#16304f;color:#93c5fd;}
 html[data-theme="dark"] .vg-s-sac{background:#12281c;color:#86efac;}
@@ -913,6 +911,9 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
     <div class="det-panel" id="det-vg"><div class="det-hdr" id="det-vg-hdr"><span class="det-title" id="det-vg-title"></span><button class="det-close" onclick="closeDet('vg')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-vg-body"></div><div class="det-sub" id="det-vg-sub"></div></div></div>
     <!-- OPERACIONAL: o dia a dia da operação, na ordem que o João definiu em
          17/08 — duas fileiras de quatro.
+         Em 26/08 entrou a Meta de Hora Extra ao lado do card de Horas Extras,
+         a pedido dele — são 9 cards, então a Justif. Postos fecha sozinha a
+         terceira fileira.
          Saíram daqui: Coberturas, OS Avulsos e (em 17/08) Faltas Contrato,
          Faltas Reserva, Faltas Departamento e Suspensão / Abandono. O card
          Faltas já traz o total, e a quebra por tipo continua na guia Faltas;
@@ -927,6 +928,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
         <div class="oc c2" id="ocTMR" onclick="navTo('coberturas',null)"><div class="oc-ic">⏱️</div><div class="oc-lb">Resposta na Cobertura</div><div class="oc-v" id="ocTMRV">—</div><div class="oc-sb" id="ocTMRSub">abertura → chegada</div></div>
         <div class="oc c8 oc-t-warn" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div><div class="oc-cmp" id="ocHEMeta"></div></div>
+        <div class="oc c4" id="ocMetaProx"><div class="oc-ic">📅</div><div class="oc-lb">Meta Hora Extra — próximo mês</div><div class="oc-v" id="ocMetaProxV">—</div><div class="oc-sb" id="ocMetaProxSub">—</div><div class="oc-cmp" id="ocMetaProxDet"></div></div>
         <div class="oc c7" id="ocJust" onclick="navTo('postos',null)"><div class="oc-ic">⚠️</div><div class="oc-lb">Justif. Postos Descobertos</div><div class="oc-duo"><span class="oc-v" id="ocJustV">—</span><span class="d2" id="ocJustS">—</span></div><div class="oc-sb" id="ocJustSub">justificados · sem justificativa</div></div>
       </div>
     </div>
@@ -971,17 +973,6 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div class="oc c7 oc-h" id="ocDisc" onclick="vgDiscDet()">
           <div class="oc-ic">⚖️</div>
           <div class="oc-txt"><div class="oc-lb">Disciplina</div><div class="oc-duo"><span class="oc-v" id="ocDiscA">—</span><span class="d2" id="ocDiscS">—</span></div><div class="oc-sb" id="ocDiscSub">advertências · suspensões</div><div class="oc-cmp" id="ocDiscDet"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- METAS: definidas pela diretoria na guia Metas, nao vem da planilha -->
-    <div class="vg-sec">
-      <div class="vg-sec-lbl vg-s-meta"><span class="i">🎯</span>Metas</div>
-      <div class="oc-row oc-row-2">
-        <div class="oc c4 oc-h" id="ocMetaProx">
-          <div class="oc-ic">📅</div>
-          <div class="oc-txt"><div class="oc-lb">Meta Hora Extra — próximo mês</div><div class="oc-v" id="ocMetaProxV">—</div><div class="oc-sb" id="ocMetaProxSub">—</div><div class="oc-cmp" id="ocMetaProxDet"></div></div>
         </div>
       </div>
     </div>
