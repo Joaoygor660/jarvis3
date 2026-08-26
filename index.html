@@ -3274,9 +3274,15 @@ function vgCardDisciplina(){
   document.getElementById("ocDiscS").textContent=sus.length;
   document.getElementById("ocDiscSub").innerHTML=
     "<b>"+adv.length+"</b> advert\u00eancia(s) \u00b7 <b>"+sus.length+"</b> suspens\u00e3o(\u00f5es)"+(dias?" \u00b7 "+dias+"d":"");
-  const nl=cls("N\u00c3O LOCALIZADO");
-  document.getElementById("ocDiscDet").innerHTML=
-    "Efetivo <b>"+cls("EFETIVO")+"</b> \u00b7 Reserva <b>"+cls("RESERVA")+"</b>"+(nl?" \u00b7 s/ v\u00ednculo <b>"+nl+"</b>":"");
+  // A quebra monta-se a partir das classes que EXISTEM nos dados. Com os nomes
+  // chumbados, um vinculo EXCEDENTE sumia da linha e a soma nao fechava com o
+  // total do card: 12 advertencias + 7 suspensoes = 19, exibindo 16 + 1 + 1.
+  const rot={"EFETIVO":"Efetivo","RESERVA":"Reserva","N\u00c3O LOCALIZADO":"s/ v\u00ednculo","EXCEDENTE":"Excedente"};
+  const cont={};L.forEach(x=>{const k=x.CLASSE||"N\u00c3O LOCALIZADO";cont[k]=(cont[k]||0)+1;});
+  document.getElementById("ocDiscDet").innerHTML=Object.keys(cont)
+    .sort((a,b)=>cont[b]-cont[a])
+    .map(k=>(rot[k]||(k.charAt(0)+k.slice(1).toLowerCase()))+" <b>"+cont[k]+"</b>")
+    .join(" \u00b7 ");
   const c=document.getElementById("ocDisc");
   if(c)c.classList.toggle("oc-t-alert", sus.length>0);
 }
