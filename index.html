@@ -3010,10 +3010,16 @@ function mtSalvar(ev){
     area:document.getElementById("mtf-area").value||null,
     observacao:document.getElementById("mtf-obs").value||null,
     criado_por:sessionStorage.getItem("userNome")||""};
-  const url="/api/rh?t=metas"+(id?"&id="+id:"");
-  fetch(url,{method:id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(corpo)})
-    .then(r=>r.json().catch(()=>({}))).then(()=>{mtLimpar();mtLoad();if(typeof updOC==="function")updOC();})
-    .catch(()=>alert("Erro ao salvar a meta."));
+  // A API do RH espera o id NO CORPO para atualizar (o DELETE e que aceita na
+  // URL). Mandando so na query, ela responde 400 e a edicao falha calada.
+  if(id)corpo.id=Number(id);
+  fetch("/api/rh?t=metas",{method:id?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(corpo)})
+    .then(r=>r.json().catch(()=>({}))).then(j=>{
+      if(j&&j.error){alert("Erro ao salvar a meta: "+j.error);return;}
+      mtLimpar();mtLoad();
+      if(typeof mtCarregaFundo==="function")mtCarregaFundo();
+      if(typeof updOC==="function")updOC();
+    }).catch(()=>alert("Erro ao salvar a meta."));
   return false;
 }
 function mtExcluir(id){
