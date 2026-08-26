@@ -2964,7 +2964,7 @@ function mtLoad(){
   }
   const mes=document.getElementById("mtf-mes");
   if(mes&&!mes.value)mes.value=new Date().toISOString().slice(0,7);
-  fetch("/api/rh?t=metas&select=*&order=mes.desc").then(r=>r.json()).then(j=>{
+  fetch("/api/rh?t=metas&select=*&order=mes.desc",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     MT_LISTA=Array.isArray(j)?j:(j.dados||j.rows||[]);
     mtRender();
   }).catch(()=>{document.getElementById("mtBody").innerHTML='<tr><td colspan="8" style="text-align:center;color:#dc2626;padding:18px">Erro ao carregar.</td></tr>';});
@@ -3024,7 +3024,9 @@ function mtExcluir(id){
    uma chamada propria a cada atualizacao. */
 let MT_CACHE=null;
 function mtCarregaFundo(){
-  fetch("/api/rh?t=metas&select=*").then(r=>r.json()).then(j=>{
+  // no-store: sem isso o navegador serve a resposta antiga e o card continua
+  // mostrando a meta anterior depois que o diretor acabou de mudar.
+  fetch("/api/rh?t=metas&select=*",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     MT_CACHE=Array.isArray(j)?j:(j.dados||j.rows||[]);
     if(typeof vgCardHoraExtra==="function")vgCardHoraExtra();
   }).catch(()=>{MT_CACHE=[];});
