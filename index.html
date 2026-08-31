@@ -1229,7 +1229,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
 
   <!-- HORAS EXTRAS -->
   <div class="page" id="pg-hrextra">
-    <div class="sec-hdr"><span class="sec-hdr-ic">⏰</span><div><div class="sec-hdr-t">Horas Extras</div><div class="sec-hdr-sub">Controle de horas extras por tipo, cliente e supervisor</div></div></div>
+    <div class="sec-hdr"><span class="sec-hdr-ic">⏰</span><div><div class="sec-hdr-t">Horas Extras</div><div class="sec-hdr-sub">Controle de horas extras por tipo, cliente e supervisor</div></div><button class="rh-btn" style="margin-left:auto" onclick="heReportAbrir()">📧 Enviar relatório</button></div>
     <div class="sec-kpis" id="he-tipos-kpis"></div>
     <div class="det-panel" id="det-hrextra"><div class="det-hdr" id="det-hrextra-hdr"><span class="det-title" id="det-hrextra-title"></span><button class="det-close" onclick="closeDet('hrextra')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-hrextra-body"></div><div class="det-sub" id="det-hrextra-sub"></div></div></div>
     <div class="grid-2" style="margin-top:11px">
@@ -3675,6 +3675,98 @@ function updRestecC(){
 }
 
 function _heMinToStr(seg){const h=Math.floor(seg/3600);const m=Math.floor((seg%3600)/60);const s=seg%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");}
+/* ===== Relatorio de hora extra por dia/area (e-mail ao supervisor) =====
+   As linhas do relatorio SEMPRE vem do servidor (ultimo snapshot salvo), nunca
+   do que esta na tela: assim o e-mail nunca diverge do que a planilha diz,
+   mesmo que o navegador de quem envia esteja com filtro ou cache diferente. */
+function heReportDatasDisponiveis(){
+  const H=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.hrextra)||[];
+  return[...new Set(H.filter(r=>HE_EXTRA.has(String(r.TIPO||"").toUpperCase())).map(r=>r.DATA))].sort();
+}
+function heReportAreas(dia){
+  const H=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.hrextra)||[];
+  return[...new Set(H.filter(r=>r.DATA===dia&&HE_EXTRA.has(String(r.TIPO||"").toUpperCase())&&r.AREA)
+    .map(r=>r.AREA))].sort();
+}
+function heReportAbrir(){
+  const datas=heReportDatasDisponiveis();
+  if(!datas.length){alert("Nenhuma marcacao de entrada ou saida extra na planilha carregada.");return;}
+  const hoje=(typeof _hojeLocal==="function")?_hojeLocal():datas[datas.length-1];
+  const diaIni=datas.includes(hoje)?hoje:datas[datas.length-1];
+  const ov=document.createElement("div");ov.id="he-report";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(13,31,53,.55);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px";
+  ov.onclick=e=>{if(e.target===ov)ov.remove();};
+  ov.innerHTML=`<div style="background:#fff;border-radius:16px;padding:22px 26px;max-width:600px;width:100%;max-height:90vh;overflow:auto">
+    <div style="font-size:.9rem;font-weight:900;color:#0d1f35;margin-bottom:3px">📧 Relatorio de hora extra</div>
+    <div style="font-size:.72rem;color:#64748b;margin-bottom:16px">Avisa o supervisor sobre marcacoes de entrada e saida extra no dia.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label class="rhf-l">Dia</label><select class="rhf-i" id="her-dia" onchange="heReportRecarregar()">
+        ${datas.slice().reverse().map(d=>`<option value="${d}" ${d===diaIni?"selected":""}>${d.split("-").reverse().join("/")}</option>`).join("")}
+      </select></div>
+      <div><label class="rhf-l">Area</label><select class="rhf-i" id="her-area" onchange="heReportRecarregar()"></select></div>
+    </div>
+    <div id="her-email-wrap" style="margin-bottom:12px">
+      <label class="rhf-l">E-mail do supervisor</label>
+      <input class="rhf-i" id="her-email" type="email" placeholder="nome@gruposervcamp.com.br">
+      <label style="display:flex;align-items:center;gap:6px;font-size:.68rem;color:#64748b;margin-top:5px;font-weight:600">
+        <input type="checkbox" id="her-salvar" checked style="width:auto"> salvar este e-mail para as proximas vezes</label>
+    </div>
+    <div><label class="rhf-l">Observacao (vai no corpo do e-mail)</label>
+      <textarea class="rhf-i" id="her-obs" rows="2">Por favor, oriente os colaboradores para marcarem o ponto no horario correto - essas entradas e saidas fora do previsto estao gerando hora extra.</textarea></div>
+    <div id="her-prev" style="margin-top:14px"></div>
+    <div id="her-msg" style="font-size:.7rem;font-weight:700;margin-top:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+      <button class="rh-btn" style="background:#64748b" onclick="document.getElementById('he-report').remove()">Cancelar</button>
+      <button class="rh-btn" id="her-btn-enviar" onclick="heReportEnviar()">📨 Enviar e-mail</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  heReportRecarregar();
+}
+function heReportRecarregar(){
+  const dia=document.getElementById("her-dia").value;
+  const selArea=document.getElementById("her-area");
+  const areas=heReportAreas(dia);
+  const atual=selArea.value;
+  selArea.innerHTML=areas.map(a=>`<option value="${a}" ${a===atual?"selected":""}>${a}</option>`).join("")
+    ||'<option value="">nenhuma area com hora extra nesse dia</option>';
+  heReportPreviaCarregar();
+}
+function heReportPreviaCarregar(){
+  const dia=document.getElementById("her-dia").value, area=document.getElementById("her-area").value;
+  const prev=document.getElementById("her-prev");
+  if(!area){prev.innerHTML="";return;}
+  prev.innerHTML='<div style="color:#94a3b8;font-size:.72rem">Carregando...</div>';
+  fetch("/api/rh?herelatorio=1&dia="+encodeURIComponent(dia)+"&area="+encodeURIComponent(area))
+    .then(r=>r.json()).then(j=>{
+      if(j.email_salvo)document.getElementById("her-email").value=j.email_salvo;
+      if(!j.itens||!j.itens.length){prev.innerHTML='<div style="color:#94a3b8;font-size:.72rem">Nenhuma marcacao encontrada.</div>';return;}
+      prev.innerHTML='<div style="font-size:.63rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">'
+        +j.itens.length+' marcacao(oes) - total '+j.total+'</div>'
+        +'<div style="max-height:220px;overflow:auto;border:1px solid #e5e9f0;border-radius:9px">'
+        +j.itens.map(x=>'<div style="padding:8px 12px;border-bottom:1px solid #f1f5f9">'
+          +'<div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:.74rem;color:#0d1f35">'+x.nome+'</b>'
+          +'<b style="font-size:.74rem;color:#b45309">'+x.duracao+'</b></div>'
+          +'<div style="font-size:.65rem;color:#64748b;margin-top:2px">'+x.tipo+' - '+x.cliente+' - '+x.motivo+'</div></div>').join("")
+        +'</div>';
+    }).catch(()=>{prev.innerHTML='<div style="color:#dc2626;font-size:.72rem">Erro ao carregar a previa.</div>';});
+}
+function heReportEnviar(){
+  const dia=document.getElementById("her-dia").value, area=document.getElementById("her-area").value;
+  const email=document.getElementById("her-email").value.trim();
+  const msg=document.getElementById("her-msg");
+  if(!area){msg.style.color="#dc2626";msg.textContent="Escolha uma area.";return;}
+  if(!email||!email.includes("@")){msg.style.color="#dc2626";msg.textContent="Informe um e-mail valido.";return;}
+  const btn=document.getElementById("her-btn-enviar");btn.disabled=true;
+  msg.style.color="#64748b";msg.textContent="Enviando...";
+  fetch("/api/rh?herelatorio=1",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    dia,area,email,observacao:document.getElementById("her-obs").value.trim(),
+    salvarEmail:document.getElementById("her-salvar").checked
+  })}).then(r=>r.json().then(j=>({ok:r.ok,j}))).then(({ok,j})=>{
+    if(!ok||j.ok===false)throw new Error((j&&(j.error||j.motivo))||"Falha ao enviar.");
+    msg.style.color="#16a34a";msg.textContent="Enviado - "+j.enviados+" marcacao(oes), "+j.total+".";
+    setTimeout(()=>{const el=document.getElementById("he-report");if(el)el.remove();},1800);
+  }).catch(e=>{msg.style.color="#dc2626";msg.textContent=e.message||"Erro ao enviar.";btn.disabled=false;});
+}
 const HE_EXTRA=new Set(["EXTRA ENTRADA","EXTRA SAIDA"]);
 function updHrExtraC(){
   const d=F.hrextra;
