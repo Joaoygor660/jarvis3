@@ -3680,17 +3680,24 @@ function _heMinToStr(seg){const h=Math.floor(seg/3600);const m=Math.floor((seg%3
    do que esta na tela: assim o e-mail nunca diverge do que a planilha diz,
    mesmo que o navegador de quem envia esteja com filtro ou cache diferente. */
 function heReportDatasDisponiveis(){
-  const H=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.hrextra)||[];
-  return[...new Set(H.filter(r=>HE_EXTRA.has(String(r.TIPO||"").toUpperCase())).map(r=>r.DATA))].sort();
+  // Antes só listava dias com hora extra — um dia sem NENHUMA marcação nunca
+  // aparecia, e era justamente esse dia que precisava do e-mail de
+  // reconhecimento ("hoje não tivemos"). Agora usa o mesmo universo de dias do
+  // Relatório Diário, e garante que hoje sempre apareça mesmo sem dado nenhum.
+  const base=(typeof _relDates==="function")?_relDates():[];
+  const hoje=(typeof _hojeLocal==="function")?_hojeLocal():null;
+  return[...new Set(hoje?[...base,hoje]:base)].sort();
 }
-function heReportAreas(dia){
+function heReportAreas(){
+  // A área é o supervisor — um cargo estável. Ignora o dia de propósito: se
+  // listasse só quem teve hora extra NAQUELE dia, a área sem ocorrência
+  // desapareceria do seletor e não daria pra mandar o "não tivemos" pra ela.
   const H=(typeof DASHBOARD_DATA!=="undefined"&&DASHBOARD_DATA&&DASHBOARD_DATA.hrextra)||[];
-  return[...new Set(H.filter(r=>r.DATA===dia&&HE_EXTRA.has(String(r.TIPO||"").toUpperCase())&&r.AREA)
-    .map(r=>r.AREA))].sort();
+  return[...new Set(H.filter(r=>r.AREA).map(r=>r.AREA))].sort();
 }
 function heReportAbrir(){
   const datas=heReportDatasDisponiveis();
-  if(!datas.length){alert("Nenhuma marcacao de entrada ou saida extra na planilha carregada.");return;}
+  if(!datas.length){alert("Nenhum dia carregado ainda. Carregue a planilha primeiro.");return;}
   const hoje=(typeof _hojeLocal==="function")?_hojeLocal():datas[datas.length-1];
   const diaIni=datas.includes(hoje)?hoje:datas[datas.length-1];
   const ov=document.createElement("div");ov.id="he-report";
@@ -3712,7 +3719,7 @@ function heReportAbrir(){
         <input type="checkbox" id="her-salvar" checked style="width:auto"> salvar este e-mail para as proximas vezes</label>
     </div>
     <div><label class="rhf-l">Observacao (vai no corpo do e-mail)</label>
-      <textarea class="rhf-i" id="her-obs" rows="2">Por favor, oriente os colaboradores para marcarem o ponto no horario correto - essas entradas e saidas fora do previsto estao gerando hora extra.</textarea></div>
+      <textarea class="rhf-i" id="her-obs" rows="2"></textarea></div>
     <div id="her-prev" style="margin-top:14px"></div>
     <div id="her-msg" style="font-size:.7rem;font-weight:700;margin-top:8px"></div>
     <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
@@ -3724,15 +3731,18 @@ function heReportAbrir(){
   heReportRecarregar();
 }
 function heReportRecarregar(){
-  const dia=document.getElementById("her-dia").value;
   const selArea=document.getElementById("her-area");
-  const areas=heReportAreas(dia);
+  const areas=heReportAreas();
   const atual=selArea.value;
   selArea.innerHTML=areas.map(a=>`<option value="${a}" ${a===atual?"selected":""}>${a}</option>`).join("")
-    ||'<option value="">nenhuma area com hora extra nesse dia</option>';
+    ||'<option value="">nenhuma area cadastrada</option>';
   heReportPreviaCarregar();
 }
 let HE_REPORT_PREV=null;
+// Texto padrão só faz sentido quando HÁ marcação errada pra corrigir. Trocado
+// automaticamente ao mudar dia/área — mas só quando o campo ainda está vazio
+// ou com o próprio texto padrão anterior, pra não apagar o que o usuário digitou.
+const HE_OBS_PADRAO="Por favor, oriente os colaboradores para marcarem o ponto no horario correto - essas entradas e saidas fora do previsto estao gerando hora extra.";
 function heReportPreviaCarregar(){
   const dia=document.getElementById("her-dia").value, area=document.getElementById("her-area").value;
   const prev=document.getElementById("her-prev");
@@ -3742,12 +3752,23 @@ function heReportPreviaCarregar(){
   fetch("/api/rh?herelatorio=1&dia="+encodeURIComponent(dia)+"&area="+encodeURIComponent(area))
     .then(r=>r.json()).then(j=>{
       if(j.email_salvo)document.getElementById("her-email").value=j.email_salvo;
-      HE_REPORT_PREV={dia,area,itens:j.itens||[],total:j.total||"0min"};
-      if(!j.itens||!j.itens.length){prev.innerHTML='<div style="color:#94a3b8;font-size:.72rem">Nenhuma marcacao encontrada.</div>';return;}
+      const itens=j.itens||[];
+      HE_REPORT_PREV={dia,area,itens,total:j.total||"0min"};
+      const obsEl=document.getElementById("her-obs");
+      const obsAtual=obsEl.value.trim();
+      if(itens.length&&!obsAtual)obsEl.value=HE_OBS_PADRAO;
+      else if(!itens.length&&obsAtual===HE_OBS_PADRAO)obsEl.value="";
+      if(!itens.length){
+        const diaFmt=dia.split("-").reverse().join("/");
+        prev.innerHTML='<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:9px;padding:10px 14px;font-size:.74rem;color:#15803d">'
+          +'✅ Não tivemos hora extra (entrada ou saída) em '+diaFmt+' na área de <b>'+area+'</b>.'
+          +'<div style="font-size:.63rem;color:#64748b;margin-top:4px;font-weight:600">Pode enviar assim mesmo — vira um e-mail de reconhecimento.</div></div>';
+        return;
+      }
       prev.innerHTML='<div style="font-size:.63rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">'
-        +j.itens.length+' marcacao(oes) - total '+j.total+'</div>'
+        +itens.length+' marcacao(oes) - total '+j.total+'</div>'
         +'<div style="max-height:220px;overflow:auto;border:1px solid #e5e9f0;border-radius:9px">'
-        +j.itens.map(x=>'<div style="padding:8px 12px;border-bottom:1px solid #f1f5f9">'
+        +itens.map(x=>'<div style="padding:8px 12px;border-bottom:1px solid #f1f5f9">'
           +'<div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:.74rem;color:#0d1f35">'+x.nome+'</b>'
           +'<b style="font-size:.74rem;color:#b45309">'+x.duracao+'</b></div>'
           +'<div style="font-size:.65rem;color:#64748b;margin-top:2px">'+x.tipo+' - '+x.cliente+' - '+x.motivo+'</div></div>').join("")
@@ -3761,24 +3782,28 @@ function heReportPreviaCarregar(){
    quando ninguem digitou nada: quem envia escolhe To/Cc dentro do Outlook,
    como o Joao pediu. */
 function heReportAbrirOutlook(){
-  if(!HE_REPORT_PREV||!HE_REPORT_PREV.itens||!HE_REPORT_PREV.itens.length){
-    alert("Escolha uma area com marcacao de hora extra antes de abrir no Outlook.");return;
+  if(!HE_REPORT_PREV){
+    alert("Escolha uma area antes de abrir no Outlook.");return;
   }
   const{dia,area,itens,total}=HE_REPORT_PREV;
   const diaFmt=dia.split("-").reverse().join("/");
   const obs=(document.getElementById("her-obs").value||"").trim();
   const email=(document.getElementById("her-email").value||"").trim();
+  const semOcorrencia=!itens.length;
 
-  const linhas=itens.map(x=>"- "+x.nome+" | "+x.tipo+" | "+x.cliente+" | "+x.motivo+" | "+x.duracao).join("\r\n");
-  const corpo=
-    "Ola,\r\n\r\n"+
-    "Segue o relatorio de hora extra registrada em "+diaFmt+" na area de "+area+".\r\n\r\n"+
-    linhas+"\r\n\r\n"+
-    "Total do dia: "+total+" em "+itens.length+" marcacao(oes).\r\n"+
-    (obs?"\r\n"+obs+"\r\n":"")+
-    "\r\nRelatorio gerado pelo JARVIS \u2014 Grupo ServCamp.";
+  const corpo=semOcorrencia
+    ? "Ola,\r\n\r\n"+
+      "Nao tivemos situacao de hora extra (entrada ou saida) registrada em "+diaFmt+" na area de "+area+".\r\n"+
+      (obs?"\r\n"+obs+"\r\n":"")+
+      "\r\nRelatorio gerado pelo JARVIS \u2014 Grupo ServCamp."
+    : "Ola,\r\n\r\n"+
+      "Segue o relatorio de hora extra registrada em "+diaFmt+" na area de "+area+".\r\n\r\n"+
+      itens.map(x=>"- "+x.nome+" | "+x.tipo+" | "+x.cliente+" | "+x.motivo+" | "+x.duracao).join("\r\n")+"\r\n\r\n"+
+      "Total do dia: "+total+" em "+itens.length+" marcacao(oes).\r\n"+
+      (obs?"\r\n"+obs+"\r\n":"")+
+      "\r\nRelatorio gerado pelo JARVIS \u2014 Grupo ServCamp.";
 
-  const assunto="Hora extra - "+area+" - "+diaFmt;
+  const assunto="Hora extra - "+area+" - "+diaFmt+(semOcorrencia?" (sem ocorrencia)":"");
   const link="mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent(assunto)+"&body="+encodeURIComponent(corpo);
   // troca de aba/app pelo protocolo mailto: nao navega a pagina do JARVIS
   window.location.href=link;
@@ -3796,7 +3821,8 @@ function heReportEnviar(){
     salvarEmail:document.getElementById("her-salvar").checked
   })}).then(r=>r.json().then(j=>({ok:r.ok,j}))).then(({ok,j})=>{
     if(!ok||j.ok===false)throw new Error((j&&(j.error||j.motivo))||"Falha ao enviar.");
-    msg.style.color="#16a34a";msg.textContent="Enviado - "+j.enviados+" marcacao(oes), "+j.total+".";
+    msg.style.color="#16a34a";
+    msg.textContent=j.enviados?("Enviado - "+j.enviados+" marcacao(oes), "+j.total+"."):"Enviado - sem ocorrencia no dia.";
     setTimeout(()=>{const el=document.getElementById("he-report");if(el)el.remove();},1800);
   }).catch(e=>{msg.style.color="#dc2626";msg.textContent=e.message||"Erro ao enviar.";btn.disabled=false;});
 }

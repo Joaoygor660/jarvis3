@@ -132,7 +132,10 @@ module.exports = async function handler(req, res) {
     }
 
     // POST: envia de verdade.
-    if (!itens.length) return res.status(400).json({ error: "Nenhuma marcação de hora extra para essa área nesse dia." });
+    // Áreas SEM hora extra também podem gerar e-mail — é um reconhecimento
+    // ("hoje não tivemos hora extra"), não só um alerta de problema. Por isso
+    // não bloqueia mais quando itens.length é zero; o corpo do e-mail é que
+    // muda (mensagem de confirmação em vez de tabela).
     if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
       return res.status(200).json({ ok: false, motivo: "MAIL_USER/MAIL_PASS não configuradas — envio de e-mail inativo." });
     }
@@ -141,6 +144,7 @@ module.exports = async function handler(req, res) {
     if (!destino || !destino.includes("@")) return res.status(400).json({ error: "Informe um e-mail válido." });
     const observacao = String(body.observacao || "").trim();
     const diaFmt = dia.split("-").reverse().join("/");
+    const semOcorrencia = itens.length === 0;
 
     const linhasHtml = itens.map(x =>
       `<tr><td style="padding:6px 10px;border-bottom:1px solid #e5e9f0">${x.nome}</td>` +
@@ -149,20 +153,25 @@ module.exports = async function handler(req, res) {
       `<td style="padding:6px 10px;border-bottom:1px solid #e5e9f0">${x.motivo}</td>` +
       `<td style="padding:6px 10px;border-bottom:1px solid #e5e9f0;text-align:right"><b>${x.duracao}</b></td></tr>`
     ).join("");
+    const corpoMiolo = semOcorrencia
+      ? `<p style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;color:#15803d">
+           <b>Não tivemos situação de hora extra</b> (entrada ou saída) registrada em <b>${diaFmt}</b> na área de <b>${area}</b>.
+         </p>`
+      : `<p>Segue o relatório de <b>hora extra registrada em ${diaFmt}</b> na área de <b>${area}</b>.</p>
+         <table style="border-collapse:collapse;width:100%;margin:14px 0">
+           <thead><tr style="background:#f1f5f9">
+             <th style="padding:6px 10px;text-align:left">Colaborador</th>
+             <th style="padding:6px 10px;text-align:left">Tipo</th>
+             <th style="padding:6px 10px;text-align:left">Cliente</th>
+             <th style="padding:6px 10px;text-align:left">Motivo</th>
+             <th style="padding:6px 10px;text-align:right">Duração</th>
+           </tr></thead>
+           <tbody>${linhasHtml}</tbody>
+         </table>
+         <p>Total do dia: <b>${fmtDur(totalSeg)}</b> em ${itens.length} marcação(ões).</p>`;
     const html = `<div style="font-family:Arial,sans-serif;color:#0d1f35;font-size:14px;max-width:640px">
       <p>Olá,</p>
-      <p>Segue o relatório de <b>hora extra registrada em ${diaFmt}</b> na sua área.</p>
-      <table style="border-collapse:collapse;width:100%;margin:14px 0">
-        <thead><tr style="background:#f1f5f9">
-          <th style="padding:6px 10px;text-align:left">Colaborador</th>
-          <th style="padding:6px 10px;text-align:left">Tipo</th>
-          <th style="padding:6px 10px;text-align:left">Cliente</th>
-          <th style="padding:6px 10px;text-align:left">Motivo</th>
-          <th style="padding:6px 10px;text-align:right">Duração</th>
-        </tr></thead>
-        <tbody>${linhasHtml}</tbody>
-      </table>
-      <p>Total do dia: <b>${fmtDur(totalSeg)}</b> em ${itens.length} marcação(ões).</p>
+      ${corpoMiolo}
       ${observacao ? `<p style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px">${observacao}</p>` : ""}
       <p style="color:#64748b;font-size:12px;margin-top:20px">Relatório gerado automaticamente pelo JARVIS — Grupo ServCamp.</p>
     </div>`;
@@ -176,7 +185,7 @@ module.exports = async function handler(req, res) {
       });
       await tx.sendMail({
         from: process.env.MAIL_FROM || `"Grupo Serv Camp" <${process.env.MAIL_USER}>`,
-        to: destino, subject: `Hora extra — ${area} — ${diaFmt}`, html
+        to: destino, subject: `Hora extra — ${area} — ${diaFmt}${semOcorrencia ? " (sem ocorrência)" : ""}`, html
       });
     } catch (e) {
       return res.status(200).json({ ok: false, motivo: String((e && e.message) || e).slice(0, 200) });
