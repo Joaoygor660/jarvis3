@@ -3864,12 +3864,19 @@ function _heTipoClick(tipo,card){
   card.classList.add("sk-act");
   const filtered=F.hrextra.filter(r=>(r.TIPO||"—")===tipo);
   const byCli={};filtered.forEach(r=>{const c=r.CLIENTE||"—";if(!byCli[c])byCli[c]={count:0,min:0};byCli[c].count++;byCli[c].min+=r.MINUTOS||0;});
-  const items=Object.entries(byCli).sort((a,b)=>b[1].min-a[1].min);
-  const mx=items[0]?.[1].min||1;
-  document.getElementById("det-hrextra-title").textContent="⏰ "+tipo+" — por Cliente";
+  // items no mesmo formato que drillRow() já espera (v em segundos, rawKey =
+  // o CLIENTE exato) — reaproveita o mecanismo de clique que Justif. Postos e
+  // outras guias já usam, em vez de inventar um segundo sistema de detalhe.
+  const items=Object.entries(byCli).sort((a,b)=>b[1].min-a[1].min)
+    .map(([k,v])=>({NOME:k,rawKey:k,v:v.min,sub:v.count+" registro"+(v.count>1?"s":"")}));
+  const mx=items[0]?.v||1;
+  const cfg={t:"⏰ "+tipo+" — por Cliente",fill:"#2e8fef",arr:()=>filtered,key:"CLIENTE"};
+  _detRows.hrextra={cfg,items};
+  document.getElementById("det-hrextra-title").textContent=cfg.t;
   document.getElementById("det-hrextra-body").innerHTML=items.length
-    ?`<div class="det-grid">${items.map(([k,v])=>`<div class="di2"><div class="di2-row"><span class="di2-lbl" title="${k}">${k}</span><span class="di2-val">${_heMinToStr(v.min)}</span></div><div class="di2-sub">${v.count} registros</div><div class="di2-bar"><div class="di2-fill" style="width:${Math.round(v.min/mx*100)}%;background:#2e8fef"></div></div></div>`).join("")}</div>`
+    ?`<div class="det-grid">${items.map((r,i)=>`<div class="di2 di2-click" onclick="drillRow('hrextra',${i})"><div class="di2-row"><span class="di2-lbl" title="${r.NOME}">${r.NOME}</span><span class="di2-val">${_heMinToStr(r.v)}</span></div><div class="di2-sub">${r.sub}</div><div class="di2-bar"><div class="di2-fill" style="width:${Math.round(r.v/mx*100)}%;background:#2e8fef"></div></div></div>`).join("")}</div>`
     :'<div class="nd">Nenhum registro</div>';
+  _detSubAct.hrextra=null;
   const subEl=document.getElementById("det-hrextra-sub");if(subEl){subEl.classList.remove("open");subEl.innerHTML="";}
   panel.classList.add("open");
   panel.scrollIntoView({behavior:"smooth",block:"nearest"});
