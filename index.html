@@ -3717,6 +3717,7 @@ function heReportAbrir(){
     <div id="her-msg" style="font-size:.7rem;font-weight:700;margin-top:8px"></div>
     <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
       <button class="rh-btn" style="background:#64748b" onclick="document.getElementById('he-report').remove()">Cancelar</button>
+      <button class="rh-btn rh-btn-sec" onclick="heReportAbrirOutlook()">✉ Abrir no Outlook</button>
       <button class="rh-btn" id="her-btn-enviar" onclick="heReportEnviar()">📨 Enviar e-mail</button>
     </div></div>`;
   document.body.appendChild(ov);
@@ -3731,14 +3732,17 @@ function heReportRecarregar(){
     ||'<option value="">nenhuma area com hora extra nesse dia</option>';
   heReportPreviaCarregar();
 }
+let HE_REPORT_PREV=null;
 function heReportPreviaCarregar(){
   const dia=document.getElementById("her-dia").value, area=document.getElementById("her-area").value;
   const prev=document.getElementById("her-prev");
+  HE_REPORT_PREV=null;
   if(!area){prev.innerHTML="";return;}
   prev.innerHTML='<div style="color:#94a3b8;font-size:.72rem">Carregando...</div>';
   fetch("/api/rh?herelatorio=1&dia="+encodeURIComponent(dia)+"&area="+encodeURIComponent(area))
     .then(r=>r.json()).then(j=>{
       if(j.email_salvo)document.getElementById("her-email").value=j.email_salvo;
+      HE_REPORT_PREV={dia,area,itens:j.itens||[],total:j.total||"0min"};
       if(!j.itens||!j.itens.length){prev.innerHTML='<div style="color:#94a3b8;font-size:.72rem">Nenhuma marcacao encontrada.</div>';return;}
       prev.innerHTML='<div style="font-size:.63rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">'
         +j.itens.length+' marcacao(oes) - total '+j.total+'</div>'
@@ -3749,6 +3753,35 @@ function heReportPreviaCarregar(){
           +'<div style="font-size:.65rem;color:#64748b;margin-top:2px">'+x.tipo+' - '+x.cliente+' - '+x.motivo+'</div></div>').join("")
         +'</div>';
     }).catch(()=>{prev.innerHTML='<div style="color:#dc2626;font-size:.72rem">Erro ao carregar a previa.</div>';});
+}
+/* Abre um rascunho no Outlook (mailto:), com assunto e corpo ja prontos.
+   O texto e' plano (mailto nao aceita HTML) e vem da MESMA previa que a tela
+   mostra -- sem novo fetch, entao o rascunho bate exatamente com o que o
+   usuario acabou de conferir. O destinatario nao vai preenchido de proposito
+   quando ninguem digitou nada: quem envia escolhe To/Cc dentro do Outlook,
+   como o Joao pediu. */
+function heReportAbrirOutlook(){
+  if(!HE_REPORT_PREV||!HE_REPORT_PREV.itens||!HE_REPORT_PREV.itens.length){
+    alert("Escolha uma area com marcacao de hora extra antes de abrir no Outlook.");return;
+  }
+  const{dia,area,itens,total}=HE_REPORT_PREV;
+  const diaFmt=dia.split("-").reverse().join("/");
+  const obs=(document.getElementById("her-obs").value||"").trim();
+  const email=(document.getElementById("her-email").value||"").trim();
+
+  const linhas=itens.map(x=>"- "+x.nome+" | "+x.tipo+" | "+x.cliente+" | "+x.motivo+" | "+x.duracao).join("\r\n");
+  const corpo=
+    "Ola,\r\n\r\n"+
+    "Segue o relatorio de hora extra registrada em "+diaFmt+" na area de "+area+".\r\n\r\n"+
+    linhas+"\r\n\r\n"+
+    "Total do dia: "+total+" em "+itens.length+" marcacao(oes).\r\n"+
+    (obs?"\r\n"+obs+"\r\n":"")+
+    "\r\nRelatorio gerado pelo JARVIS \u2014 Grupo ServCamp.";
+
+  const assunto="Hora extra - "+area+" - "+diaFmt;
+  const link="mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent(assunto)+"&body="+encodeURIComponent(corpo);
+  // troca de aba/app pelo protocolo mailto: nao navega a pagina do JARVIS
+  window.location.href=link;
 }
 function heReportEnviar(){
   const dia=document.getElementById("her-dia").value, area=document.getElementById("her-area").value;
