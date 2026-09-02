@@ -6329,13 +6329,17 @@ function comCadParada(x){
   if((x.cadencia_etapa||0)>=5)return"a régua chegou ao fim (Msg 5 já enviada)";
   return null;
 }
-/* Próxima etapa devida e a data em que ela sai. */
+/* Próxima etapa devida e a data em que ela sai.
+   cadencia_reiniciada_em, quando preenchida, substitui data_envio_proposta só
+   para esta conta — mesma regra do servidor (api/comercial-cron.js). Sem isso
+   o Radar mostraria uma data e o e-mail sairia em outra. */
 function comCadProxima(x){
   if(comCadParada(x))return null;
   const atual=x.cadencia_etapa||0;
+  const ancora=x.cadencia_reiniciada_em||x.data_envio_proposta;
   for(const et of [2,3,4,5]){
     if(et>atual){
-      const base=new Date(String(x.data_envio_proposta).slice(0,10)+"T12:00:00");
+      const base=new Date(String(ancora).slice(0,10)+"T12:00:00");
       base.setDate(base.getDate()+COM_CAD_DIAS[et]);
       return{etapa:et,data:base,atrasada:base<new Date()};
     }

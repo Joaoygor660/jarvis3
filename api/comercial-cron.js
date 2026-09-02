@@ -433,7 +433,12 @@ module.exports = async function handler(req, res) {
   let tx = null;
 
   for (const p of props) {
-    const envio = new Date(String(p.data_envio_proposta).slice(0, 10) + "T00:00:00Z");
+    // cadencia_reiniciada_em, quando preenchida, substitui data_envio_proposta
+    // só para contar os dias da cadência — usada quando a régua é reiniciada
+    // manualmente (ex.: depois de semanas com a agenda pausada) sem mexer na
+    // data real de envio, que outros relatórios dependem dela ficar intacta.
+    const ancora = p.cadencia_reiniciada_em || p.data_envio_proposta;
+    const envio = new Date(String(ancora).slice(0, 10) + "T00:00:00Z");
     const dias = Math.floor((hoje - envio) / 86400000);
     // maior etapa vencida ainda não enviada (evita rajada: envia só a mais atual)
     let due = null;
