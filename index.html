@@ -928,7 +928,7 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
         <div class="oc c3" id="ocCk" onclick="navTo('checklist',null)"><div class="oc-ic">✅</div><div class="oc-lb">Check List</div><div class="oc-duo"><span class="oc-v" id="ocCkV">—</span><span class="d2" id="ocCkS">—</span></div><div class="oc-sb" id="ocCkSub">visitados · sem visita</div></div>
         <div class="oc c2" id="ocTMR" onclick="navTo('coberturas',null)"><div class="oc-ic">⏱️</div><div class="oc-lb">Resposta na Cobertura</div><div class="oc-v" id="ocTMRV">—</div><div class="oc-sb" id="ocTMRSub">abertura → chegada</div></div>
         <div class="oc c8 oc-t-warn" id="ocHE" onclick="navTo('hrextra',null)"><div class="oc-ic">⏰</div><div class="oc-lb">Horas Extras</div><div class="oc-v" id="ocHEV">—</div><div class="oc-sb" id="ocHESub">entrada + saída</div><div class="oc-cmp" id="ocHEDet"></div><div class="oc-cmp" id="ocHEMeta"></div></div>
-        <div class="oc c4" id="ocMetaProx"><div class="oc-ic">📅</div><div class="oc-lb">Meta Hora Extra — próximo mês</div><div class="oc-v" id="ocMetaProxV">—</div><div class="oc-sb" id="ocMetaProxSub">—</div><div class="oc-cmp" id="ocMetaProxDet"></div></div>
+        <div class="oc c4" id="ocMetaProx"><div class="oc-ic">📅</div><div class="oc-lb">Meta Hora Extra</div><div class="oc-v" id="ocMetaProxV">—</div><div class="oc-sb" id="ocMetaProxSub">—</div><div class="oc-cmp" id="ocMetaProxDet"></div></div>
         <div class="oc c7" id="ocJust" onclick="navTo('postos',null)"><div class="oc-ic">⚠️</div><div class="oc-lb">Justif. Postos Descobertos</div><div class="oc-duo"><span class="oc-v" id="ocJustV">—</span><span class="d2" id="ocJustS">—</span></div><div class="oc-sb" id="ocJustSub">justificados · sem justificativa</div></div>
       </div>
     </div>
@@ -3057,19 +3057,24 @@ function vgCardHoraExtra(){
    e sempre do MES INTEIRO e diz isso em texto: comparar "hoje" com um teto
    mensal daria sempre 2% e nao significaria nada. Sao duas leituras diferentes
    no mesmo card, entao cada uma vem rotulada. */
-/* Meta de hora extra do PROXIMO mes.
-   Serve para planejar: a diretoria define o teto antes do mes comecar, e a
-   operacao ja sabe com o que vai ser cobrada. Por isso o card mostra tambem
-   como esta o mes corrente — um teto sem a referencia do realizado atual nao
-   ajuda ninguem a decidir se e um numero possivel.
-   O "proximo" e relativo ao mes em foco no filtro: olhando julho, o proximo e
-   agosto. Assim o card acompanha o seletor de mes em vez de ficar preso ao
-   calendario de hoje. */
+/* Meta de hora extra: mostra o MES ATUAL como numero principal, e o mes
+   seguinte como nota -- nao mais o contrario.
+   Antes o card so mostrava o proximo mes, e ficava vazio assim que o
+   calendario virava: o Joao cadastrou 50h para setembro em 26/08 vendo o
+   card dizer "proximo mes"; quando setembro chegou, o card passou a olhar
+   outubro (que ninguem tinha preenchido ainda) e pareceu que a meta tinha
+   sumido -- ela so estava um card errado, na linha pequena "Meta do mes"
+   dentro do card Horas Extras.
+   "Atual" e "seguinte" sao relativos ao mes em foco no filtro: olhando
+   julho, atual e julho e seguinte e agosto -- o card acompanha o seletor de
+   mes do topo em vez de ficar preso ao calendario de hoje. */
 function vgMetaProxima(){
   const v=document.getElementById("ocMetaProxV");if(!v)return;
   const sub=document.getElementById("ocMetaProxSub"),det=document.getElementById("ocMetaProxDet");
   const M=(typeof comMesRef==="function")?comMesRef():null;
   if(!M){v.textContent="\u2014";return;}
+  const isoAtual=M.ini.getFullYear()+"-"+String(M.ini.getMonth()+1).padStart(2,"0");
+  const nomeAtual=M.ini.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
   const prox=new Date(M.ini.getFullYear(),M.ini.getMonth()+1,1);
   const isoProx=prox.getFullYear()+"-"+String(prox.getMonth()+1).padStart(2,"0");
   const nomeProx=prox.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
@@ -3082,28 +3087,32 @@ function vgMetaProxima(){
     card.style.cursor=podeEditar?"pointer":"default";
   }
   if(!MT_CACHE){v.textContent="\u2014";if(sub)sub.textContent="carregando\u2026";return;}
-  const meta=MT_CACHE.find(x=>x.tipo==="HREXTRA"&&String(x.mes||"").slice(0,7)===isoProx&&!x.area);
-  const isoAtual=M.ini.getFullYear()+"-"+String(M.ini.getMonth()+1).padStart(2,"0");
+  const metaAtual=MT_CACHE.find(x=>x.tipo==="HREXTRA"&&String(x.mes||"").slice(0,7)===isoAtual&&!x.area);
+  const metaProx=MT_CACHE.find(x=>x.tipo==="HREXTRA"&&String(x.mes||"").slice(0,7)===isoProx&&!x.area);
   const realAtual=(mtRealizadoHE(isoAtual)[""]||0)/3600;
-  if(!meta){
+  const notaProx=metaProx
+    ?nomeProx+": "+mtFmtH(Number(metaProx.valor)||0)
+    :nomeProx+': <span style="color:#b45309">n\u00e3o definida</span>';
+  if(!metaAtual){
     v.textContent="\u2014";
-    if(sub)sub.innerHTML='<span style="color:#b45309">n\u00e3o definida</span> \u00b7 '+nomeProx;
-    if(det)det.innerHTML=podeEditar?'Clique para cadastrar em Metas':'A diretoria ainda n\u00e3o definiu';
+    if(sub)sub.innerHTML='<span style="color:#b45309">n\u00e3o definida</span> \u00b7 '+nomeAtual;
+    if(det)det.innerHTML=(podeEditar?'Clique para cadastrar em Metas':'A diretoria ainda n\u00e3o definiu')+' \u00b7 '+notaProx;
     if(card)card.classList.remove("oc-t-warn");
     return;
   }
-  const alvoH=Number(meta.valor)||0;
+  const alvoH=Number(metaAtual.valor)||0;
   v.textContent=mtFmtH(alvoH);
-  if(sub)sub.textContent="teto para "+nomeProx;
-  // Comparar com o mes corrente diz se a meta pede reducao ou ja esta folgada.
+  if(sub)sub.textContent="teto para "+nomeAtual;
+  // Comparar com o realizado do mes diz se a meta pede reducao ou ja esta folgada.
   if(det){
-    if(!realAtual){det.innerHTML="";}
+    if(!realAtual){det.innerHTML=notaProx;}
     else{
       const dif=alvoH-realAtual;
       const pct=Math.round(Math.abs(dif)/realAtual*100);
-      det.innerHTML=dif<0
-        ?'M\u00eas atual em <b>'+mtFmtH(realAtual)+'</b> \u00b7 <b style="color:#dc2626">reduzir '+pct+'%</b>'
-        :'M\u00eas atual em <b>'+mtFmtH(realAtual)+'</b> \u00b7 <b style="color:#16a34a">folga de '+pct+'%</b>';
+      det.innerHTML=(dif<0
+        ?'Realizado <b>'+mtFmtH(realAtual)+'</b> \u00b7 <b style="color:#dc2626">reduzir '+pct+'%</b>'
+        :'Realizado <b>'+mtFmtH(realAtual)+'</b> \u00b7 <b style="color:#16a34a">folga de '+pct+'%</b>')
+        +' \u00b7 '+notaProx;
     }
   }
   if(card)card.classList.toggle("oc-t-warn", alvoH<realAtual);
