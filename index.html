@@ -909,19 +909,19 @@ td{padding:6px 9px;font-size:.73rem;color:var(--g700);}
       <div class="sk sk-gr clickable" onclick="skDet('vg','funcs',this)"><div class="sk-top"><span class="sk-ic">👥</span><span class="sk-tag t-gr">Fixo</span></div><div class="sk-lbl">Funcionários Ativos</div><div class="sk-v" id="vg-fn">—</div><div class="sk-sub" id="vg-fns">—</div><div id="vg-efet-trend"></div></div>
     </div>
     <div class="det-panel" id="det-vg"><div class="det-hdr" id="det-vg-hdr"><span class="det-title" id="det-vg-title"></span><button class="det-close" onclick="closeDet('vg')">✕</button></div><div class="det-body"><div class="det-grid-wrap" id="det-vg-body"></div><div class="det-sub" id="det-vg-sub"></div></div></div>
-    <!-- OPERACIONAL: o dia a dia da operação, na ordem que o João definiu em
-         17/08 — duas fileiras de quatro.
-         Em 26/08 entrou a Meta de Hora Extra ao lado do card de Horas Extras,
-         a pedido dele — são 9 cards, então a Justif. Postos fecha sozinha a
-         terceira fileira.
-         Saíram daqui: Coberturas, OS Avulsos e (em 17/08) Faltas Contrato,
-         Faltas Reserva, Faltas Departamento e Suspensão / Abandono. O card
-         Faltas já traz o total, e a quebra por tipo continua na guia Faltas;
-         suspensão e abandono seguem em Funcionários Ativos e Reservas Técnicas. -->
+    <!-- OPERACIONAL: o dia a dia da operação. Faltas Contrato/Reserva/
+         Departamento saíram em 17/08 e voltaram em 31/08 a pedido do João.
+         Com a Meta de Hora Extra (26/08), são 12 cards — três fileiras de
+         quatro, exatas.
+         Saíram e continuam fora: Coberturas, OS Avulsos e Suspensão/Abandono
+         (esses dois seguem em Funcionários Ativos e Reservas Técnicas). -->
     <div class="vg-sec">
       <div class="vg-sec-lbl vg-s-op"><span class="i">🔧</span>Operacional</div>
       <div class="oc-row oc-row-op">
         <div class="oc c1 oc-t-alert" id="ocFaltas" onclick="navTo('faltas',null)"><div class="oc-ic">🚫</div><div class="oc-lb">Faltas</div><div class="oc-v" id="oc1">—</div><div class="oc-sb" id="oc1s">registros</div><div id="ocFaltasTrend"></div></div>
+        <div class="oc c7 oc-t-warn"><div class="oc-ic">📌</div><div class="oc-lb">Faltas Contrato</div><div class="oc-v" id="oc7">—</div><div class="oc-sb">registros</div></div>
+        <div class="oc c8 oc-t-warn"><div class="oc-ic">🔖</div><div class="oc-lb">Faltas Reserva</div><div class="oc-v" id="oc8">—</div><div class="oc-sb">registros</div></div>
+        <div class="oc c8 oc-t-warn"><div class="oc-ic">🏢</div><div class="oc-lb">Faltas Departamento</div><div class="oc-v" id="oc10">—</div><div class="oc-sb">pessoal interno</div></div>
         <div class="oc oc-t-alert" onclick="_postoVagoClick()"><div class="oc-ic">🚨</div><div class="oc-lb">Posto Descoberto</div><div class="oc-v" id="oc9">—</div><div class="oc-sb">vago sem cobertura</div></div>
         <div class="oc c6 oc-alert" id="ocDispo" onclick="navTo('dispo',null)"><div class="oc-ic">🔴</div><div class="oc-lb">Sem Alocação</div><div class="oc-v" id="oc6">—</div><div class="oc-sb" id="oc6s">registros</div><div class="oc-cmp" id="oc6c"></div></div>
         <div class="oc c4" onclick="navTo('fts',null)"><div class="oc-ic">🔄</div><div class="oc-lb">FTS</div><div class="oc-v" id="oc4">—</div><div class="oc-sb">registros</div></div>
@@ -2627,11 +2627,14 @@ function updVG(){
 }
 function updOC(){
   document.getElementById("oc1").textContent=F.faltas.length;
+  document.getElementById("oc7").textContent=F.faltas.filter(r=>r.TIPO==="CONTRATO").length;
+  document.getElementById("oc8").textContent=F.faltas.filter(r=>r.TIPO==="RESERVA").length;
+  // Pessoal interno (Mesa Operacional, Supervisao, DP, Financeiro). Entra no
+  // total de Faltas; sem este card a soma Contrato+Reserva nao fechava com ele.
+  document.getElementById("oc10").textContent=F.faltas.filter(r=>r.TIPO==="DEPARTAMENTO").length;
   document.getElementById("oc4").textContent=F.fts.length;
   const _oc5=document.getElementById("oc5");if(_oc5)_oc5.textContent=F.justif.length;
   document.getElementById("oc6").textContent=F.dispo.length;
-  // Pessoal interno (Mesa Operacional, Supervisao, DP, Financeiro). Entra no
-  // total de Faltas; sem este card a soma Contrato+Reserva nao fechava com ele.
   document.getElementById("oc9").textContent=(F.justif||[]).filter(r=>(r.MOTIVO||"").toUpperCase().includes("VAGO SEM COBERTURA")).length;
   const _ncList=DASHBOARD_DATA.novosClientes||[];
   document.getElementById("vg-novoscli").textContent=_ncList.length;
@@ -3650,10 +3653,14 @@ function updRestecC(){
   mkBar("cRT3",dispCargos.map(([k])=>k.length>18?k.substring(0,18)+"…":k),dispCargos.map(([,v])=>v),"#16a34a",true);
   const indispCargos=topN(indisp,"CARGO",8);
   mkBar("cRT4",indispCargos.map(([k])=>k.length>18?k.substring(0,18)+"…":k),indispCargos.map(([,v])=>v),"#dc2626",true);
-  // Painel separado: indisponíveis por cargo, trabalho por motivo
+  // Painel separado: indisponíveis por motivo (o que está gerando a
+  // indisponibilidade — folga, falta, INSS, abandono...), trabalho por motivo.
+  // Antes o lado indisponível vinha por CARGO, e ainda mandava o cargo pra
+  // dentro de _rtMotClick(), que filtra por MOTIVO — o clique nesses cards
+  // nunca batia com nada e sempre voltava vazio.
   const allMot=topN(d,"MOTIVO",30);
   const motDisp=allMot.filter(([k])=>!RT_INDISP.has(normTxt(k)));
-  const cargoIndisp=topN(indisp,"CARGO",20);
+  const motIndisp=allMot.filter(([k])=>RT_INDISP.has(normTxt(k)));
   function renderMotCards(el,mots,isInd){
     if(!el)return;
     const tc=isInd?"#dc2626":"#16a34a";
@@ -3668,7 +3675,7 @@ function updRestecC(){
         <span style="font-size:1.1rem;font-weight:900;color:${tc}">${v}</span>
       </div>`).join("");
   }
-  renderMotCards(document.getElementById("rt-mot-indisp"),cargoIndisp,true);
+  renderMotCards(document.getElementById("rt-mot-indisp"),motIndisp,true);
   renderMotCards(document.getElementById("rt-mot-disp"),motDisp,false);
   // Gráfico todos os motivos
   mkBar("cRT5",allMot.map(([k])=>k.length>25?k.substring(0,25)+"…":k),allMot.map(([,v])=>v),allMot.map(([k])=>RT_INDISP.has(normTxt(k))?"#dc2626":"#1e4d8c"),true);
