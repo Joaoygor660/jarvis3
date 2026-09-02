@@ -6329,22 +6329,37 @@ function comCadParada(x){
   if((x.cadencia_etapa||0)>=5)return"a régua chegou ao fim (Msg 5 já enviada)";
   return null;
 }
+/* Data do envio REAL de uma etapa já mandada, lida do log — não da âncora.
+   Com mais de um registro da mesma etapa (reenvio, ou histórico de antes de
+   um reinício de cadência), fica com o mais recente. */
+function comUltimoEnvioEtapa(id,etapa){
+  const rows=COM_LOG.filter(l=>l.proposta_id===id&&l.etapa===etapa&&l.canal==="EMAIL"&&l.status==="enviado");
+  if(!rows.length)return null;
+  return rows.reduce((max,r)=>(!max||String(r.enviado_em)>String(max))?r.enviado_em:max,null);
+}
 /* Próxima etapa devida e a data em que ela sai.
-   cadencia_reiniciada_em, quando preenchida, substitui data_envio_proposta só
-   para esta conta — mesma regra do servidor (api/comercial-cron.js). Sem isso
-   o Radar mostraria uma data e o e-mail sairia em outra. */
+   Mesma regra do servidor (api/comercial-cron.js): Msg 2 conta a partir da
+   âncora (data_envio_proposta ou cadencia_reiniciada_em) — não há e-mail
+   anterior pra encadear, o antecessor dela é o WhatsApp. Msg 3/4/5 contam a
+   partir do ENVIO REAL da etapa anterior (lido do COM_LOG), nunca de uma
+   âncora única — e é sempre só o PRÓXIMO passo, nunca "o mais atrasado".
+   Sem essa mesma regra dos dois lados, o Radar mostraria uma data e o e-mail
+   sairia em outra. */
 function comCadProxima(x){
   if(comCadParada(x))return null;
   const atual=x.cadencia_etapa||0;
   const ancora=x.cadencia_reiniciada_em||x.data_envio_proposta;
-  for(const et of [2,3,4,5]){
-    if(et>atual){
-      const base=new Date(String(ancora).slice(0,10)+"T12:00:00");
-      base.setDate(base.getDate()+COM_CAD_DIAS[et]);
-      return{etapa:et,data:base,atrasada:base<new Date()};
-    }
+  if(atual<2){
+    const base=new Date(String(ancora).slice(0,10)+"T12:00:00");
+    base.setDate(base.getDate()+2);
+    return{etapa:2,data:base,atrasada:base<new Date()};
   }
-  return null;
+  const proxima=atual+1;
+  if(proxima>5)return null;
+  const baseISO=comUltimoEnvioEtapa(x.id,atual)||ancora;
+  const base=new Date(String(baseISO).slice(0,10)+"T12:00:00");
+  base.setDate(base.getDate()+COM_CAD_DIAS[proxima]);
+  return{etapa:proxima,data:base,atrasada:base<new Date()};
 }
 const COM_ETAPA_LBL={1:"Msg 1 · WhatsApp (envio da proposta)",2:"Msg 2 · E-mail (+2 dias)",3:"Msg 3 · E-mail (+5 dias)",4:"Msg 4 · E-mail (+10 dias)",5:"Msg 5 · E-mail (+20 dias — pausa)"};
 /* ══ INTERRUPTOR DE VALORES (R$) DO COMERCIAL ══

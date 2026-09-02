@@ -19,12 +19,17 @@
 
 const nodemailer = require("nodemailer");
 
-const ETAPAS = [
-  { etapa: 2, dias: 2 },
-  { etapa: 3, dias: 5 },
-  { etapa: 4, dias: 10 },
-  { etapa: 5, dias: 20 }
-];
+// Msg 2 ainda conta a partir da âncora (data_envio_proposta ou
+// cadencia_reiniciada_em) — não há um "e-mail anterior" pra encadear, o
+// antecessor dela é o WhatsApp (Msg 1), outro canal.
+const DIAS_ANCORA_MSG2 = 2;
+// Msg 3, 4 e 5 contam a partir do ENVIO REAL da mensagem anterior (lido do
+// com_cadencia_log), não de uma âncora única. Antes as quatro etapas eram
+// checadas contra a mesma âncora e o código escolhia "a mais atrasada vencida"
+// — foi assim que gente que nunca recebeu nada pulou direto pra Msg 5 depois
+// da agenda ficar semanas parada. Agora cada proposta só pode avançar UM passo
+// de cada vez, e só quando o intervalo desde o envio real anterior se cumpriu.
+const GAP_DESDE_ANTERIOR = { 3: 5, 4: 10, 5: 20 };
 
 function corpoEmail(etapa, nome) {
   const txt = {
@@ -427,22 +432,53 @@ module.exports = async function handler(req, res) {
   if (!r.ok) return res.status(502).json({ error: "Falha ao consultar propostas.", details: await r.text() });
   const props = await r.json();
 
+  // Envio real de cada etapa já mandada, por proposta — a fonte de verdade
+  // para os intervalos de Msg 3/4/5, em vez de uma âncora única.
+  const ultimoEnvioPorProposta = {};
+  if (props.length) {
+    const ids = props.map(p => p.id).join(",");
+    const lr = await fetch(
+      `${SUPABASE_URL}/rest/v1/com_cadencia_log?proposta_id=in.(${ids})&canal=eq.EMAIL&status=eq.enviado&select=proposta_id,etapa,enviado_em&order=enviado_em.desc`,
+      { headers: sb }
+    );
+    if (lr.ok) {
+      const linhas = await lr.json().catch(() => []);
+      for (const l of linhas) {
+        (ultimoEnvioPorProposta[l.proposta_id] = ultimoEnvioPorProposta[l.proposta_id] || {});
+        // order=enviado_em.desc: a primeira ocorrência de cada etapa já é a mais recente
+        if (!ultimoEnvioPorProposta[l.proposta_id][l.etapa]) ultimoEnvioPorProposta[l.proposta_id][l.etapa] = l.enviado_em;
+      }
+    }
+  }
+
   const hoje = new Date(); hoje.setUTCHours(0, 0, 0, 0);
   const resultado = { candidatas: props.length, enviadas: 0, falhas: 0, detalhes: [] };
   if (dry) resultado.modo = "SIMULAÇÃO — nenhum e-mail enviado, nada gravado";
   let tx = null;
 
   for (const p of props) {
-    // cadencia_reiniciada_em, quando preenchida, substitui data_envio_proposta
-    // só para contar os dias da cadência — usada quando a régua é reiniciada
-    // manualmente (ex.: depois de semanas com a agenda pausada) sem mexer na
-    // data real de envio, que outros relatórios dependem dela ficar intacta.
-    const ancora = p.cadencia_reiniciada_em || p.data_envio_proposta;
-    const envio = new Date(String(ancora).slice(0, 10) + "T00:00:00Z");
-    const dias = Math.floor((hoje - envio) / 86400000);
-    // maior etapa vencida ainda não enviada (evita rajada: envia só a mais atual)
-    let due = null;
-    for (const e of ETAPAS) if (dias >= e.dias && e.etapa > (p.cadencia_etapa || 0)) due = e;
+    const etapaAtual = p.cadencia_etapa || 0;
+    let dias, due = null;
+
+    if (etapaAtual < 2) {
+      // Msg 2: ainda a partir da âncora (data_envio_proposta ou
+      // cadencia_reiniciada_em) — não há e-mail anterior pra encadear.
+      const ancora = p.cadencia_reiniciada_em || p.data_envio_proposta;
+      const envio = new Date(String(ancora).slice(0, 10) + "T00:00:00Z");
+      dias = Math.floor((hoje - envio) / 86400000);
+      if (dias >= DIAS_ANCORA_MSG2) due = { etapa: 2 };
+    } else if (etapaAtual < 5) {
+      // Msg 3/4/5: só o PRÓXIMO passo (etapaAtual+1), nunca "o mais atrasado
+      // vencido" — isso é o que impede pular etapa. Conta a partir do envio
+      // REAL da etapa anterior; sem registro no log (não deveria acontecer),
+      // cai para a âncora como último recurso, para não travar a proposta.
+      const proxima = etapaAtual + 1;
+      const ancora = p.cadencia_reiniciada_em || p.data_envio_proposta;
+      const baseISO = (ultimoEnvioPorProposta[p.id] && ultimoEnvioPorProposta[p.id][etapaAtual]) || ancora;
+      const base = new Date(String(baseISO).slice(0, 10) + "T00:00:00Z");
+      dias = Math.floor((hoje - base) / 86400000);
+      if (dias >= GAP_DESDE_ANTERIOR[proxima]) due = { etapa: proxima };
+    }
     if (!due) continue;
 
     const nome = ((p.contato || p.nome || "").trim().split(" ")[0]) || "tudo bem";
