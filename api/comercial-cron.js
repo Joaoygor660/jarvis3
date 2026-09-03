@@ -269,40 +269,59 @@ module.exports = async function handler(req, res) {
 
     try {
       await client.connect();
-      await client.mailboxOpen("INBOX", { readOnly: true });   // não altera nada na caixa dela
+
+      // Lê a INBOX e a pasta de spam. Uma resposta real da TME Engenharia caiu
+      // direto no spam (achada só porque a Gabriela abriu a pasta por acaso) —
+      // até aqui a leitura só olhava a INBOX e nunca teria visto essa resposta,
+      // mesmo funcionando perfeitamente. O nome da pasta de spam não fica fixo
+      // no código: é descoberto pelo specialUse "\Junk", do mesmo jeito que
+      // pastaEnviados() já descobre a pasta de enviados em outro lugar deste
+      // arquivo — se a Locaweb um dia renomear a pasta, continua funcionando.
+      const todasPastas = await client.list();
+      const pastaSpam = todasPastas.find(m => (m.specialUse || "") === "\\Junk");
+      const caixas = [{ path: "INBOX", label: "INBOX" }];
+      if (pastaSpam) caixas.push({ path: pastaSpam.path, label: "spam" });
+
       const desde = new Date(Date.now() - dias * 86400000);
 
-      for await (const msg of client.fetch({ since: desde }, { envelope: true })) {
-        out.lidas++;
-        const env = msg.envelope || {};
-        const de = ((env.from && env.from[0] && env.from[0].address) || "").trim().toLowerCase();
-        const assunto = String(env.subject || "");
-        if (!de) { out.ignoradas++; continue; }
+      for (const caixa of caixas) {
+        const lock = await client.getMailboxLock(caixa.path, { readOnly: true }); // não altera nada na caixa dela
+        try {
+          for await (const msg of client.fetch({ since: desde }, { envelope: true })) {
+            out.lidas++;
+            const env = msg.envelope || {};
+            const de = ((env.from && env.from[0] && env.from[0].address) || "").trim().toLowerCase();
+            const assunto = String(env.subject || "");
+            if (!de) { out.ignoradas++; continue; }
 
-        if (ehAutomatico(de, assunto)) { out.automaticas++; continue; }
+            if (ehAutomatico(de, assunto)) { out.automaticas++; continue; }
 
-        const p = porEmail[de];
-        if (!p) { out.ignoradas++; continue; }   // não é cliente da base
+            const p = porEmail[de];
+            if (!p) { out.ignoradas++; continue; }   // não é cliente da base
 
-        const quando = (env.date ? new Date(env.date) : new Date()).toISOString();
-        out.respostas.push({ cliente: p.nome, de, assunto: assunto.slice(0, 120), em: quando });
-        if (simular) continue;
+            const quando = (env.date ? new Date(env.date) : new Date()).toISOString();
+            out.respostas.push({ cliente: p.nome, de, assunto: assunto.slice(0, 120), em: quando, pasta: caixa.label });
+            if (simular) continue;
 
-        await fetch(`${SUPABASE_URL}/rest/v1/com_propostas?id=eq.${p.id}`, {
-          method: "PATCH",
-          headers: { ...sb3, Prefer: "return=minimal" },
-          body: JSON.stringify({ respondido_em: quando, atualizado_em: new Date().toISOString() })
-        });
-        await fetch(`${SUPABASE_URL}/rest/v1/com_cadencia_log`, {
-          method: "POST",
-          headers: { ...sb3, Prefer: "return=minimal" },
-          body: JSON.stringify({
-            proposta_id: p.id, etapa: 0, canal: "EMAIL", status: "evento",
-            destinatario: de, enviado_em: quando,
-            detalhe: "Cliente respondeu: " + (assunto.slice(0, 150) || "(sem assunto)")
-          })
-        });
-        delete porEmail[de];   // evita reprocessar o mesmo cliente nesta rodada
+            await fetch(`${SUPABASE_URL}/rest/v1/com_propostas?id=eq.${p.id}`, {
+              method: "PATCH",
+              headers: { ...sb3, Prefer: "return=minimal" },
+              body: JSON.stringify({ respondido_em: quando, atualizado_em: new Date().toISOString() })
+            });
+            await fetch(`${SUPABASE_URL}/rest/v1/com_cadencia_log`, {
+              method: "POST",
+              headers: { ...sb3, Prefer: "return=minimal" },
+              body: JSON.stringify({
+                proposta_id: p.id, etapa: 0, canal: "EMAIL", status: "evento",
+                destinatario: de, enviado_em: quando,
+                detalhe: "Cliente respondeu (" + caixa.label + "): " + (assunto.slice(0, 140) || "(sem assunto)")
+              })
+            });
+            delete porEmail[de];   // evita reprocessar o mesmo cliente nesta rodada, em qualquer pasta
+          }
+        } finally {
+          lock.release();
+        }
       }
     } catch (e) {
       return res.status(502).json({ error: "Falha ao ler a caixa de entrada.", details: String((e && e.message) || e).slice(0, 250) });
